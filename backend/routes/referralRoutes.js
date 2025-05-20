@@ -8,12 +8,22 @@ const router = express.Router();
 // Get user's referral code and stats
 router.get("/my-referrals", protect, async (req, res) => {
   try {
+    console.log("🔹 Fetching referrals for user:", req.user.id);
     const user = await users.findById(req.user.id)
       .select('referralCode');
+
+    if (!user) {
+      console.log("❌ User not found");
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    console.log("✅ Found user with referral code:", user.referralCode);
 
     const referrals = await Referral.find({ referrer: req.user.id })
       .populate('referredUser', 'userName userEmail')
       .sort({ createdAt: -1 });
+
+    console.log("✅ Found referrals:", referrals.length);
 
     const stats = {
       totalReferrals: referrals.length,
@@ -23,9 +33,10 @@ router.get("/my-referrals", protect, async (req, res) => {
       referralCode: user.referralCode
     };
 
+    console.log("✅ Sending response with stats:", stats);
     res.json({ stats, referrals });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Error in my-referrals:", err);
     res.status(500).json({ msg: "Server Error" });
   }
 });
@@ -36,13 +47,13 @@ router.post("/apply-code", async (req, res) => {
     const { referralCode, userId } = req.body;
 
     // Find referrer
-    const referrer = await users.findOne({ referralCode });
+    const referrer = await User.findOne({ referralCode });
     if (!referrer) {
       return res.status(404).json({ msg: "Invalid referral code" });
     }
 
     // Find user to be referred
-    const user = await users.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
@@ -72,7 +83,7 @@ router.post("/apply-code", async (req, res) => {
 // Get top referrers (admin only)
 router.get("/top-referrers", protect, async (req, res) => {
   try {
-    const user = await users.findById(req.user.id);
+    const user = await User.findById(req.user.id);
     if (!user.isAdmin) {
       return res.status(403).json({ msg: "Not authorized" });
     }
@@ -127,7 +138,7 @@ router.get("/top-referrers", protect, async (req, res) => {
 // Update referral reward settings (admin only)
 router.put("/reward-settings", protect, async (req, res) => {
   try {
-    const user = await users.findById(req.user.id);
+    const user = await User.findById(req.user.id);
     if (!user.isAdmin) {
       return res.status(403).json({ msg: "Not authorized" });
     }

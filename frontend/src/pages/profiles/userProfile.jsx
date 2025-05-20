@@ -104,7 +104,7 @@ const UserProfile = () => {
 
       await axios.post(
         `http://localhost:5000/api/investments/${investmentId}/invest`,
-        { amount },
+        { amount: Number(amount) },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -117,6 +117,7 @@ const UserProfile = () => {
       setFundingRequests(res.data);
     } catch (err) {
       console.error("Investment failed:", err);
+      alert(err.response?.data?.msg || "Investment failed. Please try again.");
     }
   };
 

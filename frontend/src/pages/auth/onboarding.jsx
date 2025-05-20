@@ -19,6 +19,7 @@ const Onboarding = () => {
     businessYear: "",
     businessPhone: "",
     businessEmail: "",
+    referralCode: "",
   });
 
   const handleChange = (e) => {
@@ -112,8 +113,40 @@ const Onboarding = () => {
             </div>
           )}
 
-          {/* Step 2: Location */}
+          {/* New Step: Referral Code */}
           {step === 2 && (
+            <div className="animate-fade-in">
+              <div className="mb-6">
+                <h3 className="text-lg font-medium text-white mb-2">Have a referral code?</h3>
+                <p className="text-white/70 mb-4">Enter it below to get started with your referral benefits.</p>
+                <input
+                  type="text"
+                  name="referralCode"
+                  placeholder="Enter referral code (optional)"
+                  value={formData.referralCode}
+                  onChange={handleChange}
+                  className="w-full p-3 bg-white bg-opacity-30 border border-white rounded-lg mb-3 text-white placeholder-gray-200 focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div className="flex justify-between">
+                <button
+                  className="bg-gray-500 text-white px-6 py-3 rounded-lg"
+                  onClick={prevStep}
+                >
+                  Back
+                </button>
+                <button
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+                  onClick={nextStep}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Location */}
+          {step === 3 && (
             <div className="animate-fade-in">
               <input
                 type="text"
@@ -141,7 +174,7 @@ const Onboarding = () => {
           )}
 
           {/* Step 3: Industry Selection */}
-          {step === 3 && (
+          {step === 4 && (
             <div className="animate-fade-in">
               <input
                 type="text"
@@ -168,7 +201,7 @@ const Onboarding = () => {
             </div>
           )}
           {/*Step : 4 - is user seeker or giver */}
-          {step === 4 && (
+          {step === 5 && (
             <div className="animate-fade-in">
               <p className="text-lg font-medium text-white mb-3">
                 Are you a seeker ?
@@ -197,7 +230,7 @@ const Onboarding = () => {
           )}
 
           {/* Step 4: Ask if User Wants Business Details */}
-          {step === 5 && (
+          {step === 6 && (
             <div className="animate-fade-in">
               <p className="text-lg font-medium text-white mb-3">
                 Do you want to add business details?
@@ -223,7 +256,7 @@ const Onboarding = () => {
           )}
 
           {/* Step 5: Business Basic Info */}
-          {step === 6 && formData.wantsBusiness && (
+          {step === 7 && formData.wantsBusiness && (
             <div className="animate-fade-in">
               <input
                 type="text"
@@ -249,7 +282,7 @@ const Onboarding = () => {
             </div>
           )}
 
-          {step === 7 && (
+          {step === 8 && (
             <div className="animate-fade-in">
               <input
                 type="text"
@@ -277,7 +310,7 @@ const Onboarding = () => {
           )}
 
           {/* Step 6B: Business Contact Details */}
-          {step === 8 && formData.wantsBusiness && (
+          {step === 9 && formData.wantsBusiness && (
             <div className="animate-fade-in">
               <input
                 type="text"
@@ -311,7 +344,7 @@ const Onboarding = () => {
             Welcome to Our Community!
           </h1>
           <p className="text-lg text-center max-w-md">
-            Let’s build something amazing together.
+            Let's build something amazing together.
           </p>
           <img
             src="https://source.unsplash.com/400x300/?team,success"

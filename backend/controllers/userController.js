@@ -3,6 +3,7 @@ import Business from "../models/Business.js";
 import Chapter from "../models/chapter.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import Referral from "../models/referral.js";
 
 // Helper function to generate unique referral code
 const generateUniqueReferralCode = async () => {
@@ -128,6 +129,7 @@ export const onboarding = async (req, res) => {
                         businessYear,
                         businessPhone,
                         businessEmail,
+                        referralCode,
                 } = req.body;
 
                 // Update user info in Users collection
@@ -141,12 +143,35 @@ export const onboarding = async (req, res) => {
                         groupJoined: false,
                 });
 
+                // Handle referral code if provided
+                if (referralCode) {
+                        try {
+                                // Find referrer
+                                const referrer = await users.findOne({ referralCode });
+                                if (!referrer) {
+                                        console.log("❌ Invalid referral code:", referralCode);
+                                } else {
+                                        // Create new referral
+                                        const referral = new Referral({
+                                                referrer: referrer._id,
+                                                referredUser: req.user._id,
+                                                referralCode: referralCode,
+                                                status: 'pending'
+                                        });
+                                        await referral.save();
+                                        console.log("✅ Referral created successfully");
+                                }
+                        } catch (error) {
+                                console.error("❌ Error creating referral:", error);
+                        }
+                }
+
                 let newBusiness = null;
 
                 // If the user provides business info, insert into Business collection
                 if (wantsBusiness) {
                         newBusiness = await Business.create({
-                                CreatorName: req.user._id, // Link business to user
+                                CreatorName: req.user._id,
                                 name: businessName,
                                 bio: businessDescription,
                                 location: businessLocation,

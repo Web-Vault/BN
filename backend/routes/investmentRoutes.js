@@ -4,6 +4,7 @@ import { protect } from "../middleware/authMiddleware.js";
 import Investment from "../models/investment.js";
 import users from "../models/users.js";
 import Withdrawal from "../models/Withdrawal.js";
+import Referral from "../models/referral.js";
 
 const router = express.Router();
 
@@ -67,23 +68,80 @@ router.post("/:id/invest", protect, async (req, res) => {
     }
 
     const investmentAmount = req.body.amount;
-    if (investment.currentFunding + investmentAmount > investment.amount) {
-      return res.status(400).json({ msg: "Exceeds funding goal" });
+    
+    // Check if total funding would exceed the goal
+    const currentTotalFunding = investment.currentFunding;
+    if (currentTotalFunding + investmentAmount > investment.amount) {
+      return res.status(400).json({ 
+        msg: "Exceeds funding goal",
+        details: {
+          currentFunding: currentTotalFunding,
+          requestedAmount: investmentAmount,
+          remainingAmount: investment.amount - currentTotalFunding
+        }
+      });
     }
 
-    investment.investors.push({
-      user: req.user.id,
-      amount: investmentAmount,
-    });
+    // Check if user already has an investment
+    const existingInvestment = investment.investors.find(
+      inv => inv.user.toString() === req.user.id
+    );
+
+    if (existingInvestment) {
+      // Update existing investment amount
+      existingInvestment.amount += investmentAmount;
+    } else {
+      // Add new investment
+      investment.investors.push({
+        user: req.user.id,
+        amount: investmentAmount,
+      });
+    }
+
+    // Update total funding
     investment.currentFunding += investmentAmount;
 
+    // Check if investment is fully funded
     if (investment.currentFunding >= investment.amount) {
       investment.status = "funded";
     }
 
     await investment.save();
+
+    // Handle referral completion
+    try {
+      console.log("🔍 Looking for pending referrals for user:", req.user.id);
+      // Find any pending referrals for this user
+      const pendingReferrals = await Referral.find({
+        referredUser: req.user.id,
+        status: 'pending'
+      });
+      console.log("📊 Found pending referrals:", pendingReferrals.length);
+
+      // Complete each pending referral
+      for (const referral of pendingReferrals) {
+        try {
+          console.log("🔄 Processing referral:", {
+            referralId: referral._id,
+            referrer: referral.referrer,
+            referredUser: referral.referredUser,
+            investmentAmount: investmentAmount
+          });
+          await referral.complete(investmentAmount);
+          console.log(`✅ Referral ${referral._id} completed successfully with reward amount: ${referral.rewardAmount}`);
+        } catch (error) {
+          console.error(`❌ Error completing referral ${referral._id}:`, error.message);
+          // Continue with other referrals even if one fails
+        }
+      }
+    } catch (referralError) {
+      console.error("❌ Error handling referrals:", referralError.message);
+      // Don't fail the investment if referral handling fails
+    }
+
     res.json(investment);
   } catch (err) {
+    console.error("❌ Investment error:", err);
     res.status(500).json({ msg: "Server Error" });
   }
 });

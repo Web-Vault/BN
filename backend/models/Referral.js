@@ -83,6 +83,7 @@ referralSchema.methods.complete = async function(amount) {
   return this;
 };
 
-const Referral = mongoose.model('Referral', referralSchema);
+// Check if model exists before creating
+const Referral = mongoose.models.Referral || mongoose.model('Referral', referralSchema);
 
 export default Referral; 

@@ -24,12 +24,29 @@ const ReferralsPage = () => {
 
   const fetchReferrals = async () => {
     try {
-      const { data } = await axios.get("/api/referrals/my-referrals");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please login to view referrals");
+        return;
+      }
+
+      console.log("🔹 Sending request with token:", token);
+      const { data } = await axios.get("http://localhost:5000/api/referrals/my-referrals", {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log("✅ Received data:", data);
       setReferrals(data);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching referrals:", error);
-      toast.error("Failed to load referrals");
+      console.error("❌ Error fetching referrals:", error);
+      if (error.response?.status === 401) {
+        toast.error("Please login to view referrals");
+      } else {
+        toast.error("Failed to load referrals");
+      }
       setLoading(false);
     }
   };
