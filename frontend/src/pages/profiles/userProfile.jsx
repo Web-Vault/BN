@@ -21,6 +21,7 @@ import {
 import Navbar from "../../components/Navbar";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import WithdrawalForm from '../../components/WithdrawalForm';
 
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -38,6 +39,127 @@ const UserProfile = () => {
   const [requests, setRequests] = useState([]);
 
   const [myConnections, setMyConnections] = useState([]);
+
+  const [fundingRequests, setFundingRequests] = useState([]);
+  const [investments, setInvestments] = useState([]);
+  const [amount, setAmount] = useState(0);
+  const [loadingInvestments, setLoadingInvestments] = useState(false);
+  const [errorInvestments, setErrorInvestments] = useState("");
+
+  const [showWithdrawalForm, setShowWithdrawalForm] = useState(false);
+  const [selectedInvestment, setSelectedInvestment] = useState(null);
+
+  useEffect(() => {
+    const fetchInvestmentData = async () => {
+      try {
+        setLoadingInvestments(true);
+        const token = localStorage.getItem("token");
+
+        if (user.isSeeker) {
+          // Fetch seeker's funding requests
+          const fundingRes = await axios.get(
+            "http://localhost:5000/api/investments/my-requests",
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          setFundingRequests(fundingRes.data);
+        } else {
+          // Fetch investor's investments
+          const investmentsRes = await axios.get(
+            "http://localhost:5000/api/investments/my-investments",
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          setInvestments(investmentsRes.data);
+        }
+
+        // Fetch open requests for seekers to see their own, investors to see all open
+        const requestsRes = await axios.get(
+          "http://localhost:5000/api/investments",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setFundingRequests(requestsRes.data);
+      } catch (err) {
+        setErrorInvestments(
+          err.response?.data?.msg || "Error loading investment data"
+        );
+      } finally {
+        setLoadingInvestments(false);
+      }
+    };
+
+    if (user) fetchInvestmentData();
+  }, [user]);
+
+  const handleInvest = async (investmentId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const amount = prompt("Enter investment amount:");
+
+      if (!amount || isNaN(amount)) return;
+
+      await axios.post(
+        `http://localhost:5000/api/investments/${investmentId}/invest`,
+        { amount },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Refresh data
+      const res = await axios.get("http://localhost:5000/api/investments", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFundingRequests(res.data);
+    } catch (err) {
+      console.error("Investment failed:", err);
+    }
+  };
+
+  const handleWithdrawal = async (investmentId) => {
+    const investment = investments.find(inv => inv._id === investmentId);
+    setSelectedInvestment(investment);
+    setShowWithdrawalForm(true);
+  };
+
+  const handleWithdrawSubmit = async (formData) => {
+    try {
+      const token = localStorage.getItem("token");
+      console.log('Submitting withdrawal for investment:', selectedInvestment._id); // Debug log
+      
+      const response = await axios.post(
+        `http://localhost:5000/api/investments/${selectedInvestment._id}/withdraw`,
+        formData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data.msg === 'Withdrawal request submitted successfully') {
+        // Refresh investments
+        const res = await axios.get(
+          "http://localhost:5000/api/investments/my-investments",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setInvestments(res.data);
+        setShowWithdrawalForm(false);
+        setSelectedInvestment(null);
+        alert('Withdrawal request submitted successfully!');
+      } else {
+        throw new Error(response.data.msg || 'Withdrawal failed');
+      }
+    } catch (err) {
+      console.error("Withdrawal failed:", err);
+      alert(err.response?.data?.msg || "Withdrawal failed. Please try again.");
+    }
+  };
+
   useEffect(() => {
     const fetchRequests = async () => {
       const token = localStorage.getItem("token"); // Or however you store it
@@ -122,37 +244,36 @@ const UserProfile = () => {
         );
 
         console.log("✅ API Response:", response.data);
+        console.log("chapter API response: ", chapterData.data);
 
-        console.log("chapter API response: ", chapterData.data[0]);
-        setChapter(chapterData.data[0]._id);
-        console.log("chapter ID: ", typeof chapterData.data[0]._id);
-        console.log("chapter members: ", chapterData.data[0].members);
-
-        if (
-          chapterData.data[0].chapterCreator._id ===
-          localStorage.getItem("userId")
-        ) {
-          setCreator(true);
-        }
-
-        console.log("isCreator: ", isCreator);
-
+        // Set user and business data
         if (response.data) {
-          setUser(response.data.user || {}); // Ensure no null values
-          setBusiness(response.data.business || {}); // Handle missing business
-          setUsersChapter(response.data.hasJoinedChapter || {});
-          setMyConnections(response.data.user.userConnections);
-          console.log("MyConnections", response.data.user.userConnections);
-          if (response.data.hasJoinedChapter !== null) {
-            setChapter(response.data.hasJoinedChapter._id);
-          }
+          setUser(response.data.user || {});
+          setBusiness(response.data.business || {});
+          setUsersChapter(response.data.hasJoinedChapter || null);
+          setMyConnections(response.data.user.userConnections || []);
         }
+
+        // Handle chapter data safely
+        if (chapterData.data && chapterData.data.length > 0) {
+          const chapter = chapterData.data[0];
+          setChapter(chapter._id);
+          
+          // Check if user is creator
+          if (chapter.chapterCreator && chapter.chapterCreator._id === localStorage.getItem("userId")) {
+            setCreator(true);
+          }
+        } else {
+          setChapter(null);
+          setCreator(false);
+        }
+
       } catch (error) {
         console.error(
           "❌ Error fetching profile:",
           error.response ? error.response.data : error.message
         );
-        setError("Failed to load profile data. navigating to login page");
+        setError("Failed to load profile data. Navigating to login page");
         setTimeout(() => {
           navigate("/login");
         }, 3000);
@@ -162,7 +283,7 @@ const UserProfile = () => {
     };
 
     fetchProfile();
-  }, [navigate, isCreator]);
+  }, [navigate]);
 
   if (loading) return <p>Loading profile...</p>;
   if (error) return <p className="error">{error}</p>;
@@ -177,7 +298,7 @@ const UserProfile = () => {
     // industry: "Technology",
     // address: "123 Main St, New York, USA",
     // contact: "+1 234 567 890",
-    website: "https://johndoe.com",
+    website: "https://potfolio.aryanlathigara.com",
     business: {
       //   name: "Tech Corp Inc.",
       //   industry: "Software Development",
@@ -188,85 +309,85 @@ const UserProfile = () => {
       //     "Innovative tech solutions provider specializing in AI, cloud computing, and enterprise software.",
       established: "2025",
     },
-    connections: [
-      { id: 1, name: "Jane Smith", role: "CEO at InnovateX" },
-      { id: 2, name: "Mike Johnson", role: "CTO at NextGen" },
-    ],
-    requests: {
-      received: [{ id: 1, name: "Alex Brown", role: "Founder at Startify" }],
-      sent: [
-        {
-          id: 1,
-          name: "Emily Davis",
-          role: "Investor at VentureFund",
-          status: "pending",
-        },
-      ],
-    },
-    fundingRequests: [
-      {
-        id: 1,
-        title: "Tech Expansion",
-        amount: "$50,000",
-        investor: "Tech Ventures",
-        type: "Equity",
-        returns: "15%",
-        dueDate: "2024-12-31",
-      },
-      {
-        id: 2,
-        title: "Equity sharing",
-        amount: "$50,000",
-        investor: "Tech Ventures",
-        type: "Equity",
-        returns: "15%",
-        dueDate: "2024-12-31",
-      },
-      {
-        id: 3,
-        title: "shares locking",
-        amount: "$50,000",
-        investor: "Tech Ventures",
-        type: "Equity",
-        returns: "15%",
-        dueDate: "2024-12-31",
-      },
-      {
-        id: 4,
-        title: "just for fun.",
-        amount: "$50,000",
-        investor: "Tech Ventures",
-        type: "Equity",
-        returns: "15%",
-        dueDate: "2024-12-31",
-      },
-    ],
-    investments: [
-      {
-        id: 1,
-        title: "Green Energy",
-        amount: "$25,000",
-        type: "Equity",
-        interest: "$1,250",
-        status: "Active",
-      },
-      {
-        id: 2,
-        title: "Solar Energy",
-        amount: "$25,000",
-        type: "Equity",
-        interest: "$1,250",
-        status: "Active",
-      },
-      {
-        id: 3,
-        title: "Thermal Energy",
-        amount: "$25,000",
-        type: "Equity",
-        interest: "$1,250",
-        status: "Active",
-      },
-    ],
+    // connections: [
+    //   { id: 1, name: "Jane Smith", role: "CEO at InnovateX" },
+    //   { id: 2, name: "Mike Johnson", role: "CTO at NextGen" },
+    // ],
+    // requests: {
+    //   received: [{ id: 1, name: "Alex Brown", role: "Founder at Startify" }],
+    //   sent: [
+    //     {
+    //       id: 1,
+    //       name: "Emily Davis",
+    //       role: "Investor at VentureFund",
+    //       status: "pending",
+    //     },
+    //   ],
+    // },
+    // fundingRequests: [
+    //   {
+    //     id: 1,
+    //     title: "Tech Expansion",
+    //     amount: "$50,000",
+    //     investor: "Tech Ventures",
+    //     type: "Equity",
+    //     returns: "15%",
+    //     dueDate: "2024-12-31",
+    //   },
+    //   {
+    //     id: 2,
+    //     title: "Equity sharing",
+    //     amount: "$50,000",
+    //     investor: "Tech Ventures",
+    //     type: "Equity",
+    //     returns: "15%",
+    //     dueDate: "2024-12-31",
+    //   },
+    //   {
+    //     id: 3,
+    //     title: "shares locking",
+    //     amount: "$50,000",
+    //     investor: "Tech Ventures",
+    //     type: "Equity",
+    //     returns: "15%",
+    //     dueDate: "2024-12-31",
+    //   },
+    //   {
+    //     id: 4,
+    //     title: "just for fun.",
+    //     amount: "$50,000",
+    //     investor: "Tech Ventures",
+    //     type: "Equity",
+    //     returns: "15%",
+    //     dueDate: "2024-12-31",
+    //   },
+    // ],
+    // investments: [
+    //   {
+    //     id: 1,
+    //     title: "Green Energy",
+    //     amount: "$25,000",
+    //     type: "Equity",
+    //     interest: "$1,250",
+    //     status: "Active",
+    //   },
+    //   {
+    //     id: 2,
+    //     title: "Solar Energy",
+    //     amount: "$25,000",
+    //     type: "Equity",
+    //     interest: "$1,250",
+    //     status: "Active",
+    //   },
+    //   {
+    //     id: 3,
+    //     title: "Thermal Energy",
+    //     amount: "$25,000",
+    //     type: "Equity",
+    //     interest: "$1,250",
+    //     status: "Active",
+    //   },
+    // ],
   };
 
   const handleRemoveProfile = async () => {
@@ -371,41 +492,23 @@ const UserProfile = () => {
                       <div className="text-gray-600 leading-relaxed pl-4 lg:pl-8 border-l-4 border-blue-100">
                         <div className="flex flex-wrap gap-4">
                           {isCreator || usersChapter !== null ? (
-                            <>
-                              <Link
-                                to={`/chapterDashboard/${chapter}`}
-                                className="bg-blue-100/50 px-4 py-2 rounded-lg flex items-center gap-2  cursor-pointer lg:w-max w-full"
-                              >
-                                <FiGlobe className="text-blue-600" /> My Chapter
-                                Dashboard
-                              </Link>
-                            </>
+                            <Link
+                              to={`/chapterDashboard/${chapter}`}
+                              className="bg-blue-100/50 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer lg:w-max w-full"
+                            >
+                              <FiGlobe className="text-blue-600" /> My Chapter
+                              Dashboard
+                            </Link>
                           ) : (
-                            <>
-                              <div
-                                onClick={goToChapterCreation}
-                                className="bg-blue-100/50 px-4 py-2 rounded-lg flex items-center gap-2  cursor-pointer"
-                              >
-                                <FiPlus className="text-blue-600" /> Create
-                                Chapter
-                              </div>
-                            </>
+                            <div
+                              onClick={goToChapterCreation}
+                              className="bg-blue-100/50 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer"
+                            >
+                              <FiPlus className="text-blue-600" /> Create
+                              Chapter
+                            </div>
                           )}
 
-                          {/* <div
-                            onClick={goToChapterDashboard}
-                            className="bg-blue-100/50 px-4 py-2 rounded-lg flex items-center gap-2  cursor-pointer lg:w-max w-full"
-                          >
-                            <FiGlobe className="text-blue-600" /> My Chapter
-                            Dashboard
-                          </div> */}
-
-                          {/* <div
-                            onClick={goToChapterCreation}
-                            className="bg-blue-100/50 px-4 py-2 rounded-lg flex items-center gap-2  cursor-pointer"
-                          >
-                            <FiPlus className="text-blue-600" /> Create Chapter
-                          </div> */}
                           {/* <div className="bg-green-100/50 px-4 py-2 rounded-lg flex items-center gap-2  cursor-pointer lg:w-max w-full">
                             <FiEdit className="text-green-600" /> Edit Profile
                             And Business
@@ -691,99 +794,145 @@ const UserProfile = () => {
                   </button>
                 </nav>
 
-                {/* Funding Requests - Styled */}
-                {investmentsTab === "funding" && (
+                {/* Funding Requests */}
+                {investmentsTab === "funding" ? (
                   <div className="p-4 space-y-6">
-                    <button className="mb-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow flex items-center gap-2">
-                      <FiPlus className="text-lg" /> New Funding Request
-                    </button>
-
-                    {userData.fundingRequests.map((request) => (
-                      <div
-                        key={request.id}
-                        className="bg-white/30 backdrop-blur-sm p-4 rounded-lg border border-white/20 hover:bg-white/50 transition-all"
+                    {user.isSeeker && (
+                      <button
+                        onClick={() => navigate("/create-investment")}
+                        className="mb-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow flex items-center gap-2"
                       >
-                        <div className="lg:flex lg:justify-between items-center">
-                          <div>
-                            <h4 className="text-lg font-semibold text-gray-800">
-                              {request.title}
-                            </h4>
-                            <div className="mt-2 flex items-center gap-4 text-gray-600">
-                              <span className="bg-blue-100/50 px-3 py-1 rounded-lg text-sm text-blue-700">
-                                {request.type}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <FiBriefcase className="text-blue-600" />{" "}
-                                {request.investor}
-                              </span>
+                        <FiPlus className="text-lg" /> New Funding Request
+                      </button>
+                    )}
+
+                    {loadingInvestments ? (
+                      <div className="text-center py-8">Loading...</div>
+                    ) : errorInvestments ? (
+                      <div className="text-red-500 p-4">{errorInvestments}</div>
+                    ) : fundingRequests.length > 0 ? (
+                      fundingRequests.map((request) => (
+                        <div
+                          key={request._id}
+                          className="bg-white/30 backdrop-blur-sm p-4 rounded-lg border border-white/20 hover:bg-white/50 transition-all"
+                        >
+                          <div className="lg:flex lg:justify-between items-center">
+                            <div>
+                              <h4 className="text-lg font-semibold text-gray-800">
+                                {request.title}
+                              </h4>
+                              <div className="mt-2 flex items-center gap-4 text-gray-600">
+                                <span className="bg-blue-100/50 px-3 py-1 rounded-lg text-sm text-blue-700">
+                                  {request.type}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <FiClock className="text-blue-600" />
+                                  {new Date(
+                                    request.deadline
+                                  ).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="lg:text-right p-2 lg:p-0">
+                              <p className="text-2xl font-bold text-blue-600">
+                                ${request.currentFunding} / ${request.amount}
+                              </p>
+                              <div className="mt-2 flex items-center gap-3 text-sm text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  <FiTrendingUp className="text-blue-600" />
+                                  {request.returns}
+                                </span>
+                                {!user.isSeeker && (
+                                  <button
+                                    onClick={() => handleInvest(request._id)}
+                                    className="px-4 py-2 bg-green-500 text-white rounded-lg"
+                                  >
+                                    Invest
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <div className="lg:text-right p-2 lg:p-0">
-                            <p className="text-2xl font-bold text-blue-600">
-                              {request.amount}
-                            </p>
-                            <div className="mt-2 flex items-center gap-3 text-sm text-gray-600">
-                              <span className="flex items-center gap-1">
-                                <FiTrendingUp className="text-blue-600" />{" "}
-                                {request.returns}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <FiClock className="text-blue-600" />{" "}
-                                {request.dueDate}
-                              </span>
-                            </div>
+                          <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full"
+                              style={{
+                                width: `${
+                                  (request.currentFunding / request.amount) *
+                                  100
+                                }%`,
+                              }}
+                            />
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-gray-500">
+                        No funding requests available.
+                      </p>
+                    )}
                   </div>
-                )}
-
-                {/* My Investments - Styled */}
-                {investmentsTab === "investments" && (
+                ) : (
+                  // My Investments Tab
                   <div className="p-4 space-y-6">
-                    {userData.investments.map((investment) => (
-                      <div
-                        key={investment.id}
-                        className="bg-white/30 backdrop-blur-sm p-4 rounded-lg border border-white/20 hover:bg-white/50 transition-all"
-                      >
-                        <div className="lg:flex lg:justify-between items-center">
-                          <div>
-                            <h4 className="text-lg font-semibold text-gray-800">
-                              {investment.title}
-                            </h4>
-                            <div className="mt-2 flex items-center gap-4 text-gray-600">
-                              <span className="bg-purple-100/50 px-3 py-1 rounded-lg text-sm text-purple-700">
-                                {investment.type}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                {/* <FiDollarSign className="text-purple-600" /> */}{" "}
-                                {investment.amount}
-                              </span>
+                    {loadingInvestments ? (
+                      <div className="text-center py-8">Loading...</div>
+                    ) : errorInvestments ? (
+                      <div className="text-red-500 p-4">{errorInvestments}</div>
+                    ) : investments.length > 0 ? (
+                      investments.map((investment) => (
+                        <div
+                          key={investment._id}
+                          className="bg-white/30 backdrop-blur-sm p-4 rounded-lg border border-white/20 hover:bg-white/50 transition-all"
+                        >
+                          <div className="lg:flex lg:justify-between items-center">
+                            <div>
+                              <h4 className="text-lg font-semibold text-gray-800">
+                                {investment.title}
+                              </h4>
+                              <div className="mt-2 flex items-center gap-4 text-gray-600">
+                                <span className="bg-purple-100/50 px-3 py-1 rounded-lg text-sm text-purple-700">
+                                  {investment.type}
+                                </span>
+                                {/* <span className="flex items-center gap-1">
+                                  Invested: ${investment.amount}
+                                  </span> */}
+                                <span className="flex items-center gap-1 text-gray-600">
+                                  <FiDollarSign className="text-purple-600" />
+                                  Your Investment: ${investment.investors.find(inv => inv.user === localStorage.getItem("userId"))?.amount || 0} 
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                          <div className="mt-3 lg:mt-0 lg:text-right">
-                            <p className="text-xl font-bold text-blue-600">
-                              +{investment.interest}
-                            </p>
-                            <div className="mt-3 flex items-center lg:flex-start lg:justify-left justify-between gap-2">
-                              <span
-                                className={`px-2 py-1 text-sm rounded-lg ${
-                                  investment.status === "Active"
-                                    ? "bg-blue-100/50 text-blue-700"
-                                    : "bg-red-100/50 text-red-700"
-                                }`}
-                              >
-                                {investment.status}
-                              </span>
-                              <button className="px-4 py-1.5 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:shadow-lg transition-shadow">
-                                Withdraw
-                              </button>
+                            <div className="mt-3 lg:mt-0 lg:text-right">
+                              <p className="text-xl font-bold text-blue-600">
+                                Returns: ${investment.returns}
+                              </p>
+                              <div className="mt-3 flex items-center gap-2">
+                                <span
+                                  className={`px-2 py-1 text-sm rounded-lg ${
+                                    investment.status === "Active"
+                                      ? "bg-blue-100/50 text-blue-700"
+                                      : "bg-red-100/50 text-red-700"
+                                  }`}
+                                >
+                                  {investment.status}
+                                </span>
+                                <button
+                                  className="px-4 py-1.5 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:shadow-lg transition-shadow"
+                                  onClick={() =>
+                                    handleWithdrawal(investment._id)
+                                  }
+                                >
+                                  Withdraw
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-gray-500">No investments found.</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -791,6 +940,17 @@ const UserProfile = () => {
           )}
         </div>
       </div>
+      
+      {showWithdrawalForm && selectedInvestment && (
+        <WithdrawalForm
+          investment={selectedInvestment}
+          onClose={() => {
+            setShowWithdrawalForm(false);
+            setSelectedInvestment(null);
+          }}
+          onWithdraw={handleWithdrawSubmit}
+        />
+      )}
     </>
   );
 };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FiArrowUp,
   FiArrowDown,
@@ -7,91 +7,85 @@ import {
   FiCalendar,
 } from "react-icons/fi";
 import Navbar from "../../components/Navbar";
+import axios from "axios";
 
 const TransactionsPage = () => {
   const [activeTab, setActiveTab] = useState("received");
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [transactions, setTransactions] = useState({ received: [], sent: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock transactions data
-  const transactions = {
-    received: [
-      {
-        id: 1,
-        type: "investment",
-        partner: "Tech Ventures Inc.",
-        amount: "+$5,000",
-        date: "2023-10-05",
-        description: "Series A investment returns",
-      },
-      {
-        id: 2,
-        type: "interest",
-        partner: "Green Energy Fund",
-        amount: "+$1,200",
-        date: "2023-10-04",
-        description: "Monthly interest payment",
-      },
-      {
-        id: 3,
-        type: "funding",
-        partner: "StartupHub Investors",
-        amount: "+$50,000",
-        date: "2023-10-03",
-        description: "Seed funding received",
-      },
-    ],
-    sent: [
-      {
-        id: 4,
-        type: "investment",
-        partner: "AI Startup Co.",
-        amount: "-$25,000",
-        date: "2023-10-02",
-        description: "Equity investment",
-      },
-      {
-        id: 5,
-        type: "lended",
-        partner: "John Smith",
-        amount: "-$10,000",
-        date: "2023-10-01",
-        description: "Business loan provided",
-      },
-      {
-        id: 6,
-        type: "service",
-        partner: "Cloud Solutions Ltd.",
-        amount: "-$2,500",
-        date: "2023-09-30",
-        description: "Cloud infrastructure payment",
-      },
-    ],
-  };
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          "http://localhost:5000/api/investments/my-investments",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        // Process investments into transactions
+        const processedTransactions = {
+          sent: [], // Investments made
+          received: [], // Returns received
+        };
+
+        response.data.forEach((investment) => {
+          // Add investment as a sent transaction
+          processedTransactions.sent.push({
+            id: investment._id,
+            type: "investment",
+            partner: investment.title,
+            amount: `-$${investment.investors.find(inv => inv.user === localStorage.getItem("userId"))?.amount || 0}`,
+            date: new Date(investment.createdAt).toISOString().split('T')[0],
+            description: `Investment in ${investment.title}`,
+            status: investment.status
+          });
+
+          // Add returns as received transactions if any
+          if (investment.returns > 0) {
+            processedTransactions.received.push({
+              id: `${investment._id}-returns`,
+              type: "interest",
+              partner: investment.title,
+              amount: `+$${investment.returns}`,
+              date: new Date(investment.updatedAt).toISOString().split('T')[0],
+              description: `Returns from ${investment.title}`,
+              status: investment.status
+            });
+          }
+        });
+
+        setTransactions(processedTransactions);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching transactions:", err);
+        setError("Failed to load transactions");
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
 
   const transactionTypes = [
     { value: "all", label: "All Transactions" },
     { value: "investment", label: "Investments" },
-    { value: "lended", label: "Lended Money" },
-    { value: "interest", label: "Interest Received" },
-    { value: "funding", label: "Funding Received" },
-    { value: "service", label: "Service Payments" },
+    { value: "interest", label: "Returns" },
   ];
 
   const getTypeBadge = (type) => {
     const typeStyles = {
       investment: "bg-purple-100/50 text-purple-700",
-      lended: "bg-orange-100/50 text-orange-700",
       interest: "bg-green-100/50 text-green-700",
-      funding: "bg-blue-100/50 text-blue-700",
-      service: "bg-red-100/50 text-red-700",
     };
 
     const typeLabels = {
       investment: "Investment",
-      lended: "Money Lent",
-      interest: "Interest",
-      funding: "Funding",
-      service: "Service",
+      interest: "Returns",
     };
 
     return (
@@ -104,6 +98,39 @@ const TransactionsPage = () => {
   const filteredTransactions = transactions[activeTab].filter((transaction) =>
     selectedFilter === "all" ? true : transaction.type === selectedFilter
   );
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 pt-[110px] lg:pt-[110px] p-3 lg:p-8">
+          <div className="max-w-7xl mx-auto bg-white/50 backdrop-blur-lg rounded-2xl shadow-xl border border-white/30 p-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (error) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 pt-[110px] lg:pt-[110px] p-3 lg:p-8">
+          <div className="max-w-7xl mx-auto bg-white/50 backdrop-blur-lg rounded-2xl shadow-xl border border-white/30 p-8">
+            <div className="text-red-500 text-center">{error}</div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -128,7 +155,7 @@ const TransactionsPage = () => {
                         : "text-gray-600 hover:text-blue-500"
                     }`}
                   >
-                    <FiArrowUp className="text-lg" /> Sent
+                    <FiArrowUp className="text-lg" /> Investments Made
                   </button>
                   <button
                     onClick={() => setActiveTab("received")}
@@ -138,7 +165,7 @@ const TransactionsPage = () => {
                         : "text-gray-600 hover:text-blue-500"
                     }`}
                   >
-                    <FiArrowDown className="text-lg" /> Received
+                    <FiArrowDown className="text-lg" /> Returns Received
                   </button>
                 </nav>
               </div>
@@ -167,59 +194,74 @@ const TransactionsPage = () => {
 
             {/* Transactions List */}
             <div className="grid grid-cols-1 gap-4">
-              {filteredTransactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="bg-white/30 backdrop-blur-lg rounded-xl border border-white/20 p-6 transition-shadow"
-                >
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    {/* Transaction Details */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-2">
-                        <div
-                          className={`p-2 rounded-lg ${
-                            activeTab === "received"
-                              ? "bg-green-100/50 text-green-600"
-                              : "bg-red-100/50 text-red-600"
-                          }`}
-                        >
-                          {activeTab === "received" ? (
-                            <FiArrowDown className="text-xl" />
-                          ) : (
-                            <FiArrowUp className="text-xl" />
-                          )}
+              {filteredTransactions.length > 0 ? (
+                filteredTransactions.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    className="bg-white/30 backdrop-blur-lg rounded-xl border border-white/20 p-6 transition-shadow"
+                  >
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      {/* Transaction Details */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-4 mb-2">
+                          <div
+                            className={`p-2 rounded-lg ${
+                              activeTab === "received"
+                                ? "bg-green-100/50 text-green-600"
+                                : "bg-red-100/50 text-red-600"
+                            }`}
+                          >
+                            {activeTab === "received" ? (
+                              <FiArrowDown className="text-xl" />
+                            ) : (
+                              <FiArrowUp className="text-xl" />
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-800">
+                              {transaction.partner}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {transaction.description}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-800">
-                            {transaction.partner}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {transaction.description}
-                          </p>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <FiCalendar className="text-blue-600" />{" "}
+                            {transaction.date}
+                          </div>
+                          {getTypeBadge(transaction.type)}
+                          <span className={`px-3 py-1 rounded-md text-sm ${
+                            transaction.status === "completed" 
+                              ? "bg-green-100/50 text-green-700"
+                              : transaction.status === "pending"
+                              ? "bg-yellow-100/50 text-yellow-700"
+                              : "bg-red-100/50 text-red-700"
+                          }`}>
+                            {transaction.status}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <FiCalendar className="text-blue-600" />{" "}
-                          {transaction.date}
-                        </div>
-                        {getTypeBadge(transaction.type)}
-                      </div>
-                    </div>
 
-                    {/* Amount */}
-                    <div
-                      className={`text-xl font-semibold ${
-                        activeTab === "received"
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {transaction.amount}
+                      {/* Amount */}
+                      <div
+                        className={`text-xl font-semibold ${
+                          activeTab === "received"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {transaction.amount}
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-600">
+                  No transactions found
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

@@ -4,6 +4,23 @@ import Chapter from "../models/chapter.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+// Helper function to generate unique referral code
+const generateUniqueReferralCode = async () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code;
+    do {
+        code = '';
+        for (let i = 0; i < 8; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        // Check if code already exists
+        const existingUser = await users.findOne({ referralCode: code });
+        if (!existingUser) {
+            return code;
+        }
+    } while (true);
+};
+
 export const registerUser = async (req, res) => {
         try {
                 const { userName, userEmail, userPassword } = req.body;
@@ -28,14 +45,18 @@ export const registerUser = async (req, res) => {
                 const salt = await bcrypt.genSalt(10);
                 const hashedPassword = await bcrypt.hash(userPassword, salt);
 
-                // Create user
+                // Generate unique referral code
+                const referralCode = await generateUniqueReferralCode();
+
+                // Create user with referral code
                 const user = await users.create({
                         userName,
                         userEmail,
                         userPassword: hashedPassword,
+                        referralCode
                 });
 
-                // Generate JWT token (optional)
+                // Generate JWT token
                 const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
                         expiresIn: "7d",
                 });
@@ -47,7 +68,10 @@ export const registerUser = async (req, res) => {
                 });
         } catch (error) {
                 console.error("Registration error:", error);
-                res.status(500).json({ message: "Registration failed", error: error.message });
+                res.status(500).json({ 
+                    message: "Registration failed",
+                    error: error.message 
+                });
         }
 };
 
@@ -199,6 +223,7 @@ export const getProfile = async (req, res) => {
                                 bio: user.bio,
                                 mobileNumber: user.mobileNumber,
                                 userConnections: user.connections,
+                                isSeeker: user.isSeeker,
                         },
                         business: business || null,
                         hasJoinedChapter: chapter || null,

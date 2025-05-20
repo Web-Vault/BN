@@ -16,6 +16,7 @@ const userSchema = mongoose.Schema(
                 location: { type: String },
                 mobileNumber: { type: String },
                 bio: { type: String },
+                referralCode: { type: String },
 
                 // 
                 connections: [{ type: mongoose.Schema.Types.ObjectId, ref: 'users' }],
@@ -24,5 +25,8 @@ const userSchema = mongoose.Schema(
         timestamps: true,
 }
 );
+
+// Create a sparse unique index for referralCode
+userSchema.index({ referralCode: 1 }, { unique: true, sparse: true });
 
 export default mongoose.model("users", userSchema);

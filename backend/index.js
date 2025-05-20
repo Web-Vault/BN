@@ -9,6 +9,7 @@ import userRoutes from "./routes/userRoutes.js";
 import chapterRoutes from "./routes/chapterRoutes.js";
 import activityRoutes from "./routes/activityRoutes.js";
 import connectionRoutes from './routes/connectionRoutes.js';
+import investmentRoutes from './routes/investmentRoutes.js';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/chapters", chapterRoutes);
 app.use("/api/activity", activityRoutes); // ✅ This connects the route!
 app.use('/api/connections', connectionRoutes);
+app.use('/api/investments', investmentRoutes);
 
 mongoose
         .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })

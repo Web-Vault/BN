@@ -1,54 +1,62 @@
-import { useState } from "react";
-import { FiSend, FiInbox, FiClock, FiCheck, FiX } from "react-icons/fi";
+import { useState, useEffect } from "react";
+import { FiSend, FiInbox, FiClock, FiCheck, FiX, FiCopy, FiShare2 } from "react-icons/fi";
 import Navbar from "../../components/Navbar";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const ReferralsPage = () => {
   const [activeTab, setActiveTab] = useState("sent");
-  const [receivedReferrals, setReceivedReferrals] = useState([
-    {
-      id: 1,
-      sender: "John Doe",
-      content: "Would like to refer you for a senior developer position at Tech Corp.",
-      date: "2023-10-05 03:45 PM",
-      status: "pending",
+  const [referrals, setReferrals] = useState({
+    stats: {
+      totalReferrals: 0,
+      completedReferrals: 0,
+      pendingReferrals: 0,
+      totalEarnings: 0,
+      referralCode: ""
     },
-    {
-      id: 2,
-      sender: "Jane Smith",
-      content: "Recommendation for team lead role in the FinTech project",
-      date: "2023-10-04 01:20 PM",
-      status: "pending",
-    },
-  ]);
+    referrals: []
+  });
+  const [loading, setLoading] = useState(true);
 
-  const [sentReferrals] = useState([
-    {
-      id: 1,
-      recipient: "Mike Johnson",
-      content: "Referred for cloud architect position at Cloud Solutions Inc.",
-      date: "2023-10-03 11:15 AM",
-      status: "accepted",
-    },
-    {
-      id: 2,
-      recipient: "Emily Davis",
-      content: "Suggested for product manager role at StartupHub",
-      date: "2023-10-02 09:30 AM",
-      status: "rejected",
-    },
-  ]);
+  useEffect(() => {
+    fetchReferrals();
+  }, []);
 
-  const handleReferralResponse = (id, action) => {
-    setReceivedReferrals(receivedReferrals.map(ref => 
-      ref.id === id ? { ...ref, status: action } : ref
-    ));
+  const fetchReferrals = async () => {
+    try {
+      const { data } = await axios.get("/api/referrals/my-referrals");
+      setReferrals(data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching referrals:", error);
+      toast.error("Failed to load referrals");
+      setLoading(false);
+    }
+  };
+
+  const copyReferralCode = () => {
+    navigator.clipboard.writeText(referrals.stats.referralCode);
+    toast.success("Referral code copied to clipboard!");
+  };
+
+  const shareReferral = () => {
+    const shareText = `Join using my referral code: ${referrals.stats.referralCode}`;
+    if (navigator.share) {
+      navigator.share({
+        title: 'Join with my referral code',
+        text: shareText
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(shareText);
+      toast.success("Referral link copied to clipboard!");
+    }
   };
 
   const getStatusBadge = (status) => {
     const statusStyles = {
       pending: "bg-yellow-100/50 text-yellow-700",
-      accepted: "bg-green-100/50 text-green-700",
-      rejected: "bg-red-100/50 text-red-700",
+      completed: "bg-green-100/50 text-green-700",
+      expired: "bg-red-100/50 text-red-700",
     };
     return (
       <span className={`px-3 py-1 rounded-md text-sm ${statusStyles[status]}`}>
@@ -57,100 +65,110 @@ const ReferralsPage = () => {
     );
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 pt-[110px] lg:pt-[110px] p-3 lg:p-8">
+          <div className="max-w-7xl mx-auto bg-white/50 backdrop-blur-lg rounded-2xl shadow-xl border border-white/30 p-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Navbar />
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 pt-[110px] lg:pt-[110px] p-3 lg:p-8">
         <div className="max-w-7xl mx-auto bg-white/50 backdrop-blur-lg rounded-2xl shadow-xl border border-white/30">
           <div className="p-3 lg:p-8">
-            {/* Tabs Navigation */}
-            <div className="border-b border-white/20 mb-6">
-              <nav className="flex space-x-8">
-                <button
-                  onClick={() => setActiveTab("sent")}
-                  className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
-                    activeTab === "sent"
-                      ? "text-blue-600 border-blue-500"
-                      : "text-gray-600 hover:text-blue-500"
-                  }`}
-                >
-                  <FiSend className="text-lg" /> Sent Referrals
-                </button>
-                <button
-                  onClick={() => setActiveTab("received")}
-                  className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
-                    activeTab === "received"
-                      ? "text-blue-600 border-blue-500"
-                      : "text-gray-600 hover:text-blue-500"
-                  }`}
-                >
-                  <FiInbox className="text-lg" /> Received Referrals
-                </button>
-              </nav>
+            {/* Stats Section */}
+            <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-white/30 backdrop-blur-lg rounded-xl p-4">
+                <h3 className="text-sm text-gray-600">Total Referrals</h3>
+                <p className="text-2xl font-bold text-gray-800">{referrals.stats.totalReferrals}</p>
+              </div>
+              <div className="bg-white/30 backdrop-blur-lg rounded-xl p-4">
+                <h3 className="text-sm text-gray-600">Completed</h3>
+                <p className="text-2xl font-bold text-gray-800">{referrals.stats.completedReferrals}</p>
+              </div>
+              <div className="bg-white/30 backdrop-blur-lg rounded-xl p-4">
+                <h3 className="text-sm text-gray-600">Pending</h3>
+                <p className="text-2xl font-bold text-gray-800">{referrals.stats.pendingReferrals}</p>
+              </div>
+              <div className="bg-white/30 backdrop-blur-lg rounded-xl p-4">
+                <h3 className="text-sm text-gray-600">Total Earnings</h3>
+                <p className="text-2xl font-bold text-gray-800">${referrals.stats.totalEarnings}</p>
+              </div>
             </div>
 
-            {/* Sent Referrals Tab */}
-            {activeTab === "sent" && (
-              <div className="lg:grid grid-cols-3 gap-6 ">
-                {sentReferrals.map((referral) => (
-                  <div
-                    key={referral.id}
-                    className="bg-white/30 backdrop-blur-lg rounded-xl border border-white/20 my-2 p-6 hover:shadow-lg transition-shadow"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold text-gray-800">{referral.recipient}</h3>
-                        <p className="text-gray-600 mt-2">{referral.content}</p>
-                        <div className="flex items-center gap-2 mt-4 text-sm text-gray-600">
-                          <FiClock className="text-blue-600" /> {referral.date}
-                        </div>
-                      </div>
-                      {getStatusBadge(referral.status)}
-                    </div>
-                  </div>
-                ))}
+            {/* Referral Code Section */}
+            <div className="mb-8 bg-white/30 backdrop-blur-lg rounded-xl p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Referral Code</h2>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 bg-white/50 rounded-lg p-3 text-center font-mono text-lg">
+                  {referrals.stats.referralCode}
+                </div>
+                <button
+                  onClick={copyReferralCode}
+                  className="p-3 bg-blue-100/50 text-blue-600 rounded-lg hover:bg-blue-200/50 transition-colors"
+                >
+                  <FiCopy className="text-xl" />
+                </button>
+                <button
+                  onClick={shareReferral}
+                  className="p-3 bg-green-100/50 text-green-600 rounded-lg hover:bg-green-200/50 transition-colors"
+                >
+                  <FiShare2 className="text-xl" />
+                </button>
               </div>
-            )}
+            </div>
 
-            {/* Received Referrals Tab */}
-            {activeTab === "received" && (
-              <div className="lg:grid grid-cols-2 gap-6">
-                {receivedReferrals.map((referral) => (
-                  <div
-                    key={referral.id}
-                    className="bg-white/30 backdrop-blur-lg rounded-xl border border-white/20 my-2 p-6 hover:shadow-lg transition-shadow"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-semibold text-gray-800">{referral.sender}</h3>
-                        <p className="text-gray-600 mt-2">{referral.content}</p>
-                        <div className="flex items-center gap-2 mt-4 text-sm text-gray-600">
-                          <FiClock className="text-blue-600" /> {referral.date}
-                        </div>
+            {/* Referrals List */}
+            <div className="space-y-4">
+              {referrals.referrals.map((referral) => (
+                <div
+                  key={referral._id}
+                  className="bg-white/30 backdrop-blur-lg rounded-xl border border-white/20 p-6 hover:shadow-lg transition-shadow"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-gray-800">
+                        {referral.referredUser.userName}
+                      </h3>
+                      <p className="text-gray-600 mt-2">
+                        Reward: {referral.rewardType === 'percentage' ? `${referral.rewardValue}%` : `$${referral.rewardValue}`}
+                        {referral.rewardAmount > 0 && ` ($${referral.rewardAmount})`}
+                      </p>
+                      <div className="flex items-center gap-2 mt-4 text-sm text-gray-600">
+                        <FiClock className="text-blue-600" />
+                        {referral.completedAt ? `Completed: ${formatDate(referral.completedAt)}` : `Expires: ${formatDate(referral.expiresAt)}`}
                       </div>
-                      {referral.status === "pending" ? (
-                        <div className="lg:flex gap-2">
-                          <button
-                            onClick={() => handleReferralResponse(referral.id, "accepted")}
-                            className="p-2 bg-green-100/50 text-green-600 rounded-lg hover:bg-green-200/50 transition-colors"
-                          >
-                            <FiCheck className="text-lg" />
-                          </button>
-                          <button
-                            onClick={() => handleReferralResponse(referral.id, "rejected")}
-                            className="mt-2 p-2 bg-red-100/50 text-red-600 rounded-lg hover:bg-red-200/50 transition-colors"
-                          >
-                            <FiX className="text-lg" />
-                          </button>
-                        </div>
-                      ) : (
-                        getStatusBadge(referral.status)
-                      )}
                     </div>
+                    {getStatusBadge(referral.status)}
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

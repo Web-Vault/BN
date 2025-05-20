@@ -14,6 +14,7 @@ import TransactionsPage from "./pages/network/transactions";
 import AboutPlatformPage from "./pages/utility/about";
 import SupportPage from "./pages/utility/supportTeam";
 import HelpCenterPage from "./pages/utility/commonIssue";
+import CreateInvestment from "./pages/investments/CreateInvestment";
 
 function App() {
 
@@ -52,6 +53,8 @@ function App() {
         <Route path="/support" element={<SupportPage />} />
         
         <Route path="/commonIssues" element={<HelpCenterPage />} />
+
+        <Route path="/create-investment" element={<CreateInvestment />} />
       </Routes>
     </Router>
   );
