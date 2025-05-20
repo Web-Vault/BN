@@ -1,7 +1,7 @@
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
 import users from "../models/users.js";
-import Referral from "../models/Referral.js";
+import Referral from "../models/referral.js";
 
 const router = express.Router();
 
