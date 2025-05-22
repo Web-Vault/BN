@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const withdrawalSchema = new mongoose.Schema({
+const withdrawalRequestSchema = new mongoose.Schema({
   investment: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Investment',
@@ -35,8 +35,12 @@ const withdrawalSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'processing', 'completed', 'failed'],
+    enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
+  },
+  reason: {
+    type: String,
+    required: true
   },
   createdAt: {
     type: Date,
@@ -49,9 +53,9 @@ const withdrawalSchema = new mongoose.Schema({
 });
 
 // Update the updatedAt timestamp before saving
-withdrawalSchema.pre('save', function(next) {
+withdrawalRequestSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
 
-export default mongoose.model('Withdrawal', withdrawalSchema); 
+export default mongoose.model('WithdrawalRequest', withdrawalRequestSchema); 

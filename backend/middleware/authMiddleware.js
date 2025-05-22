@@ -4,15 +4,15 @@ import User from "../models/users.js";
 export const protect = async (req, res, next) => {
         let token = req.headers.authorization;
 
-        console.log("🔹 Token Received in Backend:", token);
+        // console.log("🔹 Token Received in Backend:", token);
 
         if (token && token.startsWith("Bearer ")) {
                 try {
                         token = token.split(" ")[1];
-                        console.log("✅ Extracted Token:", token);
+                        // console.log("✅ Extracted Token:", token);
 
                         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                        console.log("✅ Decoded Token:", decoded);
+                        // console.log("✅ Decoded Token:", decoded);
 
                         req.user = await User.findById(decoded.id).select("-userPassword");
 
@@ -21,7 +21,7 @@ export const protect = async (req, res, next) => {
                                 return res.status(401).json({ message: "User not found, authorization denied" });
                         }
 
-                        console.log("✅ User Authenticated:", req.user);
+                        // console.log("✅ User Authenticated:", req.user);
                         next();
                 } catch (error) {
                         console.error("❌ Token Verification Failed:", error);

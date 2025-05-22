@@ -8,12 +8,15 @@ import {
 } from "react-icons/fi";
 import Navbar from "../../components/Navbar";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const ConnectPage = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("idle");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -96,7 +99,6 @@ const ConnectPage = () => {
     }
   };
 
-
   return (
     <>
       <Navbar />
@@ -114,11 +116,11 @@ const ConnectPage = () => {
                   key={user._id}
                   className="bg-white/30 backdrop-blur-lg rounded-xl border border-white/20 p-6 transition-shadow"
                 >
-                  <div className="flex items-start gap-6">
+                  <div className="flex items-start gap-6 my-3">
                     {/* Profile Image */}
                     <div className="w-20 h-20 flex-shrink-0">
                       <img
-                        src={user.profileImage}
+                        src={"https://img.freepik.com/free-vector/illustration-businessman_53876-5856.jpg?t=st=1742290205~exp=1742293805~hmac=51b36f46407e7bc32432f058e678995e49adba7ebb40a956ab64e55236f02415&w=740"}
                         className="w-20 h-20 rounded-lg border-2 border-white/50 object-cover"
                         alt={user.userName}
                       />
@@ -126,10 +128,15 @@ const ConnectPage = () => {
 
                     {/* User Info */}
                     <div className="flex-1">
-                      <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                      <span
+                        onClick={() => {
+                          navigate(`/userProfile/${user._id}`);
+                        }}
+                        className="h2 d-block text-xl font-semibold text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
+                      >
                         {user.userName}
-                      </h2>
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-4">
+                      </span>
+                      <p className="text-sm text-gray-600 line-clamp-1 mb-4 mt-2">
                         {user.bio}
                       </p>
                     </div>
@@ -155,15 +162,22 @@ const ConnectPage = () => {
                     {/* Connect Button */}
                     <button
                       onClick={() => sendRequest(user._id)}
-                      disabled={connectionStatuses[user._id] === "pending" || connectionStatuses[user._id] === "accepted" }
+                      disabled={
+                        connectionStatuses[user._id] === "pending" ||
+                        connectionStatuses[user._id] === "accepted"
+                      }
                       className={`col-span-1 sm:col-span-1 p-2 rounded-lg flex items-center justify-center gap-2 ${
-                        connectionStatuses[user._id] === "pending" || connectionStatuses[user._id] === "accepted"
+                        connectionStatuses[user._id] === "pending" ||
+                        connectionStatuses[user._id] === "accepted"
                           ? "bg-gray-100 text-gray-500 cursor-not-allowed"
                           : "bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl"
                       } transition-all`}
                     >
                       {connectionStatuses[user._id] === "accepted" ? (
-                        <button className="flex items-center gap-1 px-3 py-1 text-white-700 text-sm cursor-not-allowed" disabled>
+                        <button
+                          className="flex items-center gap-1 px-3 py-1 text-white-700 text-sm cursor-not-allowed"
+                          disabled
+                        >
                           <FiCheck className="text-sm" />
                           Connected
                         </button>

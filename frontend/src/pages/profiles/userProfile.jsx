@@ -13,15 +13,15 @@ import {
   FiUpload,
   FiTrendingUp,
   FiLink,
-  // FiEdit,
+  FiEdit,
   FiMinus,
-  FiUserMinus,
+  FiTrello,
   FiUserCheck,
 } from "react-icons/fi";
 import Navbar from "../../components/Navbar";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import WithdrawalForm from '../../components/WithdrawalForm';
+import WithdrawalForm from "../../components/WithdrawalForm";
 
 const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -42,7 +42,7 @@ const UserProfile = () => {
 
   const [fundingRequests, setFundingRequests] = useState([]);
   const [investments, setInvestments] = useState([]);
-  const [amount, setAmount] = useState(0);
+  const [withdrawals, setWithdrawals] = useState([]);
   const [loadingInvestments, setLoadingInvestments] = useState(false);
   const [errorInvestments, setErrorInvestments] = useState("");
 
@@ -64,6 +64,7 @@ const UserProfile = () => {
             }
           );
           setFundingRequests(fundingRes.data);
+          console.log("fundingRequests: ", fundingRes.data);
         } else {
           // Fetch investor's investments
           const investmentsRes = await axios.get(
@@ -73,6 +74,17 @@ const UserProfile = () => {
             }
           );
           setInvestments(investmentsRes.data);
+          console.log("investments: ", investmentsRes.data);
+
+          // Fetch withdrawals
+          const withdrawalsRes = await axios.get(
+            "http://localhost:5000/api/investments/withdrawals",
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          setWithdrawals(withdrawalsRes.data);
+          console.log("withdrawals: ", withdrawalsRes.data);
         }
 
         // Fetch open requests for seekers to see their own, investors to see all open
@@ -83,6 +95,7 @@ const UserProfile = () => {
           }
         );
         setFundingRequests(requestsRes.data);
+        console.log("requests: ", requestsRes.data);
       } catch (err) {
         setErrorInvestments(
           err.response?.data?.msg || "Error loading investment data"
@@ -115,6 +128,14 @@ const UserProfile = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setFundingRequests(res.data);
+
+      const result = await axios.get(
+        "http://localhost:5000/api/investments/my-investments",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setInvestments(result.data);
     } catch (err) {
       console.error("Investment failed:", err);
       alert(err.response?.data?.msg || "Investment failed. Please try again.");
@@ -122,7 +143,7 @@ const UserProfile = () => {
   };
 
   const handleWithdrawal = async (investmentId) => {
-    const investment = investments.find(inv => inv._id === investmentId);
+    const investment = investments.find((inv) => inv._id === investmentId);
     setSelectedInvestment(investment);
     setShowWithdrawalForm(true);
   };
@@ -130,8 +151,8 @@ const UserProfile = () => {
   const handleWithdrawSubmit = async (formData) => {
     try {
       const token = localStorage.getItem("token");
-      console.log('Submitting withdrawal for investment:', selectedInvestment._id); // Debug log
-      
+      console.log("Submitting withdrawal for investment:", selectedInvestment._id);
+
       const response = await axios.post(
         `http://localhost:5000/api/investments/${selectedInvestment._id}/withdraw`,
         formData,
@@ -140,20 +161,30 @@ const UserProfile = () => {
         }
       );
 
-      if (response.data.msg === 'Withdrawal request submitted successfully') {
+      if (response.data.msg === "Withdrawal request submitted successfully") {
         // Refresh investments
-        const res = await axios.get(
+        const investmentsRes = await axios.get(
           "http://localhost:5000/api/investments/my-investments",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        setInvestments(res.data);
+        setInvestments(investmentsRes.data);
+
+        // Refresh withdrawals
+        const withdrawalsRes = await axios.get(
+          "http://localhost:5000/api/investments/withdrawals",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setWithdrawals(withdrawalsRes.data);
+
         setShowWithdrawalForm(false);
         setSelectedInvestment(null);
-        alert('Withdrawal request submitted successfully!');
+        alert("Withdrawal request submitted successfully!");
       } else {
-        throw new Error(response.data.msg || 'Withdrawal failed');
+        throw new Error(response.data.msg || "Withdrawal failed");
       }
     } catch (err) {
       console.error("Withdrawal failed:", err);
@@ -259,16 +290,18 @@ const UserProfile = () => {
         if (chapterData.data && chapterData.data.length > 0) {
           const chapter = chapterData.data[0];
           setChapter(chapter._id);
-          
+
           // Check if user is creator
-          if (chapter.chapterCreator && chapter.chapterCreator._id === localStorage.getItem("userId")) {
+          if (
+            chapter.chapterCreator &&
+            chapter.chapterCreator._id === localStorage.getItem("userId")
+          ) {
             setCreator(true);
           }
         } else {
           setChapter(null);
           setCreator(false);
         }
-
       } catch (error) {
         console.error(
           "❌ Error fetching profile:",
@@ -391,29 +424,45 @@ const UserProfile = () => {
     // ],
   };
 
-  const handleRemoveProfile = async () => {
-    alert("Profile is Removed.");
-    navigate("/register");
-  };
-
-  const handleRemoveBusiness = async () => {
-    alert("Business Desc. is Removed.");
-  };
-
-  // const goToChapterDashboard = (chapterId) => {
-  //   navigate(`/chapterDashboard/${chapterId}`); // Navigating to the route
+  // const handleRemoveProfile = async () => {
+  //   alert("Profile is Removed.");
+  //   navigate("/register");
   // };
 
+  const handleRemoveBusiness = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.delete(
+        "http://localhost:5000/api/users/business/remove",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data) {
+        // Refresh the page to show updated data
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error removing business:", error);
+      // You might want to show an error message to the user here
+    }
+  };
+
+  const handleWithdrawalrequests = () => {
+    navigate("/withdrawal-requests");
+  };
+
   const goToChapterCreation = () => {
-    navigate("/chapterCreation"); // Navigating to the route
+    navigate("/chapterCreation");
   };
 
   const goToReferrals = () => {
-    navigate("/referrals"); // Navigating to the route
+    navigate("/referrals");
   };
 
   const goToTransactions = () => {
-    navigate("/myTransactions"); // Navigating to the route
+    navigate("/myTransactions");
   };
 
   return (
@@ -510,10 +559,13 @@ const UserProfile = () => {
                             </div>
                           )}
 
-                          {/* <div className="bg-green-100/50 px-4 py-2 rounded-lg flex items-center gap-2  cursor-pointer lg:w-max w-full">
+                          <div
+                            onClick={() => navigate("/edit-profile")}
+                            className="bg-green-100/50 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer lg:w-max w-full"
+                          >
                             <FiEdit className="text-green-600" /> Edit Profile
                             And Business
-                          </div> */}
+                          </div>
                           <div
                             onClick={handleRemoveBusiness}
                             className="bg-purple-100/50 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer lg:w-max w-full"
@@ -522,14 +574,6 @@ const UserProfile = () => {
                             Business
                           </div>
                           {/*  */}
-
-                          <div
-                            onClick={handleRemoveProfile}
-                            className="bg-green-100/50 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer lg:w-max w-full"
-                          >
-                            <FiUserMinus className="text-green-600" /> Remove
-                            Profile
-                          </div>
                           <div
                             onClick={goToReferrals}
                             className="bg-blue-100/50 px-4 py-2 rounded-lg flex items-center gap-2  cursor-pointer lg:w-max w-full"
@@ -543,6 +587,15 @@ const UserProfile = () => {
                             <FiDollarSign className="text-green-600" /> My
                             Transactions
                           </div>
+                          {user.isSeeker && (
+                            <div
+                              onClick={handleWithdrawalrequests}
+                              className="bg-purple-100/50 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer lg:w-max w-full"
+                            >
+                              <FiTrello className="text-green-600" /> Withdrawal
+                              Requests
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -614,10 +667,13 @@ const UserProfile = () => {
                 ) : (
                   <p className="mt-4 text-gray-600 leading-relaxed">
                     No business details available
-                    <div className="bg-blue-100/50 my-4 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer w-max">
+                    <button
+                      onClick={() => navigate("/add-business-info")}
+                      className="bg-blue-100/50 my-4 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer w-max"
+                    >
                       <FiPlus className="text-blue-600" /> Add Business
                       Information
-                    </div>
+                    </button>
                   </p>
                 )}
 
@@ -812,61 +868,98 @@ const UserProfile = () => {
                     ) : errorInvestments ? (
                       <div className="text-red-500 p-4">{errorInvestments}</div>
                     ) : fundingRequests.length > 0 ? (
-                      fundingRequests.map((request) => (
-                        <div
-                          key={request._id}
-                          className="bg-white/30 backdrop-blur-sm p-4 rounded-lg border border-white/20 hover:bg-white/50 transition-all"
-                        >
-                          <div className="lg:flex lg:justify-between items-center">
-                            <div>
-                              <h4 className="text-lg font-semibold text-gray-800">
-                                {request.title}
-                              </h4>
-                              <div className="mt-2 flex items-center gap-4 text-gray-600">
-                                <span className="bg-blue-100/50 px-3 py-1 rounded-lg text-sm text-blue-700">
-                                  {request.type}
+                      fundingRequests.map((request) => {
+                        const isDeadlinePassed =
+                          new Date(request.deadline) < new Date();
+                        const isFullyFunded =
+                          request.currentFunding >= request.amount;
+                        const canInvest = !isDeadlinePassed && !isFullyFunded;
+                        console.log("request: ", request);
+                        return (
+                          <div
+                            key={request._id}
+                            className="bg-white/30 backdrop-blur-sm p-4 rounded-lg border border-white/20 hover:bg-white/50 transition-all"
+                          >
+                            <div className="lg:flex lg:justify-between items-center">
+                              <div>
+                                <h4 className="text-lg font-semibold text-gray-800">
+                                  {request.title}
+                                  <br />
+                                </h4>
+                                <span className="text-sm text-gray-600 font-normal border-l-2 border-gray-400 pl-2">
+                                  {request.description}
                                 </span>
-                                <span className="flex items-center gap-1">
-                                  <FiClock className="text-blue-600" />
-                                  {new Date(
-                                    request.deadline
-                                  ).toLocaleDateString()}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="lg:text-right p-2 lg:p-0">
-                              <p className="text-2xl font-bold text-blue-600">
-                                ${request.currentFunding} / ${request.amount}
-                              </p>
-                              <div className="mt-2 flex items-center gap-3 text-sm text-gray-600">
-                                <span className="flex items-center gap-1">
-                                  <FiTrendingUp className="text-blue-600" />
-                                  {request.returns}
-                                </span>
-                                {!user.isSeeker && (
-                                  <button
-                                    onClick={() => handleInvest(request._id)}
-                                    className="px-4 py-2 bg-green-500 text-white rounded-lg"
+                                <div className="mt-2 flex items-center gap-4 text-gray-600">
+                                  <span className="bg-blue-100/50 px-3 py-1 rounded-lg text-sm text-blue-700">
+                                    {request.type}
+                                  </span>
+                                  <span
+                                    className={`flex items-center gap-1 ${
+                                      isDeadlinePassed
+                                        ? "text-red-600"
+                                        : "text-blue-600"
+                                    }`}
                                   >
-                                    Invest
-                                  </button>
-                                )}
+                                    <FiClock
+                                      className={
+                                        isDeadlinePassed
+                                          ? "text-red-600"
+                                          : "text-blue-600"
+                                      }
+                                    />
+                                    {isDeadlinePassed
+                                      ? "Deadline Passed"
+                                      : new Date(
+                                          request.deadline
+                                        ).toLocaleDateString()}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="lg:text-right p-2 lg:p-0">
+                                <p className="text-2xl font-bold text-blue-600">
+                                  ${request.currentFunding}/${request.amount}
+                                </p>
+                                <div className="mt-2 flex justify-end items-center gap-3 text-sm text-gray-600">
+                                  <span className="flex items-center gap-1 d-block text-nowrap">
+                                    <FiTrendingUp className="text-blue-600" />
+                                    {request.returns}
+                                  </span>
+                                  {!user.isSeeker && (
+                                    <button
+                                      onClick={() => handleInvest(request._id)}
+                                      disabled={!canInvest}
+                                      className={`px-4 py-2 rounded-lg ${
+                                        canInvest
+                                          ? "bg-green-500 text-white hover:bg-green-600"
+                                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                      }`}
+                                    >
+                                      {isDeadlinePassed
+                                        ? "Deadline Passed"
+                                        : isFullyFunded
+                                        ? "Fully Funded"
+                                        : "Invest"}
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </div>
+                            <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
+                              <div
+                                className={`h-2 rounded-full ${
+                                  isFullyFunded ? "bg-green-600" : "bg-blue-600"
+                                }`}
+                                style={{
+                                  width: `${
+                                    (request.currentFunding / request.amount) *
+                                    100
+                                  }%`,
+                                }}
+                              />
+                            </div>
                           </div>
-                          <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-blue-600 h-2 rounded-full"
-                              style={{
-                                width: `${
-                                  (request.currentFunding / request.amount) *
-                                  100
-                                }%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))
+                        );
+                      })
                     ) : (
                       <p className="text-gray-500">
                         No funding requests available.
@@ -881,56 +974,104 @@ const UserProfile = () => {
                     ) : errorInvestments ? (
                       <div className="text-red-500 p-4">{errorInvestments}</div>
                     ) : investments.length > 0 ? (
-                      investments.map((investment) => (
-                        <div
-                          key={investment._id}
-                          className="bg-white/30 backdrop-blur-sm p-4 rounded-lg border border-white/20 hover:bg-white/50 transition-all"
-                        >
-                          <div className="lg:flex lg:justify-between items-center">
-                            <div>
-                              <h4 className="text-lg font-semibold text-gray-800">
-                                {investment.title}
-                              </h4>
-                              <div className="mt-2 flex items-center gap-4 text-gray-600">
-                                <span className="bg-purple-100/50 px-3 py-1 rounded-lg text-sm text-purple-700">
-                                  {investment.type}
-                                </span>
-                                {/* <span className="flex items-center gap-1">
-                                  Invested: ${investment.amount}
-                                  </span> */}
-                                <span className="flex items-center gap-1 text-gray-600">
-                                  <FiDollarSign className="text-purple-600" />
-                                  Your Investment: ${investment.investors.find(inv => inv.user === localStorage.getItem("userId"))?.amount || 0} 
-                                </span>
+                      investments.map((investment) => {
+                        // Find any withdrawals for this investment
+                        const investmentWithdrawals = withdrawals.filter(
+                          (w) => w.investment && w.investment._id === investment._id
+                        );
+                        
+                        // Check if there's a pending or processing withdrawal
+                        const hasActiveWithdrawal = investmentWithdrawals.some(
+                          (w) => w.status === "pending" || w.status === "processing"
+                        );
+                        
+                        // Check if there's a completed withdrawal
+                        const hasCompletedWithdrawal = investmentWithdrawals.some(
+                          (w) => w.status === "completed"
+                        );
+
+                        // Check if deadline has passed
+                        const isDeadlinePassed = investment.deadline ? new Date(investment.deadline) < new Date() : false;
+
+                        return (
+                          <div
+                            key={investment._id}
+                            className="bg-white/30 backdrop-blur-sm p-4 rounded-lg border border-white/20 hover:bg-white/50 transition-all"
+                          >
+                            <div className="lg:flex lg:justify-between items-center">
+                              <div>
+                                <h4 className="text-lg font-semibold text-gray-800">
+                                  {investment.title}
+                                </h4>
+                                <div className="mt-2 flex items-center gap-4 text-gray-600">
+                                  <span className="bg-purple-100/50 px-3 py-1 rounded-lg text-sm text-purple-700">
+                                    {investment.type}
+                                  </span>
+                                  <span className="flex items-center gap-1 text-gray-600">
+                                    <FiDollarSign className="text-purple-600" />
+                                    Your Investment: $
+                                    {investment.investors.find(
+                                      (inv) => inv.user === localStorage.getItem("userId")
+                                    )?.amount || 0}
+                                  </span>
+                                  <span className="flex items-center gap-1 text-gray-600">
+                                    <FiClock className="text-purple-600" />
+                                    Deadline: {new Date(investment.deadline).toLocaleDateString()}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                            <div className="mt-3 lg:mt-0 lg:text-right">
-                              <p className="text-xl font-bold text-blue-600">
-                                Returns: ${investment.returns}
-                              </p>
-                              <div className="mt-3 flex items-center gap-2">
-                                <span
-                                  className={`px-2 py-1 text-sm rounded-lg ${
-                                    investment.status === "Active"
-                                      ? "bg-blue-100/50 text-blue-700"
-                                      : "bg-red-100/50 text-red-700"
-                                  }`}
-                                >
-                                  {investment.status}
-                                </span>
-                                <button
-                                  className="px-4 py-1.5 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:shadow-lg transition-shadow"
-                                  onClick={() =>
-                                    handleWithdrawal(investment._id)
-                                  }
-                                >
-                                  Withdraw
-                                </button>
+                              <div className="mt-3 lg:mt-0 lg:text-right">
+                                <p className="text-xl font-bold text-blue-600">
+                                  Returns: ${investment.returns.toFixed(2)}
+                                </p>
+                                <div className="mt-3 flex justify-end items-center gap-2">
+                                  <span
+                                    className={`px-2 py-1 text-sm rounded-lg ${
+                                      investment.status === "Active"
+                                        ? "bg-blue-100/50 text-blue-700"
+                                        : "bg-red-100/50 text-red-700"
+                                    }`}
+                                  >
+                                    {investment.status}
+                                  </span>
+                                  {hasActiveWithdrawal && (
+                                    <span className="px-2 py-1 text-sm rounded-lg bg-yellow-100/50 text-yellow-700">
+                                      Withdrawal in Progress
+                                    </span>
+                                  )}
+                                  {hasCompletedWithdrawal && (
+                                    <span className="px-2 py-1 text-sm rounded-lg bg-green-100/50 text-green-700">
+                                      Withdrawn
+                                    </span>
+                                  )}
+                                  {isDeadlinePassed && (
+                                    <button
+                                      className={`px-4 py-1.5 rounded-lg transition-shadow ${
+                                        hasActiveWithdrawal || hasCompletedWithdrawal
+                                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                          : "bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:shadow-lg"
+                                      }`}
+                                      onClick={() => handleWithdrawal(investment._id)}
+                                      disabled={hasActiveWithdrawal || hasCompletedWithdrawal}
+                                    >
+                                      {hasActiveWithdrawal
+                                        ? "Withdrawal in Progress"
+                                        : hasCompletedWithdrawal
+                                        ? "Already Withdrawn"
+                                        : "Withdraw"}
+                                    </button>
+                                  )}
+                                  {!isDeadlinePassed && (
+                                    <span className="px-2 py-1 text-sm rounded-lg bg-yellow-100/50 text-yellow-700">
+                                      Wait for Deadline
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     ) : (
                       <p className="text-gray-500">No investments found.</p>
                     )}
@@ -941,7 +1082,7 @@ const UserProfile = () => {
           )}
         </div>
       </div>
-      
+
       {showWithdrawalForm && selectedInvestment && (
         <WithdrawalForm
           investment={selectedInvestment}

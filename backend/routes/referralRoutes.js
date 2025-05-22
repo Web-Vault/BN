@@ -47,13 +47,13 @@ router.post("/apply-code", async (req, res) => {
     const { referralCode, userId } = req.body;
 
     // Find referrer
-    const referrer = await User.findOne({ referralCode });
+    const referrer = await users.findOne({ referralCode });
     if (!referrer) {
       return res.status(404).json({ msg: "Invalid referral code" });
     }
 
     // Find user to be referred
-    const user = await User.findById(userId);
+    const user = await users.findById(userId);
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
@@ -83,7 +83,7 @@ router.post("/apply-code", async (req, res) => {
 // Get top referrers (admin only)
 router.get("/top-referrers", protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await users.findById(req.user.id);
     if (!user.isAdmin) {
       return res.status(403).json({ msg: "Not authorized" });
     }
@@ -138,7 +138,7 @@ router.get("/top-referrers", protect, async (req, res) => {
 // Update referral reward settings (admin only)
 router.put("/reward-settings", protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await users.findById(req.user.id);
     if (!user.isAdmin) {
       return res.status(403).json({ msg: "Not authorized" });
     }

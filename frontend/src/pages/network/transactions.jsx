@@ -15,13 +15,35 @@ const TransactionsPage = () => {
   const [transactions, setTransactions] = useState({ received: [], sent: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSeeker, setIsSeeker] = useState(false);
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
         const token = localStorage.getItem("token");
+        
+        // Get user profile to check if user is seeker
+        const userResponse = await axios.get(
+          "http://localhost:5000/api/users/profile",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setIsSeeker(userResponse.data.user.isSeeker);
+
+        // Fetch investments based on user type
         const response = await axios.get(
-          "http://localhost:5000/api/investments/my-investments",
+          userResponse.data.user.isSeeker 
+            ? "http://localhost:5000/api/investments/my-requests"
+            : "http://localhost:5000/api/investments/my-investments",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        // Fetch withdrawals for the user
+        const withdrawalsResponse = await axios.get(
+          "http://localhost:5000/api/investments/withdrawals",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -29,37 +51,71 @@ const TransactionsPage = () => {
 
         // Process investments into transactions
         const processedTransactions = {
-          sent: [], // Investments made
-          received: [], // Returns received
+          sent: [], // Investments made (for investors) or funding requests created (for seekers)
+          received: [], // Returns received (for investors) or investments received (for seekers)
         };
 
         response.data.forEach((investment) => {
-          // Add investment as a sent transaction
-          processedTransactions.sent.push({
-            id: investment._id,
-            type: "investment",
-            partner: investment.title,
-            amount: `-$${investment.investors.find(inv => inv.user === localStorage.getItem("userId"))?.amount || 0}`,
-            date: new Date(investment.createdAt).toISOString().split('T')[0],
-            description: `Investment in ${investment.title}`,
-            status: investment.status
-          });
-
-          // Add returns as received transactions if any
-          if (investment.returns > 0) {
-            processedTransactions.received.push({
-              id: `${investment._id}-returns`,
-              type: "interest",
-              partner: investment.title,
-              amount: `+$${investment.returns}`,
-              date: new Date(investment.updatedAt).toISOString().split('T')[0],
-              description: `Returns from ${investment.title}`,
-              status: investment.status
+          if (userResponse.data.user.isSeeker) {
+            // For seekers: Add each investment as a received transaction
+            investment.investors.forEach(investor => {
+              processedTransactions.received.push({
+                id: `${investment._id}-${investor.user._id}`,
+                type: "investment",
+                partner: investor.user.userName,
+                amount: `+$${investor.amount}`,
+                date: new Date(investment.createdAt).toISOString().split('T')[0],
+                description: `Investment received for ${investment.title}`,
+                status: investment.status
+              });
             });
+          } else {
+            // For investors: Add investment as a sent transaction
+            const userInvestment = investment.investors.find(inv => inv.user === localStorage.getItem("userId"));
+            if (userInvestment) {
+              processedTransactions.sent.push({
+                id: investment._id,
+                type: "investment",
+                partner: investment.title,
+                amount: `-$${userInvestment.amount}`,
+                date: new Date(investment.createdAt).toISOString().split('T')[0],
+                description: `Investment in ${investment.title}`,
+                status: investment.status
+              });
+
+              // Add returns as received transactions if any
+              if (investment.returns > 0) {
+                // Find successful withdrawals for this investment
+                const successfulWithdrawals = withdrawalsResponse.data.filter(
+                  withdrawal => 
+                    withdrawal.investment && 
+                    withdrawal.investment._id === investment._id && 
+                    withdrawal.status === "completed"
+                );
+
+                // Only add returns that have been successfully withdrawn
+                if (successfulWithdrawals.length > 0) {
+                  successfulWithdrawals.forEach(withdrawal => {
+                    if (withdrawal.investment) {  // Additional safety check
+                      processedTransactions.received.push({
+                        id: `${investment._id}-returns-${withdrawal._id}`,
+                        type: "interest",
+                        partner: investment.title,
+                        amount: `+$${withdrawal.amount}`,
+                        date: new Date(withdrawal.updatedAt).toISOString().split('T')[0],
+                        description: `Returns from ${investment.title}`,
+                        status: withdrawal.status
+                      });
+                    }
+                  });
+                }
+              }
+            }
           }
         });
 
         setTransactions(processedTransactions);
+        console.log("Transactions: ", processedTransactions);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching transactions:", err);
@@ -75,17 +131,20 @@ const TransactionsPage = () => {
     { value: "all", label: "All Transactions" },
     { value: "investment", label: "Investments" },
     { value: "interest", label: "Returns" },
+    { value: "funding_request", label: "Funding Requests" },
   ];
 
   const getTypeBadge = (type) => {
     const typeStyles = {
       investment: "bg-purple-100/50 text-purple-700",
       interest: "bg-green-100/50 text-green-700",
+      funding_request: "bg-blue-100/50 text-blue-700",
     };
 
     const typeLabels = {
       investment: "Investment",
       interest: "Returns",
+      funding_request: "Funding Request",
     };
 
     return (
@@ -147,16 +206,18 @@ const TransactionsPage = () => {
               {/* Tabs Navigation */}
               <div className="border-b border-white/20">
                 <nav className="flex space-x-8">
-                  <button
-                    onClick={() => setActiveTab("sent")}
-                    className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
-                      activeTab === "sent"
-                        ? "text-blue-600 border-blue-500"
-                        : "text-gray-600 hover:text-blue-500"
-                    }`}
-                  >
-                    <FiArrowUp className="text-lg" /> Investments Made
-                  </button>
+                  {!isSeeker && (
+                    <button
+                      onClick={() => setActiveTab("sent")}
+                      className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
+                        activeTab === "sent"
+                          ? "text-blue-600 border-blue-500"
+                          : "text-gray-600 hover:text-blue-500"
+                      }`}
+                    >
+                      <FiArrowUp className="text-lg" /> Investments Made
+                    </button>
+                  )}
                   <button
                     onClick={() => setActiveTab("received")}
                     className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
@@ -165,7 +226,7 @@ const TransactionsPage = () => {
                         : "text-gray-600 hover:text-blue-500"
                     }`}
                   >
-                    <FiArrowDown className="text-lg" /> Returns Received
+                    <FiArrowDown className="text-lg" /> {isSeeker ? "Investments Received" : "Returns Received"}
                   </button>
                 </nav>
               </div>

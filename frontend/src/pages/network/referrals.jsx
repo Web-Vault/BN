@@ -1,22 +1,28 @@
 import { useState, useEffect } from "react";
-import { FiSend, FiInbox, FiClock, FiCheck, FiX, FiCopy, FiShare2 } from "react-icons/fi";
+import {
+  FiClock,
+  FiCopy,
+  FiShare2,
+} from "react-icons/fi";
 import Navbar from "../../components/Navbar";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 const ReferralsPage = () => {
-  const [activeTab, setActiveTab] = useState("sent");
   const [referrals, setReferrals] = useState({
     stats: {
       totalReferrals: 0,
       completedReferrals: 0,
       pendingReferrals: 0,
       totalEarnings: 0,
-      referralCode: ""
+      referralCode: "",
     },
-    referrals: []
+    referrals: [],
   });
   const [loading, setLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchReferrals();
@@ -31,12 +37,15 @@ const ReferralsPage = () => {
       }
 
       console.log("🔹 Sending request with token:", token);
-      const { data } = await axios.get("http://localhost:5000/api/referrals/my-referrals", {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const { data } = await axios.get(
+        "http://localhost:5000/api/referrals/my-referrals",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
       console.log("✅ Received data:", data);
       setReferrals(data);
       setLoading(false);
@@ -59,10 +68,12 @@ const ReferralsPage = () => {
   const shareReferral = () => {
     const shareText = `Join using my referral code: ${referrals.stats.referralCode}`;
     if (navigator.share) {
-      navigator.share({
-        title: 'Join with my referral code',
-        text: shareText
-      }).catch(console.error);
+      navigator
+        .share({
+          title: "Join with my referral code",
+          text: shareText,
+        })
+        .catch(console.error);
     } else {
       navigator.clipboard.writeText(shareText);
       toast.success("Referral link copied to clipboard!");
@@ -83,12 +94,12 @@ const ReferralsPage = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -122,25 +133,35 @@ const ReferralsPage = () => {
             <div className="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="bg-white/30 backdrop-blur-lg rounded-xl p-4">
                 <h3 className="text-sm text-gray-600">Total Referrals</h3>
-                <p className="text-2xl font-bold text-gray-800">{referrals.stats.totalReferrals}</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {referrals.stats.totalReferrals}
+                </p>
               </div>
               <div className="bg-white/30 backdrop-blur-lg rounded-xl p-4">
                 <h3 className="text-sm text-gray-600">Completed</h3>
-                <p className="text-2xl font-bold text-gray-800">{referrals.stats.completedReferrals}</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {referrals.stats.completedReferrals}
+                </p>
               </div>
               <div className="bg-white/30 backdrop-blur-lg rounded-xl p-4">
                 <h3 className="text-sm text-gray-600">Pending</h3>
-                <p className="text-2xl font-bold text-gray-800">{referrals.stats.pendingReferrals}</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {referrals.stats.pendingReferrals}
+                </p>
               </div>
               <div className="bg-white/30 backdrop-blur-lg rounded-xl p-4">
                 <h3 className="text-sm text-gray-600">Total Earnings</h3>
-                <p className="text-2xl font-bold text-gray-800">${referrals.stats.totalEarnings}</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  ${referrals.stats.totalEarnings}
+                </p>
               </div>
             </div>
 
             {/* Referral Code Section */}
             <div className="mb-8 bg-white/30 backdrop-blur-lg rounded-xl p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Your Referral Code</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                Your Referral Code
+              </h2>
               <div className="flex items-center gap-4">
                 <div className="flex-1 bg-white/50 rounded-lg p-3 text-center font-mono text-lg">
                   {referrals.stats.referralCode}
@@ -169,16 +190,27 @@ const ReferralsPage = () => {
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold text-gray-800">
+                      <span
+                        onClick={() => {
+                          navigate(`/userProfile/${referral.referredUser._id}`);
+                        }}
+                        className="d-block font-semibold text-gray-800 pb-2 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
+                      >
                         {referral.referredUser.userName}
-                      </h3>
+                      </span>
                       <p className="text-gray-600 mt-2">
-                        Reward: {referral.rewardType === 'percentage' ? `${referral.rewardValue}%` : `$${referral.rewardValue}`}
-                        {referral.rewardAmount > 0 && ` ($${referral.rewardAmount})`}
+                        Reward:{" "}
+                        {referral.rewardType === "percentage"
+                          ? `${referral.rewardValue}%`
+                          : `$${referral.rewardValue}`}
+                        {referral.rewardAmount > 0 &&
+                          ` ($${referral.rewardAmount})`}
                       </p>
                       <div className="flex items-center gap-2 mt-4 text-sm text-gray-600">
                         <FiClock className="text-blue-600" />
-                        {referral.completedAt ? `Completed: ${formatDate(referral.completedAt)}` : `Expires: ${formatDate(referral.expiresAt)}`}
+                        {referral.completedAt
+                          ? `Completed: ${formatDate(referral.completedAt)}`
+                          : `Expires: ${formatDate(referral.expiresAt)}`}
                       </div>
                     </div>
                     {getStatusBadge(referral.status)}

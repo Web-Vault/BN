@@ -15,6 +15,9 @@ import AboutPlatformPage from "./pages/utility/about";
 import SupportPage from "./pages/utility/supportTeam";
 import HelpCenterPage from "./pages/utility/commonIssue";
 import CreateInvestment from "./pages/investments/CreateInvestment";
+import AddBusinessInfo from "./pages/profiles/addBusinessInfo";
+import EditProfile from "./pages/profiles/editProfile";
+import WithdrawalRequests from "./pages/investments/withdrawalRequests";
 
 function App() {
 
@@ -55,6 +58,12 @@ function App() {
         <Route path="/commonIssues" element={<HelpCenterPage />} />
 
         <Route path="/create-investment" element={<CreateInvestment />} />
+
+        <Route path="/add-business-info" element={<AddBusinessInfo />} />
+
+        <Route path="/edit-profile" element={<EditProfile />} />
+
+        <Route path="/withdrawal-requests" element={<WithdrawalRequests />} />
       </Routes>
     </Router>
   );

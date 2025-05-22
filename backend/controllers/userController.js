@@ -126,7 +126,6 @@ export const onboarding = async (req, res) => {
                         businessName,
                         businessDescription,
                         businessLocation,
-                        businessYear,
                         businessPhone,
                         businessEmail,
                         referralCode,
@@ -171,13 +170,12 @@ export const onboarding = async (req, res) => {
                 // If the user provides business info, insert into Business collection
                 if (wantsBusiness) {
                         newBusiness = await Business.create({
-                                CreatorName: req.user._id,
                                 name: businessName,
                                 bio: businessDescription,
                                 location: businessLocation,
-                                yearEstablished: businessYear,
-                                businessContactNumber: businessPhone,
                                 businessEmail: businessEmail,
+                                businessContactNumber: businessPhone,
+                                CreatorName: req.user._id,
                         });
                 }
 
@@ -193,7 +191,6 @@ export const onboarding = async (req, res) => {
 
 export const getAllUser = async (req, res) => {
         try {
-                console.log('👉 Reached getAllUser controller');
                 console.log('🔐 Logged in user:', req.user); // This should be set by auth middleware
 
                 if (!req.user || !req.user._id) {
@@ -264,14 +261,164 @@ export const getProfile = async (req, res) => {
 export const getUserProfile = async (req, res) => {
         try {
                 const user = await users.findById(req.params.id).select("-userPassword"); // exclude password
+                const userBusiness = await Business.findOne({ CreatorName: req.params.id });
 
                 if (!user) {
                         return res.status(404).json({ message: "User not found" });
                 }
 
-                res.status(200).json(user);
+                res.status(200).json({ user, business: userBusiness });
         } catch (error) {
                 console.error("❌ Error fetching profile:", error);
                 res.status(500).json({ message: "Server Error", error: error.message });
+        }
+};
+
+export const addBusinessInfo = async (req, res) => {
+  try {
+    const {
+      name,
+      bio,
+      location,
+      businessEmail,
+      businessContactNumber
+    } = req.body;
+
+    // Check if user already has a business
+    const existingBusiness = await Business.findOne({ CreatorName: req.user._id });
+    if (existingBusiness) {
+      return res.status(400).json({ message: "Business information already exists" });
+    }
+
+    // Create new business
+    const newBusiness = await Business.create({
+      name,
+      bio,
+      location,
+      businessEmail,
+      businessContactNumber,
+      CreatorName: req.user._id,
+    });
+
+    res.status(201).json({
+      message: "Business information added successfully",
+      business: newBusiness
+    });
+  } catch (error) {
+    console.error("Error adding business information:", error);
+    res.status(500).json({ 
+      message: "Failed to add business information", 
+      error: error.message 
+    });
+  }
+};
+
+export const removeBusinessInfo = async (req, res) => {
+  try {
+    // Find and delete the business associated with the user
+    const deletedBusiness = await Business.findOneAndDelete({ 
+      CreatorName: req.user._id 
+    });
+
+    if (!deletedBusiness) {
+      return res.status(404).json({ 
+        message: "No business information found to remove" 
+      });
+    }
+
+    res.status(200).json({
+      message: "Business information removed successfully",
+      business: deletedBusiness
+    });
+  } catch (error) {
+    console.error("Error removing business information:", error);
+    res.status(500).json({ 
+      message: "Failed to remove business information", 
+      error: error.message 
+    });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const {
+      userName,
+      industry,
+      location,
+      mobileNumber,
+      bio,
+      website
+    } = req.body;
+
+    // Update user info
+    const updatedUser = await users.findByIdAndUpdate(
+      req.user._id,
+      {
+        userName,
+        industry,
+        location,
+        mobileNumber,
+        bio,
+        website
+      },
+      { new: true }
+    ).select('-userPassword');
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ 
+      message: "Failed to update profile", 
+      error: error.message 
+    });
+  }
+};
+
+export const updateBusinessInfo = async (req, res) => {
+  try {
+    const {
+      name,
+      bio,
+      location,
+      businessEmail,
+      businessContactNumber
+    } = req.body;
+
+    // Find and update the business associated with the user
+    const updatedBusiness = await Business.findOneAndUpdate(
+      { CreatorName: req.user._id },
+      {
+        name,
+        bio,
+        location,
+        businessEmail,
+        businessContactNumber
+      },
+      { new: true }
+    );
+
+    if (!updatedBusiness) {
+      return res.status(404).json({ 
+        message: "No business information found to update" 
+      });
+    }
+
+    res.status(200).json({
+      message: "Business information updated successfully",
+      business: updatedBusiness
+    });
+  } catch (error) {
+    console.error("Error updating business information:", error);
+    res.status(500).json({ 
+      message: "Failed to update business information", 
+      error: error.message 
+    });
         }
 };

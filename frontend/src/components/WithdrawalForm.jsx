@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FiX, FiDollarSign, FiCreditCard } from 'react-icons/fi';
+import axios from 'axios';
 
 const WithdrawalForm = ({ investment, onClose, onWithdraw }) => {
   const [formData, setFormData] = useState({
@@ -9,28 +10,107 @@ const WithdrawalForm = ({ investment, onClose, onWithdraw }) => {
     ifscCode: '',
     amount: 0
   });
+  const [availableAmount, setAvailableAmount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set the amount when the investment prop changes
-    if (investment && investment.returns) {
-      setFormData(prev => ({
-        ...prev,
-        amount: investment.returns
-      }));
+    const fetchWithdrawals = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          "http://localhost:5000/api/investments/withdrawals",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        // Find withdrawals for this investment
+        const investmentWithdrawals = response.data.filter(
+          w => w.investment._id === investment._id
+        );
+
+        // Calculate total withdrawn amount
+        const totalWithdrawn = investmentWithdrawals.reduce(
+          (sum, w) => sum + (w.status === "completed" ? w.amount : 0),
+          0
+        );
+
+        // Calculate available amount
+        const available = Math.max(0, investment.returns - totalWithdrawn);
+        setAvailableAmount(available);
+        setFormData(prev => ({
+          ...prev,
+          amount: available
+        }));
+      } catch (error) {
+        console.error("Error fetching withdrawals:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (investment) {
+      fetchWithdrawals();
     }
   }, [investment]);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    if (name === 'amount') {
+      // Ensure amount is a valid number and doesn't exceed available amount
+      const amount = Math.min(
+        Math.max(0, parseFloat(value) || 0),
+        availableAmount
+      );
+      setFormData(prev => ({
+        ...prev,
+        [name]: amount
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onWithdraw(formData);
+    try {
+      // Convert amount to number and ensure it's not negative
+      const amount = Math.max(0, parseFloat(formData.amount));
+      if (isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid amount");
+        return;
+      }
+      
+      // Update formData with the validated amount
+      const updatedFormData = {
+        ...formData,
+        amount: amount
+      };
+      
+      const response = await onWithdraw(updatedFormData);
+      
+      // If withdrawal was successful, close the form
+      if (response) {
+        onClose();
+      }
+    } catch (error) {
+      console.error("Withdrawal error:", error);
+      alert(error.response?.data?.msg || "Failed to process withdrawal");
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl p-6 w-full max-w-md">
+          <div className="text-center">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -115,12 +195,16 @@ const WithdrawalForm = ({ investment, onClose, onWithdraw }) => {
                 type="number"
                 name="amount"
                 value={formData.amount}
-                readOnly
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed"
+                onChange={handleChange}
+                min="0"
+                max={availableAmount}
+                step="0.01"
+                required
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              Available returns from your investment
+              Available returns: ${availableAmount.toFixed(2)}
             </p>
           </div>
 

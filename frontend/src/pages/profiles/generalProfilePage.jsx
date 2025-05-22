@@ -5,7 +5,7 @@ import {
   FiMail,
   FiMapPin,
   FiGlobe,
-  // FiClock,
+  FiClock,
   FiInfo,
 } from "react-icons/fi";
 import Navbar from "../../components/Navbar";
@@ -50,42 +50,8 @@ const GeneralProfile = () => {
   if (!user) {
     return <div className="text-center p-4">Loading profile...</div>;
   }
-
-  // Mock data
-  const userData = {
-    name: "John Doe",
-    email: "johndoe@example.com",
-    bio: "Entrepreneur and tech enthusiast with a passion for building scalable SaaS solutions. Focused on AI-driven innovations.",
-    industry: "Technology",
-    address: "123 Main St, New York, USA",
-    contact: "+1 234 567 890",
-    website: "https://johndoe.com",
-    business: {
-      name: "Tech Corp Inc.",
-      industry: "Software Development",
-      email: "contact@techcorp.com",
-      phone: "+1 234 567 890",
-      address: "Silicon Valley, CA",
-      description:
-        "Innovative tech solutions provider specializing in AI, cloud computing, and enterprise software.",
-      established: "2015",
-    },
-    connections: [
-      { id: 1, name: "Jane Smith", role: "CEO at InnovateX" },
-      { id: 2, name: "Mike Johnson", role: "CTO at NextGen" },
-    ],
-    requests: {
-      received: [{ id: 1, name: "Alex Brown", role: "Founder at Startify" }],
-      sent: [
-        {
-          id: 1,
-          name: "Emily Davis",
-          role: "Investor at VentureFund",
-          status: "pending",
-        },
-      ],
-    },
-  };
+  
+  
   return (
     <>
       <Navbar />
@@ -121,27 +87,27 @@ const GeneralProfile = () => {
                   <div className=" flex items-center justify-between flex-1">
                     <div className="block">
                       <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                        {user.userName}
+                        {user.user.userName}
                       </h1>
                       <p className="text-gray-600 flex items-center gap-2 mb-4">
-                        <FiMail className="text-blue-500" /> {user.userEmail}
+                        <FiMail className="text-blue-500" /> {user.user.userEmail}
                       </p>
                       <div className="flex flex-wrap gap-4">
                         <div className="bg-blue-100/50 px-4 py-2 rounded-lg flex items-center gap-2">
                           <FiBriefcase className="text-blue-600" />{" "}
-                          {user.industry}
+                          {user.user.industry}
                         </div>
                         <div className="bg-purple-100/50 px-4 py-2 rounded-lg flex items-center gap-2">
                           <FiMapPin className="text-purple-600" />{" "}
-                          {user.location}
+                          {user.user.location}
                         </div>
-                        <div className="bg-green-100/50 px-4 py-2 rounded-lg flex items-center gap-2">
+                        {/* <div className="bg-green-100/50 px-4 py-2 rounded-lg flex items-center gap-2">
                           <FiGlobe className="text-green-600" />{" "}
                           {userData.website}
-                        </div>
+                        </div> */}
                         <div className="bg-orange-100/50 px-4 py-2 rounded-lg flex items-center gap-2">
                           <FiInfo className="text-orange-600" />{" "}
-                          {user.mobileNumber}
+                          {user.user.mobileNumber}
                         </div>
                       </div>
                     </div>
@@ -153,64 +119,68 @@ const GeneralProfile = () => {
                     About Me
                   </h3>
                   <p className="text-gray-600 leading-relaxed pl-8 border-l-4 border-blue-100">
-                    {user.bio}
+                    {user.user.bio}
                   </p>
                 </div>
               </div>
 
               {/* Main Content Area */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
-                {/* Business Information Section
-                <div className="bg-white/30 backdrop-blur-sm p-6 rounded-xl border border-white/20">
-                  <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2 text-blue-600">
-                    <FiBriefcase /> Business Information
-                  </h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-blue-100/50 p-3 rounded-lg">
-                        <FiClock className="text-blue-600 text-xl" />
+              <div className="grid grid-cols-1 gap-8 p-8">
+                {/* Business Information Section */}
+                {user.business && (
+                  <div className="bg-white/30 backdrop-blur-sm p-6 rounded-xl border border-white/20 transition-all duration-300 hover:border-blue-400 hover:shadow-lg hover:shadow-blue-100/20">
+                    <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2 text-blue-600">
+                      <FiBriefcase /> Business Information
+                    </h2>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-3 rounded-lg transition-all duration-300 hover:bg-white/20">
+                        <div className="bg-blue-100/50 p-3 rounded-lg">
+                          <FiBriefcase className="text-blue-600 text-xl" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Business Name</p>
+                          <p className="text-gray-600">
+                            {user.business.name}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">Established</p>
-                        <p className="text-gray-600">
-                          {userData.business.established}
+
+                      <div className="flex items-center gap-3 p-3 rounded-lg transition-all duration-300 hover:bg-white/20">
+                        <div className="bg-purple-100/50 p-3 rounded-lg">
+                          <FiMapPin className="text-purple-600 text-xl" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Business Location</p>
+                          <p className="text-gray-600">
+                            {user.business.location}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 p-3 rounded-lg transition-all duration-300 hover:bg-white/20">
+                        <div className="bg-green-100/50 p-3 rounded-lg">
+                          <FiMail className="text-green-600 text-xl" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Business Contact</p>
+                          <p className="text-gray-600">
+                            {user.business.businessEmail}
+                          </p>
+                          <p className="text-gray-600">
+                            {user.business.businessContactNumber}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 p-3 rounded-lg transition-all duration-300 hover:bg-white/20">
+                        <p className="font-medium mb-2">Business Description</p>
+                        <p className="text-gray-600 leading-relaxed">
+                          {user.business.bio}
                         </p>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="bg-purple-100/50 p-3 rounded-lg">
-                        <FiMapPin className="text-purple-600 text-xl" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Business Address</p>
-                        <p className="text-gray-600">
-                          {userData.business.address}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="bg-green-100/50 p-3 rounded-lg">
-                        <FiMail className="text-green-600 text-xl" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Business Contact</p>
-                        <p className="text-gray-600">
-                          {userData.business.email}
-                        </p>
-                        <p className="text-gray-600">
-                          {userData.business.phone}
-                        </p>
-                      </div>
-                    </div>
-
-                    <p className="mt-4 text-gray-600 leading-relaxed">
-                      {userData.business.description}
-                    </p>
                   </div>
-                </div>
-                 */}
+                )}
               </div>
             </>
           )}

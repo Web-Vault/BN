@@ -50,8 +50,8 @@ const Navbar = () => {
         return (
                 <nav
                         className={`fixed top-6 left-1/2 transform -translate-x-1/2 w-[93.5%] max-w-[1340px] px-6 py-4 rounded-2xl transition-all duration-300 z-50 ${isScrolled
-                                ? "backdrop-blur-md bg-white/10 shadow-lg border border-white/20"
-                                : "backdrop-blur-lg bg-white/5 border border-white/20"
+                                ? "backdrop-blur-md bg-white/10 shadow-lg border border-white/20 text-dark"
+                                : "backdrop-blur-lg bg-white/5 border border-white/20 text-dark"
                                 }`}
                 >
                         <div className="flex items-center justify-between">
@@ -67,16 +67,17 @@ const Navbar = () => {
                                 <ul className="hidden md:flex space-x-6">
                                         {navItems.map((item) => (
                                                 <li
-                                                        className={`transition-all duration-300 ease-in-out py-2 
+                                                        className={`transition-all duration-300 ease-in-out py-2 relative
                                                   ${currentPath === item.path
-                                                                        ? 'border-b-2 bg-transparent'
-                                                                        : 'border-white hover:border-b-2 transition-border'
+                                                                        ? 'after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-white'
+                                                                        : 'after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-white after:transition-all after:duration-300 hover:after:w-full'
                                                                 }`}
                                                 >
                                                         <Link
                                                                 to={item.path}
                                                                 className={`text-[15px] px-1 font-medium transition-colors duration-300 
-                                                    ${currentPath === item.path ? 'text-white' : 'text-white hover:text-white-400'}`}
+                                                                ${currentPath === item.path ? 'text-white' : 'text-black'}
+                                                                ${isScrolled ? 'text-black' : 'text-white'}`}
                                                         >
                                                                 {item.label}
                                                         </Link>
@@ -97,7 +98,7 @@ const Navbar = () => {
                                                 </>) : (
                                                 <>
                                                         <button
-                                                                className="px-5 py-2 bg-transparent border border-blue-400 text-white rounded-xl hover:bg-blue-400 transition"
+                                                                className={`px-5 py-2 bg-transparent border border-blue-400  rounded-xl hover:bg-blue-400 transition ${isScrolled ? 'text-black' : 'text-white'}`}
                                                                 // to="/logout"
                                                                 onClick={handleLogout}
                                                         >

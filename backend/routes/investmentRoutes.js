@@ -13,9 +13,11 @@ router.post("/", protect, async (req, res) => {
   try {
     const user = await users.findById(req.user.id);
     if (!user.isSeeker) {
-      return res.status(403).json({ msg: "Only seekers can create investments" });
+      return res
+        .status(403)
+        .json({ msg: "Only seekers can create investments" });
     }
-
+    console.log("🔍 Investment details:", req.body);
     const newInvestment = new Investment({
       ...req.body,
       seeker: req.user.id,
@@ -32,14 +34,13 @@ router.post("/", protect, async (req, res) => {
 router.get("/", protect, async (req, res) => {
   try {
     const user = await users.findById(req.user.id);
-    
+
     if (user.isSeeker) {
       // If user is seeker, get their funding requests with investor details
-      const requests = await Investment.find({ seeker: req.user.id })
-        .populate({
-          path: 'investors.user',
-          select: 'userName userEmail'
-        });
+      const requests = await Investment.find({ seeker: req.user.id }).populate({
+        path: "investors.user",
+        select: "userName userEmail",
+      });
       return res.json(requests);
     }
 
@@ -67,24 +68,29 @@ router.post("/:id/invest", protect, async (req, res) => {
       return res.status(400).json({ msg: "Invalid investment" });
     }
 
+    // Check if deadline has passed
+    if (new Date(investment.deadline) < new Date()) {
+      return res.status(400).json({ msg: "Investment deadline has passed" });
+    }
+
     const investmentAmount = req.body.amount;
-    
+
     // Check if total funding would exceed the goal
     const currentTotalFunding = investment.currentFunding;
     if (currentTotalFunding + investmentAmount > investment.amount) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         msg: "Exceeds funding goal",
         details: {
           currentFunding: currentTotalFunding,
           requestedAmount: investmentAmount,
-          remainingAmount: investment.amount - currentTotalFunding
-        }
+          remainingAmount: investment.amount - currentTotalFunding,
+        },
       });
     }
 
     // Check if user already has an investment
     const existingInvestment = investment.investors.find(
-      inv => inv.user.toString() === req.user.id
+      (inv) => inv.user.toString() === req.user.id
     );
 
     if (existingInvestment) {
@@ -114,7 +120,7 @@ router.post("/:id/invest", protect, async (req, res) => {
       // Find any pending referrals for this user
       const pendingReferrals = await Referral.find({
         referredUser: req.user.id,
-        status: 'pending'
+        status: "pending",
       });
       console.log("📊 Found pending referrals:", pendingReferrals.length);
 
@@ -125,12 +131,17 @@ router.post("/:id/invest", protect, async (req, res) => {
             referralId: referral._id,
             referrer: referral.referrer,
             referredUser: referral.referredUser,
-            investmentAmount: investmentAmount
+            investmentAmount: investmentAmount,
           });
           await referral.complete(investmentAmount);
-          console.log(`✅ Referral ${referral._id} completed successfully with reward amount: ${referral.rewardAmount}`);
+          console.log(
+            `✅ Referral ${referral._id} completed successfully with reward amount: ${referral.rewardAmount}`
+          );
         } catch (error) {
-          console.error(`❌ Error completing referral ${referral._id}:`, error.message);
+          console.error(
+            `❌ Error completing referral ${referral._id}:`,
+            error.message
+          );
           // Continue with other referrals even if one fails
         }
       }
@@ -151,27 +162,30 @@ router.get("/my-requests", protect, async (req, res) => {
   try {
     const user = await users.findById(req.user.id);
     if (!user.isSeeker) {
-      return res.status(403).json({ msg: "Only seekers can view their funding requests" });
+      return res
+        .status(403)
+        .json({ msg: "Only seekers can view their funding requests" });
     }
 
-    const requests = await Investment.find({ seeker: req.user.id })
-      .populate({
-        path: 'investors.user',
-        select: 'userName userEmail'
-      });
+    const requests = await Investment.find({ seeker: req.user.id }).populate({
+      path: "investors.user",
+      select: "userName userEmail",
+    });
 
     // Calculate returns for each investor based on investment type
-    const requestsWithReturns = requests.map(request => {
+    const requestsWithReturns = requests.map((request) => {
       const requestObj = request.toObject();
-      requestObj.investors = request.investors.map(investor => {
+      requestObj.investors = request.investors.map((investor) => {
         const investorObj = investor.toObject();
         // Calculate expected returns based on investment type and returns field
-        if (request.type === 'equity') {
+        if (request.type === "equity") {
           const equityPercentage = parseFloat(request.returns);
-          investorObj.expectedReturn = (investor.amount / request.amount) * equityPercentage;
-        } else if (request.type === 'loan') {
+          investorObj.expectedReturn =
+            (investor.amount / request.amount) * equityPercentage;
+        } else if (request.type === "loan") {
           const interestRate = parseFloat(request.returns);
-          investorObj.expectedReturn = investor.amount * (1 + interestRate/100);
+          investorObj.expectedReturn =
+            investor.amount * (1 + interestRate / 100);
         }
         return investorObj;
       });
@@ -193,19 +207,24 @@ router.get("/my-investments", protect, async (req, res) => {
     }).populate("seeker", "userName");
 
     // Calculate returns for each investment
-    const investmentsWithReturns = investments.map(investment => {
+    const investmentsWithReturns = investments.map((investment) => {
       const investmentObj = investment.toObject();
       const userInvestment = investment.investors.find(
-        inv => inv.user.toString() === req.user.id
+        (inv) => inv.user.toString() === req.user.id
       );
-      
+
       // Calculate returns based on investment type
-      if (investment.type === 'equity') {
+      if (investment.type === "equity") {
         const equityPercentage = parseFloat(investment.returns);
-        investmentObj.returns = (userInvestment.amount / investment.amount) * equityPercentage;
-      } else if (investment.type === 'loan') {
+        // Calculate the investor's share of equity based on their investment amount
+        const investorShare =
+          (userInvestment.amount / investment.amount) * equityPercentage;
+        // Calculate returns as a percentage of their investment
+        investmentObj.returns = (userInvestment.amount * investorShare) / 100;
+      } else if (investment.type === "loan") {
         const interestRate = parseFloat(investment.returns);
-        investmentObj.returns = userInvestment.amount * (1 + interestRate/100);
+        investmentObj.returns =
+          userInvestment.amount * (1 + interestRate / 100);
       } else {
         investmentObj.returns = 0; // For donations
       }
@@ -227,146 +246,173 @@ router.post("/:id/withdraw", protect, async (req, res) => {
 
     // Validate bank details
     if (!bankName || !accountNumber || !accountHolderName || !ifscCode || !amount) {
-      return res.status(400).json({ msg: 'All bank details are required' });
+      return res.status(400).json({ msg: "All bank details are required" });
+    }
+
+    // Validate amount is a positive number
+    const withdrawalAmount = parseFloat(amount);
+    if (isNaN(withdrawalAmount) || withdrawalAmount <= 0) {
+      return res.status(400).json({ msg: "Please enter a valid amount" });
     }
 
     const investment = await Investment.findById(investmentId);
     if (!investment) {
-      return res.status(404).json({ msg: 'Investment not found' });
+      return res.status(404).json({ msg: "Investment not found" });
     }
 
     // Find the user's investment
     const userInvestment = investment.investors.find(
-      inv => inv.user.toString() === req.user.id
+      (inv) => inv.user.toString() === req.user.id
     );
 
     if (!userInvestment) {
-      return res.status(403).json({ msg: 'Not authorized to withdraw from this investment' });
+      return res.status(403).json({ msg: "Not authorized to withdraw from this investment" });
     }
 
     // Calculate available returns
     let availableReturns = 0;
-    if (investment.type === 'equity') {
+    if (investment.type === "equity") {
       const equityPercentage = parseFloat(investment.returns);
-      availableReturns = (userInvestment.amount / investment.amount) * equityPercentage;
-    } else if (investment.type === 'loan') {
+      const investorShare = (userInvestment.amount / investment.amount) * equityPercentage;
+      availableReturns = (userInvestment.amount * investorShare) / 100;
+    } else if (investment.type === "loan") {
       const interestRate = parseFloat(investment.returns);
-      availableReturns = userInvestment.amount * (1 + interestRate/100);
+      availableReturns = userInvestment.amount * (1 + interestRate / 100);
     }
 
+    // Check if there are any pending or completed withdrawals
+    const existingWithdrawals = await Withdrawal.find({
+      investment: investmentId,
+      investor: req.user.id,
+      status: { $in: ['pending', 'processing', 'completed'] }
+    });
+
+    // Calculate total withdrawn amount
+    const totalWithdrawn = existingWithdrawals.reduce((sum, w) => sum + w.amount, 0);
+    const remainingReturns = Math.max(0, availableReturns - totalWithdrawn);
+
     // Check if the withdrawal amount is valid
-    if (amount > availableReturns) {
-      return res.status(400).json({ msg: 'Withdrawal amount cannot exceed available returns' });
+    if (withdrawalAmount > remainingReturns) {
+      return res.status(400).json({ 
+        msg: "Withdrawal amount cannot exceed available returns",
+        details: {
+          requestedAmount: withdrawalAmount,
+          availableAmount: remainingReturns,
+          totalReturns: availableReturns,
+          alreadyWithdrawn: totalWithdrawn
+        }
+      });
     }
 
     // Create withdrawal record
     const withdrawal = new Withdrawal({
       investment: investmentId,
       investor: req.user.id,
-      amount,
+      amount: withdrawalAmount,
       bankDetails: {
         bankName,
         accountNumber,
         accountHolderName,
-        ifscCode
+        ifscCode,
       },
-      status: 'pending'
+      status: "pending",
     });
 
     await withdrawal.save();
 
-    // Update investment returns
-    userInvestment.returns = availableReturns - amount;
-    await investment.save();
-
     res.json({
-      msg: 'Withdrawal request submitted successfully',
-      withdrawal
+      msg: "Withdrawal request submitted successfully",
+      withdrawal,
+      remainingReturns: remainingReturns - withdrawalAmount
     });
   } catch (err) {
-    console.error('Withdrawal error:', err);
-    res.status(500).json({ msg: 'Server error' });
+    console.error("Withdrawal error:", err);
+    res.status(500).json({ msg: "Server error" });
   }
 });
 
-// Get all withdrawal requests (Admin only)
-// router.get("/withdrawals", protect, admin, async (req, res) => {
-//   try {
-//     const withdrawals = await Withdrawal.find()
-//       .populate('investment', 'title type')
-//       .populate('investor', 'userName userEmail')
-//       .sort({ createdAt: -1 });
-
-//     res.json(withdrawals);
-//   } catch (err) {
-//     console.error('Error fetching withdrawals:', err);
-//     res.status(500).json({ msg: 'Server error' });
-//   }
-// });
+// Get all withdrawal requests (Seekers Only)
+router.get("/withdrawals", protect, async (req, res) => {
+  try {
+    const withdrawals = await Withdrawal.find()
+      .populate("investment", "title type")
+      .populate("investor", "userName userEmail")
+      .sort({ createdAt: -1 });
+    console.log(withdrawals);
+    res.json(withdrawals);
+  } catch (err) {
+    console.error("Error fetching withdrawals:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
 
 // // Approve withdrawal request (Admin only)
-// router.put("/withdrawals/:id/approve", protect, admin, async (req, res) => {
-//   try {
-//     const withdrawal = await Withdrawal.findById(req.params.id);
-//     if (!withdrawal) {
-//       return res.status(404).json({ msg: 'Withdrawal request not found' });
-//     }
+router.put("/withdrawals/:id/approve", protect, async (req, res) => {
+  try {
+    const withdrawal = await Withdrawal.findById(req.params.id);
+    if (!withdrawal) {
+      return res.status(404).json({ msg: "Withdrawal request not found" });
+    }
 
-//     if (withdrawal.status !== 'pending') {
-//       return res.status(400).json({ msg: 'Withdrawal request is not in pending status' });
-//     }
+    if (withdrawal.status !== "pending") {
+      return res
+        .status(400)
+        .json({ msg: "Withdrawal request is not in pending status" });
+    }
 
-//     // Update withdrawal status to processing
-//     withdrawal.status = 'processing';
-//     await withdrawal.save();
+    // Update withdrawal status to processing
+    withdrawal.status = "processing";
+    await withdrawal.save();
 
-//     // Here you would typically integrate with a payment gateway to process the actual transfer
-//     // For now, we'll just mark it as completed after a delay
-//     setTimeout(async () => {
-//       withdrawal.status = 'completed';
-//       await withdrawal.save();
-//     }, 5000); // Simulate processing time
+    // Here you would typically integrate with a payment gateway to process the actual transfer
+    // For now, we'll just mark it as completed after a delay
+    setTimeout(() => {
+      withdrawal.status = "completed";
+      withdrawal.save();
+    }, 5000); // Simulate processing time
 
-//     res.json({ msg: 'Withdrawal request approved and processing', withdrawal });
-//   } catch (err) {
-//     console.error('Error approving withdrawal:', err);
-//     res.status(500).json({ msg: 'Server error' });
-//   }
-// });
+    res.json({ msg: "Withdrawal request approved and processing", withdrawal });
+  } catch (err) {
+    console.error("Error approving withdrawal:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
 
-// // Reject withdrawal request (Admin only)
-// router.put("/withdrawals/:id/reject", protect, admin, async (req, res) => {
-//   try {
-//     const withdrawal = await Withdrawal.findById(req.params.id);
-//     if (!withdrawal) {
-//       return res.status(404).json({ msg: 'Withdrawal request not found' });
-//     }
+// Reject withdrawal request (Admin only)
+router.put("/withdrawals/:id/reject", protect, async (req, res) => {
+  try {
+    const withdrawal = await Withdrawal.findById(req.params.id);
+    if (!withdrawal) {
+      return res.status(404).json({ msg: "Withdrawal request not found" });
+    }
 
-//     if (withdrawal.status !== 'pending') {
-//       return res.status(400).json({ msg: 'Withdrawal request is not in pending status' });
-//     }
+    if (withdrawal.status !== "pending") {
+      return res
+        .status(400)
+        .json({ msg: "Withdrawal request is not in pending status" });
+    }
 
-//     // Update withdrawal status to failed
-//     withdrawal.status = 'failed';
-//     await withdrawal.save();
+    // Update withdrawal status to failed
+    withdrawal.status = "failed";
+    await withdrawal.save();
 
-//     // Return the amount back to the investment returns
-//     const investment = await Investment.findById(withdrawal.investment);
-//     if (investment) {
-//       const userInvestment = investment.investors.find(
-//         inv => inv.user.toString() === withdrawal.investor.toString()
-//       );
-//       if (userInvestment) {
-//         userInvestment.returns += withdrawal.amount;
-//         await investment.save();
-//       }
-//     }
+    // Return the amount back to the investment returns
+    const investment = await Investment.findById(withdrawal.investment);
+    if (investment) {
+      const userInvestment = investment.investors.find(
+        (inv) => inv.user.toString() === withdrawal.investor.toString()
+      );
+      if (userInvestment) {
+        userInvestment.returns += withdrawal.amount;
+        await investment.save();
+      }
+    }
 
-//     res.json({ msg: 'Withdrawal request rejected', withdrawal });
-//   } catch (err) {
-//     console.error('Error rejecting withdrawal:', err);
-//     res.status(500).json({ msg: 'Server error' });
-//   }
-// });
+    res.json({ msg: "Withdrawal request rejected", withdrawal });
+  } catch (err) {
+    console.error("Error rejecting withdrawal:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
 
 export default router;
