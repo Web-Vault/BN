@@ -1,0 +1,169 @@
+BN Features
+
+icon helper
+I. "---" -> completed
+II. "-------------- listed"  -> in queue (next to cover in development)
+III. " " (empty)  -> not implemented (pending) | no need 
+
+
+1  -  splash screen
+5  -  home screen
+8  -  platform report
+12 -  attendance number 
+16 -  filter activity 
+21 -  network report 
+
+2  -  register and login page --- implemented
+3  -  register user form and OTP verification --- implemented
+4  -  login user with mobile number verification --- implemented
+6  -  announcement news --- implemented
+9  -  all chapters --- implemented
+11 -  logout --- implemented
+14 -  my chapter --- implemented
+17 -  members --- implemented
+19 -  todays birthday --- implemented
+20 -  recent members --- implemented
+23 -  manage user profile --- implemented
+
+7  -  drawer menu -------------- listed for implementation | 2 / 4 implemented
+10 -  more  -------------- listed for implementation | 2 / 5 implemented
+13 -  activities -------------- listed for implementation | pending on thoughts
+15 -  add activity -------------- listed for implementation | 1 / 3 implmented  
+18 -  attendance -------------- listed for implementation
+22 -  all chapters  -------------- listed for implementation
+
+
+
+DESCRIPTON OF WORK -----------------
+1. Splash screen 
+
+2. Main screen with 2 options - Register or login ---
+
+3.  Register User 
+a. User Registration Form --- 
+b. Verification OTP Screen ---
+
+4. Login with User or member with Mobile number with OTP verification ---
+
+5. Home Screen 
+a. Member details display with weekly toppers 
+b. Weekly, Monthly & Tenure section 
+
+6. Announcement News 
+
+7. Drawer Menu -------------- listed
+a. Membership fee 
+b. Attendance 
+c. Todays Birthday ---
+d. Recent Members ---
+
+8. Platform Report 
+
+9. All chapters ---
+
+10. More - Notification, 
+        Privacy Policy, -------------- listed
+        Terms & Condition, -------------- listed
+        Contact Us, ---
+        Events & News,  -------------- listed -------------- add option in announcements while posting.
+        About Us --- 
+
+11. Logout ---
+
+12. Attendance Number - Present, Absent, Substitute, Official 
+
+13. Activities -------------- listed
+a. Weekly - Pending activity, 
+        one to one, 
+        Reference Received, 
+        Business Received,  
+        Number of visitors, 
+        Reference Given, 
+        Business Given.
+
+b. Last week - Pending activity, 
+        one to one, 
+        Reference Received, 
+        Business Received,  
+        Number of visitors, 
+        Reference Given, 
+        Business Given.
+
+c. Cumulative - Pending activity, 
+        one to one, 
+        Reference Received, 
+        Business Received,  
+        Number of visitors, 
+        Reference Given, 
+        Business Given.
+
+14. My Chapter 
+a.      Launch Date, ---
+        Total Members ---
+
+b. Weekly - Pending activity, 
+        one to one, 
+        Reference Received, 
+        Business Received,  
+        Number of visitors, 
+        Reference Given, 
+        Business Given.
+
+c. Last week - Pending activity, 
+        one to one, 
+        Reference Received, 
+        Business Received,  
+        Number of visitors, 
+        Reference Given, 
+        Business Given.
+
+d. Cumulative - Pending activity, 
+        one to one, 
+        Reference Received, 
+        Business Received,  
+        Number of visitors, 
+        Reference Given, 
+        Business Given.
+
+15. Add Activity -------------- listed
+a. One 2 one - Add one to one ---
+b. Thanks Slip - Add Thanks Slip 
+c. Reference Slip - Add Reference Slip
+
+16. Filter Activity 
+a. Date filter with clear 
+
+17. Members 
+a. List of My Wing Members with numbers ---
+b. List of all members with numbers ---
+c. Search Member ---
+d. Filter Members via 
+	Chapter, ---
+        Category, 
+        Sub Category, 
+        Business Type, ---
+        Country, --- 
+        State,  ---
+        City ---
+ 
+e. View Member Profile ---
+
+18. Attendance  -------------- listed
+a. QR Code scanner with meeting updates 
+
+19. Today’s Birthday -------------- listed ---
+a. List of members based on birth date 
+
+20. Recent Members -------------- listed ---
+a. List of members who joined network in last 30 days 
+
+21. Network Report 
+a. Display total data of GPBO 
+
+22.All Chapters 
+a. List of all chapters wing wise 
+b. Get details of each wing with number of activities 
+
+23. Manage User Profile 
+a. About ---
+b. Edit Profile ---
