@@ -1,0 +1,99 @@
+<html>
+
+<head>
+        <style>
+               
+                nav {
+                        display: flex;
+                        top: 0;
+                        align-items: center;
+                        justify-content: space-around;
+                }
+
+                main {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        margin-top: 200px;
+                        /* overflow: scroll; */
+                }
+
+                ul {
+                        display: flex;
+                        list-style: none;
+                        gap: 3rem;
+                }
+
+                button {
+                        background-color: rgb(115, 225, 225);
+                        border: none;
+                        height: 48px;
+                        width: 129px;
+                        border-radius: 100px;
+                        color: white;
+                        font-weight: bold;
+                }
+
+                .nav {
+                        position: fixed;
+                        width: 100%;
+                        z-index: 1000;
+                        top: 0;
+                        left: 0;
+                }
+
+                h1 {
+                        margin: 0;
+                        font-size: 64px;
+                        line-height: 1.05;
+                }
+
+                p {
+                        width: 600px;
+                        text-align: center;
+                        font-size: 26px;
+                        line-height: 1.45;
+                        font-size: #333;
+                }
+
+                .first {
+                        font-optical-sizing: auto;
+                        font-weight: 900;
+                        font-style: normal;
+                }
+
+                .sec {
+                        color: aqua;
+                }
+        </style>
+</head>
+
+<body>
+
+        <div class="nav">
+                <nav>
+                        <h2>LOGO</h2>
+                        <ul>
+                                <li>Overview</li>
+                                <li>Examples</li>
+                                <li>Tour</li>
+                                <li>Blogs</li>
+                                <li>Help</li>
+                        </ul>
+                        <button>Download</button>
+                </nav>
+                <main>
+                        <h1 class="first">Lobe <span class="sec">Tour</span></h1>
+                        <p>
+                                Build your first machine learning model in ten
+                                minutes.No code or experience required.
+                        </p>
+                        <img src="Video.jpg" alt="thumbnail" height="540" width="960">
+                </main>
+
+        </div>
+
+</body>
+
+</html>
