@@ -109,7 +109,7 @@ const NotificationBell = ({ isScrolled }) => {
               navigate('/withdrawals');
               break;
             default:
-              navigate('/dashboard');
+              navigate('/profile');
           }
         }
       }

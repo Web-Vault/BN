@@ -8,7 +8,7 @@ import {
   FiCheckCircle,
   FiArrowRight,
 } from "react-icons/fi";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
 
 const AboutPlatformPage = () => {
   const [openSection, setOpenSection] = useState(null);

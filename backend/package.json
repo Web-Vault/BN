@@ -4,7 +4,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "echo \"Building backend...\" && npm install && npm audit fix"
   },
   "keywords": [],
   "author": "",
@@ -20,7 +23,8 @@
     "mongoose": "^8.13.0",
     "mysql2": "^3.14.0",
     "nodemailer": "^7.0.3",
-    "twilio": "^5.6.1"
+    "twilio": "^5.6.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

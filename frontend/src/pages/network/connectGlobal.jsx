@@ -11,9 +11,11 @@ import {
   FiStar,
   FiBookmark,
 } from "react-icons/fi";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 const ConnectPage = () => {
   const [users, setUsers] = useState([]);
@@ -21,10 +23,10 @@ const ConnectPage = () => {
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [status, setStatus] = useState("idle");
   const [searchTerm, setSearchTerm] = useState("");
   const [showConnectedOnly, setShowConnectedOnly] = useState(false);
   const [connectionStatuses, setConnectionStatuses] = useState({});
+  const [userMembership, setUserMembership] = useState(null);
   const [filters, setFilters] = useState({
     country: "",
     state: "",
@@ -65,12 +67,15 @@ const ConnectPage = () => {
       try {
         const token = localStorage.getItem("token");
 
-        // Fetch both users and chapters
-        const [usersResponse, chaptersResponse] = await Promise.all([
-          axios.get("http://localhost:5000/api/users/all", {
+        // Fetch users, chapters, and membership status
+        const [usersResponse, chaptersResponse, membershipResponse] = await Promise.all([
+          axios.get(`${config.API_BASE_URL}/api/users/all`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get("http://localhost:5000/api/chapters", {
+          axios.get(`${config.API_BASE_URL}/api/chapters`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${config.API_BASE_URL}/api/membership/verify`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -78,6 +83,7 @@ const ConnectPage = () => {
         setUsers(usersResponse.data);
         setFilteredUsers(usersResponse.data);
         setChapters(chaptersResponse.data);
+        setUserMembership(membershipResponse.data.membership);
         setLoading(false);
       } catch (err) {
         console.error("Failed to fetch data:", err.response?.data || err.message);
@@ -143,7 +149,7 @@ const ConnectPage = () => {
         await Promise.all(
           users.map(async (user) => {
             const res = await axios.get(
-              `http://localhost:5000/api/connections/status/${user._id}`,
+              `${config.API_BASE_URL}/api/connections/status/${user._id}`,
               {
                 headers: { Authorization: `Bearer ${token}` },
               }
@@ -170,15 +176,24 @@ const ConnectPage = () => {
     return diffDays <= 10;
   };
 
+  const handleProfileClick = (userId) => {
+    if (!userMembership || 
+        (userMembership.tier !== "Professional" && 
+         userMembership.tier !== "Enterprise")) {
+      toast.error("Upgrade to Professional tier to view user profiles");
+      return;
+    }
+    navigate(`/userProfile/${userId}`);
+  };
+
   if (loading) return <p>Loading users...</p>;
   if (error) return <p>{error}</p>;
 
   const sendRequest = async (receiverId) => {
     try {
       const token = localStorage.getItem("token");
-      setStatus("loading");
       await axios.post(
-        "http://localhost:5000/api/connections/request",
+        `${config.API_BASE_URL}/api/connections/request`,
         { receiverId },
         {
           headers: {
@@ -186,9 +201,8 @@ const ConnectPage = () => {
           },
         }
       );
-      setStatus("sent");
     } catch (err) {
-      setStatus("error");
+      console.error("Error sending request:", err);
     }
   };
 
@@ -359,12 +373,16 @@ const ConnectPage = () => {
 
                     <div className="flex-1">
                       <span
-                        onClick={() => {
-                          navigate(`/userProfile/${user._id}`);
-                        }}
-                        className="h2 d-block text-xl font-semibold text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
+                        onClick={() => handleProfileClick(user._id)}
+                        className={`h2 d-block text-xl font-semibold text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full ${
+                          (!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) 
+                            ? 'opacity-50 cursor-not-allowed' 
+                            : ''
+                        }`}
                       >
                         {user.userName}
+                        {(!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) && 
+                          <span className="text-xs text-gray-500 ml-1"></span>}
                       </span>
                       <p className="text-sm text-gray-600 line-clamp-1 mb-4 mt-2">
                         {user.bio}

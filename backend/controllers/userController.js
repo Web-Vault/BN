@@ -7,6 +7,9 @@ import Referral from "../models/referral.js";
 import nodemailer from "nodemailer";
 import twilio from "twilio";
 import dotenv from "dotenv";
+import Activity from "../models/activity.js";
+import { createActivityNotification } from "./notificationController.js";
+import Membership from "../models/membership.js";
 
 dotenv.config();
 
@@ -347,7 +350,7 @@ export const onboarding = async (req, res) => {
                                 // Find referrer
                                 const referrer = await users.findOne({ referralCode });
                                 if (!referrer) {
-                                        // console.log("❌ Invalid referral code:", referralCode);
+                                        console.log("❌ Invalid referral code:", referralCode);
                                 } else {
                                         // Create new referral
                                         const referral = new Referral({
@@ -357,7 +360,32 @@ export const onboarding = async (req, res) => {
                                                 status: 'pending'
                                         });
                                         await referral.save();
-                                        // console.log("✅ Referral created successfully");
+                                        console.log("✅ Referral created successfully");
+
+                                        // Create activity for the referred user
+                                        const referralActivity = await new Activity({
+                                            user: req.user._id,
+                                            activityType: "referral",
+                                            action: "referral_received",
+                                            metadata: {
+                                                referralId: referral._id,
+                                                referrerId: referrer._id,
+                                                referrerName: referrer.userName,
+                                                referralCode: referralCode,
+                                                status: "pending",
+                                                task: "Complete your first investment to earn rewards for your referrer"
+                                            }
+                                        }).save();
+                                        console.log("✅ Activity created successfully");
+
+                                        try {
+                                                // Create notification for the referred user
+                                                const notification = await createActivityNotification(referralActivity, req.user._id, "referral_received");
+                                                console.log("✅ Notification created successfully:", notification);
+                                        } catch (notificationError) {
+                                                console.error("❌ Error creating notification:", notificationError);
+                                                // Don't throw the error, just log it so the onboarding can continue
+                                        }
                                 }
                         } catch (error) {
                                 console.error("❌ Error creating referral:", error);
@@ -378,13 +406,14 @@ export const onboarding = async (req, res) => {
                         });
                 }
 
-                res.status(201).json({
-                        message: "Onboarding data saved successfully",
+                res.json({
+                        msg: "Onboarding completed successfully",
                         user: updatedUser,
-                        business: newBusiness,
+                        business: newBusiness
                 });
-        } catch (error) {
-                res.status(500).json({ message: "❌ Server error saving onboarding data", error: error.message });
+        } catch (err) {
+                console.error("❌ Onboarding error:", err);
+                res.status(500).json({ msg: "Server Error" });
         }
 };
 
@@ -445,7 +474,8 @@ export const getProfile = async (req, res) => {
                                 isSeeker: user.isSeeker,
                                 isMobileVerified: user.isMobileVerified,
                                 isEmailVerified: user.isAccountVerified,
-                                birthday: user.birthday
+                                birthday: user.birthday,
+                                membership: user.membership
                         },
                         business: business || null,
                         hasJoinedChapter: chapter || null,

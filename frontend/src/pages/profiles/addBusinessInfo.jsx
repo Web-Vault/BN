@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { FiMapPin, FiMail, FiPhone, FiBriefcase } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
 
 const AddBusinessInfo = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const AddBusinessInfo = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:5000/api/users/business/add", {
+      const response = await fetch(`${config.API_BASE_URL}/api/users/business/add`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -7,35 +7,57 @@ import {
   FiPlus,
   FiCheck,
   FiClock,
+  FiInfo,
 } from "react-icons/fi";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
 import axios from "axios";
+import config from "../../config/config.js";
 
 const GroupsPage = () => {
   const [activeTab, setActiveTab] = useState("all");
-  // const [myGroups, setMyGroups] = useState([]); // Track joined groups
   const [users, setUsers] = useState();
   const [chapters, setChapters] = useState([]);
   const [error, setError] = useState("");
-  // const [memberAction, setMemberAction] = useState();
+  const [isUserInAnyChapter, setIsUserInAnyChapter] = useState(false);
+  const [userChapterStatus, setUserChapterStatus] = useState(null); // 'creator' or 'member' or null
+  const [showStatusMessage, setShowStatusMessage] = useState(false);
 
   const userId = localStorage.getItem("userId");
+
   useEffect(() => {
     const fetchChapters = async () => {
       try {
         const token = localStorage.getItem("token");
-
         const [chaptersRes, userRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/chapters", {
+          axios.get(`${config.API_BASE_URL}/api/chapters`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get("http://localhost:5000/api/users/profile", {
+          axios.get(`${config.API_BASE_URL}/api/users/profile`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
 
         setChapters(chaptersRes.data);
         setUsers(userRes.data);
+
+        // Check if user is a creator or member of any chapter
+        const isCreator = chaptersRes.data.some(
+          (chapter) => chapter.chapterCreator?._id === userId
+        );
+        const isMember = chaptersRes.data.some(
+          (chapter) => chapter.members?.some((member) => member._id === userId)
+        );
+
+        if (isCreator) {
+          setIsUserInAnyChapter(true);
+          setUserChapterStatus('creator');
+        } else if (isMember) {
+          setIsUserInAnyChapter(true);
+          setUserChapterStatus('member');
+        } else {
+          setIsUserInAnyChapter(false);
+          setUserChapterStatus(null);
+        }
       } catch (err) {
         console.error("❌ Error fetching data:", err);
         setError("Failed to load chapters");
@@ -43,7 +65,7 @@ const GroupsPage = () => {
     };
 
     fetchChapters();
-  }, []);
+  }, [userId]);
 
   console.log("users : ", users);
   console.log("chapters : ", chapters);
@@ -63,27 +85,27 @@ const GroupsPage = () => {
 
   // Handle joining a group
   const handleJoinGroup = async (chapterId) => {
-    console.log("Joining Chapter ID:", chapterId);
+    if (isUserInAnyChapter) {
+      setShowStatusMessage(true);
+      setTimeout(() => setShowStatusMessage(false), 3000); // Hide message after 3 seconds
+      return;
+    }
 
+    console.log("Joining Chapter ID:", chapterId);
     try {
       const token = localStorage.getItem("token");
-
       const response = await axios.post(
-        `http://localhost:5000/api/chapters/join/${chapterId}`,
-        {}, // important for Express to register as POST
+        `${config.API_BASE_URL}/api/chapters/join/${chapterId}`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-
       console.log("✅ Join Request Sent:", response.data);
     } catch (err) {
-      console.error(
-        "❌ Error joining group:",
-        err.response?.data || err.message
-      );
+      console.error("❌ Error joining group:", err.response?.data || err.message);
       alert("Already requested to Join. Kindly wait for approval.");
     }
   };
@@ -110,6 +132,16 @@ const GroupsPage = () => {
               </button>
             </nav>
           </div>
+
+          {/* Show error message when trying to join while already in a chapter */}
+          {showStatusMessage && (
+            <div className="mx-6 mt-4 p-3 rounded-lg bg-red-100/50 text-red-700 flex items-center gap-2 animate-fade-in">
+              <FiInfo className="text-lg" />
+              {userChapterStatus === 'creator' 
+                ? "You are a creator of a chapter. You cannot join other chapters."
+                : "You are already a member of a chapter. You cannot join other chapters."}
+            </div>
+          )}
 
           {/* Category Filter Dropdown */}
           {error && (
@@ -159,13 +191,9 @@ const GroupsPage = () => {
                 {/* Join Button */}
                 <button
                   onClick={() => handleJoinGroup(group._id)}
-                  disabled={
-                    group.chapterCreator?._id === userId ||
-                    group.members?.some((member) => member._id === userId)
-                  }
+                  disabled={group.chapterCreator?._id === userId || group.members?.some((member) => member._id === userId)}
                   className={`w-full px-4 py-2 rounded-lg flex items-center justify-center gap-2 ${
-                    group.chapterCreator?._id === userId ||
-                    group.members?.some((member) => member._id === userId)
+                    group.chapterCreator?._id === userId || group.members?.some((member) => member._id === userId)
                       ? "bg-gray-100 text-gray-500 cursor-not-allowed"
                       : "bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-xl"
                   } transition-all`}
@@ -192,5 +220,21 @@ const GroupsPage = () => {
     </>
   );
 };
+
+// Add this at the top of the file with other styles
+const styles = `
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+`;
+
+// Add this right after the imports
+const styleSheet = document.createElement("style");
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
 
 export default GroupsPage;

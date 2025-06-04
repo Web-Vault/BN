@@ -10,7 +10,8 @@ import {
   FiAlertCircle,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const EditProfile = () => {
     const fetchProfile = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5000/api/users/profile",
+          `${config.API_BASE_URL}/api/users/profile`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -103,7 +104,7 @@ const EditProfile = () => {
       };
 
       const userResponse = await fetch(
-        "http://localhost:5000/api/users/profile",
+        `${config.API_BASE_URL}/api/users/profile`,
         {
           method: "PUT",
           headers: {
@@ -116,7 +117,7 @@ const EditProfile = () => {
 
       if (businessData.name) {
         const businessResponse = await fetch(
-          "http://localhost:5000/api/users/business",
+          `http://localhost:5000/api/users/business`,
           {
             method: "PUT",
             headers: {

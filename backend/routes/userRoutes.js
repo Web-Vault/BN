@@ -32,7 +32,7 @@ router.get("/all", protect, getAllUser);
 router.get("/profile", protect, getProfile);
 router.get("/search", protect, searchUsers);
 router.get("/:id", protect, getUserProfile);
-router.post("/business", protect, addBusinessInfo);
+router.post("/business/add", protect, addBusinessInfo);
 router.delete("/business", protect, removeBusinessInfo);
 router.put("/profile", protect, updateProfile);
 router.put("/business", protect, updateBusinessInfo);

@@ -9,7 +9,8 @@ import {
   FiTrendingUp,
   FiTrendingDown,
 } from "react-icons/fi";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
 import axios from "axios";
 
 const TransactionsPage = () => {
@@ -20,6 +21,7 @@ const TransactionsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSeeker, setIsSeeker] = useState(false);
+  const [userMembership, setUserMembership] = useState(null);
   const [stats, setStats] = useState({
     totalEarnings: 0,
     totalSpending: 0,
@@ -36,28 +38,97 @@ const TransactionsPage = () => {
       try {
         const token = localStorage.getItem("token");
         
-        // Get user profile to check if user is seeker
+        // Get user profile to check if user is seeker and membership
         const userResponse = await axios.get(
-          "http://localhost:5000/api/users/profile",
+          `${config.API_BASE_URL}/api/users/profile`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
         setIsSeeker(userResponse.data.user.isSeeker);
+        setUserMembership(userResponse.data.user.membership);
 
-        // Fetch investments based on user type
-        const response = await axios.get(
-          userResponse.data.user.isSeeker 
-            ? "http://localhost:5000/api/investments/my-requests"
-            : "http://localhost:5000/api/investments/my-investments",
-          {
-            headers: { Authorization: `Bearer ${token}` },
+        const isEnterpriseMember = userResponse.data.user.membership && 
+                                 userResponse.data.user.membership.tier === "Enterprise";
+
+        // For Enterprise members, fetch both requests and investments
+        let requestsData = [];
+        let investmentsData = [];
+
+        if (isEnterpriseMember) {
+          // Fetch both funding requests and investments for Enterprise members
+          const [requestsResponse, investmentsResponse] = await Promise.all([
+            axios.get(`${config.API_BASE_URL}/api/investments/my-requests`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            axios.get(`${config.API_BASE_URL}/api/investments/my-investments`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          ]);
+          requestsData = requestsResponse.data;
+          investmentsData = investmentsResponse.data;
+        } else if (userResponse.data.user.isSeeker) {
+          // For seekers, only fetch funding requests
+          const requestsResponse = await axios.get(
+            `${config.API_BASE_URL}/api/investments/my-requests`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          requestsData = requestsResponse.data;
+        } else {
+          // For regular investors, only fetch investments
+          const investmentsResponse = await axios.get(
+            `${config.API_BASE_URL}/api/investments/my-investments`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          investmentsData = investmentsResponse.data;
+        }
+
+        // Process transactions
+        const processedTransactions = {
+          sent: [], // Investments made
+          received: [], // Investments received or returns received
+        };
+
+        // Process funding requests (for seekers and Enterprise members)
+        requestsData.forEach((request) => {
+          request.investors.forEach((investor) => {
+            processedTransactions.received.push({
+              id: `${request._id}-${investor.user._id}`,
+              type: "investment",
+              partner: investor.user.userName,
+              amount: `+$${investor.amount}`,
+              date: new Date(request.createdAt).toISOString().split("T")[0],
+              description: `Investment received for ${request.title}`,
+              status: request.status,
+            });
+          });
+        });
+
+        // Process investments made (for investors and Enterprise members)
+        investmentsData.forEach((investment) => {
+          const userInvestment = investment.investors.find(
+            (inv) => inv.user === localStorage.getItem("userId")
+          );
+          if (userInvestment) {
+            processedTransactions.sent.push({
+              id: investment._id,
+              type: "investment",
+              partner: investment.title,
+              amount: `-$${userInvestment.amount}`,
+              date: new Date(investment.createdAt).toISOString().split("T")[0],
+              description: `Investment in ${investment.title}`,
+              status: investment.status,
+            });
           }
-        );
+        });
 
         // Fetch withdrawals for the user
         const withdrawalsResponse = await axios.get(
-          "http://localhost:5000/api/investments/withdrawals",
+          `${config.API_BASE_URL}/api/investments/withdrawals`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -65,85 +136,32 @@ const TransactionsPage = () => {
 
         // Fetch referral earnings
         const referralsResponse = await axios.get(
-          "http://localhost:5000/api/referrals/earnings",
+          `${config.API_BASE_URL}/api/referrals/earnings`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
-        // Process investments into transactions
-        const processedTransactions = {
-          sent: [], // Investments made (for investors) or funding requests created (for seekers)
-          received: [], // Returns received (for investors) or investments received (for seekers)
-        };
-
-        response.data.forEach((investment) => {
-          if (userResponse.data.user.isSeeker) {
-            // For seekers: Add each investment as a received transaction
-            investment.investors.forEach((investor) => {
-              processedTransactions.received.push({
-                id: `${investment._id}-${investor.user._id}`,
-                type: "investment",
-                partner: investor.user.userName,
-                amount: `+$${investor.amount}`,
-                date: new Date(investment.createdAt)
-                  .toISOString()
-                  .split("T")[0],
-                description: `Investment received for ${investment.title}`,
-                status: investment.status,
-              });
-            });
-          } else {
-            // For investors: Add investment as a sent transaction
-            const userInvestment = investment.investors.find(
-              (inv) => inv.user === localStorage.getItem("userId")
-            );
-            if (userInvestment) {
-              processedTransactions.sent.push({
-                id: investment._id,
-                type: "investment",
-                partner: investment.title,
-                amount: `-$${userInvestment.amount}`,
-                date: new Date(investment.createdAt)
-                  .toISOString()
-                  .split("T")[0],
-                description: `Investment in ${investment.title}`,
-                status: investment.status,
-              });
-
-              // Add returns as received transactions if any
-              if (investment.returns > 0) {
-                // Find successful withdrawals for this investment
-                const successfulWithdrawals = withdrawalsResponse.data.filter(
-                  (withdrawal) =>
-                    withdrawal.investment && 
-                    withdrawal.investment._id === investment._id && 
-                    withdrawal.status === "completed"
-                );
-
-                // Only add returns that have been successfully withdrawn
-                if (successfulWithdrawals.length > 0) {
-                  successfulWithdrawals.forEach((withdrawal) => {
-                    if (withdrawal.investment) {
-                      // Additional safety check
-                      processedTransactions.received.push({
-                        id: `${investment._id}-returns-${withdrawal._id}`,
-                        type: "interest",
-                        partner: investment.title,
-                        amount: `+$${withdrawal.amount}`,
-                        date: new Date(withdrawal.updatedAt)
-                          .toISOString()
-                          .split("T")[0],
-                        description: `Returns from ${investment.title}`,
-                        status: withdrawal.status,
-                      });
-                    }
-                  });
-                }
+        // Add returns as received transactions if any
+        if (withdrawalsResponse.data && withdrawalsResponse.data.length > 0) {
+          withdrawalsResponse.data
+            .filter(withdrawal => withdrawal.investor._id === localStorage.getItem("userId")) // Only show withdrawals for current user
+            .forEach((withdrawal) => {
+              if (withdrawal.investment) {
+                processedTransactions.received.push({
+                  id: `${withdrawal.investment._id}-returns-${withdrawal._id}`,
+                  type: "interest",
+                  partner: withdrawal.investment.title,
+                  amount: `+$${withdrawal.amount}`,
+                  date: new Date(withdrawal.updatedAt)
+                    .toISOString()
+                    .split("T")[0],
+                  description: `Returns from ${withdrawal.investment.title}`,
+                  status: withdrawal.status,
+                });
               }
-            }
-          }
-        });
+            });
+        }
 
         // Process referral earnings
         if (referralsResponse.data && referralsResponse.data.length > 0) {
@@ -530,12 +548,14 @@ const TransactionsPage = () => {
                         : "text-gray-600 hover:text-blue-500"
                     }`}
                   >
-                      <FiArrowDown className="text-lg" />{" "}
-                      {isSeeker ? "Investments Received" : "Returns Received"}
+                    <FiArrowDown className="text-lg" />{" "}
+                    {isSeeker || userMembership?.tier === "Enterprise" 
+                      ? "Investments Received" 
+                      : "Returns Received"}
                   </button>
                 </nav>
-                </div>
               </div>
+            </div>
             </div>
 
             {/* Date Filter and Type Filter Section */}

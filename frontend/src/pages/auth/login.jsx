@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaGoogle } from "react-icons/fa"; // Import icons
 import { Link, useNavigate } from "react-router-dom";
+import config from "../../config/config.js";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/users/login", {
+      const response = await fetch(`${config.API_BASE_URL}/api/users/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

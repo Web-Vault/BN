@@ -17,10 +17,21 @@ const chapterSchema = mongoose.Schema(
                 members: [{ type: mongoose.Schema.Types.ObjectId, ref: "users" }],
                 activities: [activitySchema],
                 joinRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "users" }],
+                meetings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Meeting" }],
+                events: [{
+                        type: mongoose.Schema.Types.ObjectId,
+                        ref: "Event"
+                }],
         },
         {
                 timestamps: true,
         }
 );
 
-export default mongoose.model("Chapter", chapterSchema);
+// Add index for meetings
+chapterSchema.index({ meetings: 1 });
+
+// Check if the model exists before creating a new one
+const Chapter = mongoose.models.Chapter || mongoose.model("Chapter", chapterSchema);
+
+export default Chapter;

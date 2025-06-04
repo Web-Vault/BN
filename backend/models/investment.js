@@ -19,6 +19,11 @@ const investmentSchema = new mongoose.Schema(
       ref: "users",
       required: true,
     },
+    chapter: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Chapter",
+      required: false // Making it optional for backward compatibility
+    },
     investors: [
       {
         user: { 

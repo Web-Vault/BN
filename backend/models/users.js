@@ -56,6 +56,41 @@ const userSchema = mongoose.Schema(
                 mobileOTPExpiry: {
                     type: Date,
                     select: false
+                },
+
+                membership: {
+                    membershipId: {
+                        type: String,
+                        unique: true,
+                        sparse: true  // Allows null/undefined values
+                    },
+                    tier: {
+                        type: String,
+                        enum: ['Basic', 'Professional', 'Enterprise'],
+                        default: null
+                    },
+                    purchaseDate: {
+                        type: Date,
+                        default: null
+                    },
+                    expiryDate: {
+                        type: Date,
+                        default: null
+                    },
+                    status: {
+                        type: String,
+                        enum: ['active', 'expired', 'cancelled'],
+                        default: null
+                    },
+                    paymentDetails: {
+                        amount: Number,
+                        currency: {
+                            type: String,
+                            default: 'USD'
+                        },
+                        transactionId: String,
+                        paymentDate: Date
+                    }
                 }
         }, {
         timestamps: true,

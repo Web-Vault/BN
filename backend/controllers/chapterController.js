@@ -1,4 +1,4 @@
-import Chapter from "../models/chapter.js";
+import Chapter from "../models/Chapter.js";
 import users from "../models/users.js";
 
 export const getAllChapters = async (req, res) => {
@@ -22,7 +22,27 @@ export const getChapterById = async (req, res) => {
                 const chapter = await Chapter.findById(req.params.id)
                         .populate("chapterCreator")
                         .populate("members")
-                        .populate("joinRequests");
+                        .populate("joinRequests")
+                        .populate({
+                                path: "meetings",
+                                populate: {
+                                        path: "createdBy",
+                                        select: "userName userEmail userImage"
+                                }
+                        })
+                        .populate({
+                                path: "events",
+                                populate: [
+                                    {
+                                        path: "creator",
+                                        select: "userName userImage"
+                                    },
+                                    {
+                                        path: "bookings.user",
+                                        select: "userName userImage userEmail"
+                                    }
+                                ]
+                        });
 
                 if (!chapter) {
                         // console.log("❌ Chapter not found in DB");
@@ -218,4 +238,34 @@ export const removeMemberFromChapter = async (req, res) => {
                 console.error("❌ Error removing member:", error);
                 res.status(500).json({ message: "Server Error", error: error.message });
         }
+};
+
+export const createChapter = async (req, res) => {
+  try {
+    const { chapterName, chapterDesc, chapterTech } = req.body;
+    const userId = req.user._id;
+
+    const newChapter = new Chapter({
+      chapterName,
+      chapterDesc,
+      chapterTech,
+      chapterCreator: userId,
+      members: [userId], // Creator is automatically a member
+    });
+
+    await newChapter.save();
+
+    // Update user's groupJoined status
+    await users.findByIdAndUpdate(userId, {
+      groupJoined: {
+        Joined: true,
+        JoinedGroupId: newChapter._id
+      }
+    });
+
+    res.status(201).json(newChapter);
+  } catch (error) {
+    console.error("❌ Error creating chapter:", error);
+    res.status(500).json({ message: "Failed to create chapter", error: error.message });
+  }
 };

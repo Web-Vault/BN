@@ -11,7 +11,8 @@ import {
   FiX,
   // FiUserCheck,
 } from "react-icons/fi";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
 import axios from "axios";
 import UserSearchInput from '../../components/UserSearchInput';
 
@@ -54,7 +55,7 @@ const ActivityPage = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/api/users/${userId}`,
+        `${config.API_BASE_URL}/api/users/${userId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -117,7 +118,7 @@ const ActivityPage = () => {
         const token = localStorage.getItem("token");
 
         const response = await axios.get(
-          "http://localhost:5000/api/activity/user",
+          `${config.API_BASE_URL}/api/activity/user`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -141,7 +142,7 @@ const ActivityPage = () => {
       setIsLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `http://localhost:5000/api/activity/userActivity?timePeriod=${selectedTimePeriod}`,
+        `${config.API_BASE_URL}/api/activity/userActivity?timePeriod=${selectedTimePeriod}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -165,7 +166,7 @@ const ActivityPage = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/activity/pending-verifications",
+          `${config.API_BASE_URL}/api/activity/pending-verifications`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -185,7 +186,7 @@ const ActivityPage = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/activity/rejected",
+          `${config.API_BASE_URL}/api/activity/rejected`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -215,9 +216,9 @@ const ActivityPage = () => {
             return;
         }
 
-        const token = localStorage.getItem("token");
-        const response = await axios.post(
-            "http://localhost:5000/api/activity/userActivity",
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `${config.API_BASE_URL}/api/activity/userActivity`,
             {
                 ...newActivity,
                 relatedUser: selectedUser._id
@@ -231,10 +232,10 @@ const ActivityPage = () => {
         setUserActivities(prev => [response.data, ...prev]);
         
         // Reset form
-        setNewActivity({
-            content: "",
+      setNewActivity({
+        content: "",
             type: "One-To-One",
-            typeContent: "",
+        typeContent: "",
             date: new Date().toISOString().split("T")[0],
             rating: 5,
             visitorCount: 0,
@@ -278,7 +279,7 @@ const ActivityPage = () => {
     try {
         const token = localStorage.getItem("token");
         const response = await axios.put(
-            `http://localhost:5000/api/activity/verify/${activityId}`,
+            `${config.API_BASE_URL}/api/activity/verify/${activityId}`,
             { isVerified, verificationNotes: notes },
             {
                 headers: { Authorization: `Bearer ${token}` }
@@ -300,13 +301,13 @@ const ActivityPage = () => {
 
         // Refresh all activity lists
         const [userActivitiesRes, pendingRes, rejectedRes] = await Promise.all([
-            axios.get("http://localhost:5000/api/activity/userActivity", {
+            axios.get(`${config.API_BASE_URL}/api/activity/userActivity`, {
                 headers: { Authorization: `Bearer ${token}` }
             }),
-            axios.get("http://localhost:5000/api/activity/pending-verifications", {
+            axios.get(`${config.API_BASE_URL}/api/activity/pending-verifications`, {
                 headers: { Authorization: `Bearer ${token}` }
             }),
-            axios.get("http://localhost:5000/api/activity/rejected", {
+            axios.get(`${config.API_BASE_URL}/api/activity/rejected`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
         ]);
@@ -536,8 +537,8 @@ const ActivityPage = () => {
               </div>
 
               {/* Date Range Display */}
-              <div className="mb-4 text-sm text-gray-600">
-                {getDateRangeText()}
+              <div className="mb-4 flex justify-end mr-1 text-sm text-gray-600">
+                <span>{getDateRangeText()}</span>
               </div>
 
               {/* Loading State */}
@@ -569,8 +570,7 @@ const ActivityPage = () => {
                           <select
                             value={newActivity.type}
                             onChange={(e) => setNewActivity({ ...newActivity, type: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <optgroup label="Core Activities">
                               <option value="One-To-One">One-To-One Meeting</option>
                               <option value="Business Received">Business Received</option>

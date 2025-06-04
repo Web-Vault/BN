@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import config from "../../config/config.js";
 
 const VerifyOTP = () => {
     const navigate = useNavigate();
@@ -45,7 +46,7 @@ const VerifyOTP = () => {
         setLoading(true);
 
         try {
-            const response = await fetch("http://localhost:5000/api/users/verify-otp", {
+            const response = await fetch(`${config.API_BASE_URL}/api/users/verify-otp`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -78,7 +79,7 @@ const VerifyOTP = () => {
         setLoading(true);
 
         try {
-            const response = await fetch("http://localhost:5000/api/users/resend-otp", {
+            const response = await fetch(`${config.API_BASE_URL}/api/users/resend-otp`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

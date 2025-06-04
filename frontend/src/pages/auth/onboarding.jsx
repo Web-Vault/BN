@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logActivity from "../utility/logActivity.js";
+import config from "../../config/config.js";
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ const Onboarding = () => {
       };
 
       const response = await fetch(
-        "http://localhost:5000/api/users/onboarding",
+        `${config.API_BASE_URL}/api/users/onboarding`,
         {
           method: "POST",
           headers: {

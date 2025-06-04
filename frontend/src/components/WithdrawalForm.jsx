@@ -24,9 +24,9 @@ const WithdrawalForm = ({ investment, onClose, onWithdraw }) => {
           }
         );
 
-        // Find withdrawals for this investment
-        const investmentWithdrawals = response.data.filter(
-          w => w.investment._id === investment._id
+        // Find withdrawals for this investment, handling null investment fields
+        const investmentWithdrawals = (response.data || []).filter(
+          w => w && w.investment && w.investment._id && w.investment._id === investment._id
         );
 
         // Calculate total withdrawn amount
@@ -35,8 +35,21 @@ const WithdrawalForm = ({ investment, onClose, onWithdraw }) => {
           0
         );
 
-        // Calculate available amount
+        // The returns value is already calculated by the backend in the /my-investments route
+        // and stored in investment.returns
         const available = Math.max(0, investment.returns - totalWithdrawn);
+        
+        console.log("Withdrawal calculation details:", {
+          investmentId: investment._id,
+          returns: investment.returns,
+          totalWithdrawn,
+          available,
+          investmentType: investment.type,
+          investmentAmount: investment.amount,
+          userInvestment: investment.investors.find(inv => inv.user === localStorage.getItem("userId")),
+          withdrawals: investmentWithdrawals // Log the filtered withdrawals
+        });
+
         setAvailableAmount(available);
         setFormData(prev => ({
           ...prev,
@@ -44,6 +57,12 @@ const WithdrawalForm = ({ investment, onClose, onWithdraw }) => {
         }));
       } catch (error) {
         console.error("Error fetching withdrawals:", error);
+        // Set available amount to just the returns if there's an error fetching withdrawals
+        setAvailableAmount(investment.returns);
+        setFormData(prev => ({
+          ...prev,
+          amount: investment.returns
+        }));
       } finally {
         setLoading(false);
       }

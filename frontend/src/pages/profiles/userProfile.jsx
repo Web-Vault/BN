@@ -20,12 +20,14 @@ import {
   FiAlertCircle,
   FiCheck,
   FiGift,
-  FiCheckCircle
+  FiCheckCircle,
 } from "react-icons/fi";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import WithdrawalForm from "../../components/WithdrawalForm";
+import { toast } from "react-hot-toast";
 
 const birthdayStyles = `
   @keyframes float {
@@ -53,15 +55,16 @@ const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [connectionsTab, setConnectionsTab] = useState("connections");
   const [investmentsTab, setInvestmentsTab] = useState("funding");
+  const [fundingRequestsTab, setFundingRequestsTab] = useState("all");
 
   const [user, setUser] = useState(null);
   const [business, setBusiness] = useState(null);
   const [chapter, setChapter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isCreator, setCreator] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
   const [usersChapter, setUsersChapter] = useState(null);
-
+  const [userMembership, setMembership] = useState(null);
   const [requests, setRequests] = useState([]);
 
   const [myConnections, setMyConnections] = useState([]);
@@ -112,58 +115,67 @@ const UserProfile = () => {
         setLoadingInvestments(true);
         const token = localStorage.getItem("token");
 
-        if (user.isSeeker) {
-          // Fetch seeker's funding requests
+        // Check if user is either seeker or Enterprise member
+        const canAccessSeekerFeatures = user.isSeeker || (userMembership && userMembership.tier === "Enterprise");
+
+        if (canAccessSeekerFeatures) {
+          // Fetch funding requests for seekers and Enterprise members
           const fundingRes = await axios.get(
-            "http://localhost:5000/api/investments/my-requests",
+            `${config.API_BASE_URL}/api/investments/my-requests`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
           setFundingRequests(fundingRes.data);
           console.log("fundingRequests: ", fundingRes.data);
-        } else {
-          // Fetch investor's investments
-          const investmentsRes = await axios.get(
-            "http://localhost:5000/api/investments/my-investments",
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          setInvestments(investmentsRes.data);
-          console.log("investments: ", investmentsRes.data);
-
-          // Fetch withdrawals
-          const withdrawalsRes = await axios.get(
-            "http://localhost:5000/api/investments/withdrawals",
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          setWithdrawals(withdrawalsRes.data);
-          console.log("withdrawals: ", withdrawalsRes.data);
         }
 
-        // Fetch open requests for seekers to see their own, investors to see all open
-        const requestsRes = await axios.get(
-          "http://localhost:5000/api/investments",
+        // Fetch investments for all users
+        const investmentsRes = await axios.get(
+          `${config.API_BASE_URL}/api/investments/my-investments`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        setFundingRequests(requestsRes.data);
-        console.log("requests: ", requestsRes.data);
-      } catch (err) {
-        setErrorInvestments(
-          err.response?.data?.msg || "Error loading investment data"
+        setInvestments(investmentsRes.data);
+
+        // Fetch withdrawals for all users
+        const withdrawalsRes = await axios.get(
+          `${config.API_BASE_URL}/api/investments/withdrawals`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
+        setWithdrawals(withdrawalsRes.data);
+
+        // Fetch open requests for all users
+        const requestsRes = await axios.get(
+          `${config.API_BASE_URL}/api/investments`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (canAccessSeekerFeatures) {
+          // For seekers and Enterprise members, merge their requests with other requests
+          setFundingRequests(prevRequests => {
+            const ownRequests = prevRequests.filter(req => req.seeker._id === user.id);
+            const otherRequests = requestsRes.data.filter(req => req.seeker._id !== user.id);
+            return [...ownRequests, ...otherRequests];
+          });
+        } else {
+          // For regular non-seekers, just show all requests
+          setFundingRequests(requestsRes.data);
+        }
+      } catch (err) {
+        setErrorInvestments(err.response?.data?.msg || "Error loading investment data");
       } finally {
         setLoadingInvestments(false);
       }
     };
 
     if (user) fetchInvestmentData();
-  }, [user]);
+  }, [user, userMembership]);
 
   const handleInvest = async (investmentId) => {
     try {
@@ -173,7 +185,7 @@ const UserProfile = () => {
       if (!amount || isNaN(amount)) return;
 
       await axios.post(
-        `http://localhost:5000/api/investments/${investmentId}/invest`,
+        `${config.API_BASE_URL}/api/investments/${investmentId}/invest`,
         { amount: Number(amount) },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -181,13 +193,13 @@ const UserProfile = () => {
       );
 
       // Refresh data
-      const res = await axios.get("http://localhost:5000/api/investments", {
+      const res = await axios.get(`${config.API_BASE_URL}/api/investments`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setFundingRequests(res.data);
 
       const result = await axios.get(
-        "http://localhost:5000/api/investments/my-investments",
+        `${config.API_BASE_URL}/api/investments/my-investments`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -214,7 +226,7 @@ const UserProfile = () => {
       );
 
       const response = await axios.post(
-        `http://localhost:5000/api/investments/${selectedInvestment._id}/withdraw`,
+        `${config.API_BASE_URL}/api/investments/${selectedInvestment._id}/withdraw`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -224,7 +236,7 @@ const UserProfile = () => {
       if (response.data.msg === "Withdrawal request submitted successfully") {
         // Refresh investments
         const investmentsRes = await axios.get(
-          "http://localhost:5000/api/investments/my-investments",
+          `${config.API_BASE_URL}/api/investments/my-investments`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -233,7 +245,7 @@ const UserProfile = () => {
 
         // Refresh withdrawals
         const withdrawalsRes = await axios.get(
-          "http://localhost:5000/api/investments/withdrawals",
+          `${config.API_BASE_URL}/api/investments/withdrawals`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -256,15 +268,15 @@ const UserProfile = () => {
     const fetchRequests = async () => {
       const token = localStorage.getItem("token"); // Or however you store it
 
-      const config = {
+      const headersConfig = {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       };
 
       const res = await axios.get(
-        "http://localhost:5000/api/connections/requests",
-        config
+        `${config.API_BASE_URL}/api/connections/requests`,
+        headersConfig
       );
       setRequests(res.data);
       console.log("requests: ", res.data);
@@ -275,7 +287,7 @@ const UserProfile = () => {
   const handleAccept = async (id) => {
     const token = localStorage.getItem("token");
     await axios.put(
-      `http://localhost:5000/api/connections/requests/${id}/accept`,
+      `${config.API_BASE_URL}/api/connections/requests/${id}/accept`,
       {},
       {
         headers: {
@@ -286,7 +298,7 @@ const UserProfile = () => {
     setRequests(requests.filter((req) => req._id !== id));
 
     const response = await axios.get(
-      "http://localhost:5000/api/users/profile",
+      `${config.API_BASE_URL}/api/users/profile`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -299,7 +311,7 @@ const UserProfile = () => {
     const token = localStorage.getItem("token");
 
     const response = await axios.put(
-      `http://localhost:5000/api/connections/requests/${id}/reject`,
+      `${config.API_BASE_URL}/api/connections/requests/${id}/reject`,
       {},
       {
         headers: {
@@ -321,15 +333,35 @@ const UserProfile = () => {
 
         if (!token) throw new Error("User not authenticated");
 
+        // Check membership status first
+        const membershipResponse = await axios.get(
+          `${config.API_BASE_URL}/api/membership/verify`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (!membershipResponse.data.hasActiveMembership) {
+          toast.error(
+            membershipResponse.data.message || "No active membership found"
+          );
+          // Clear any existing membership data
+          localStorage.removeItem("membershipId");
+          localStorage.removeItem("membershipTier");
+          navigate("/", { replace: true });
+          return;
+        }
+
+        // Continue with existing profile fetch if membership is active
         const response = await axios.get(
-          "http://localhost:5000/api/users/profile",
+          `${config.API_BASE_URL}/api/users/profile`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
         const chapterData = await axios.get(
-          "http://localhost:5000/api/chapters",
+          `${config.API_BASE_URL}/api/chapters`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -344,24 +376,38 @@ const UserProfile = () => {
           setBusiness(response.data.business || {});
           setUsersChapter(response.data.hasJoinedChapter || null);
           setMyConnections(response.data.user.userConnections || []);
+          setMembership(response.data.user.membership || []);
         }
 
         // Handle chapter data safely
-        if (chapterData.data && chapterData.data.length > 0) {
-          const chapter = chapterData.data[0];
-          setChapter(chapter._id);
 
-          // Check if user is creator
-          if (
-            chapter.chapterCreator &&
-            chapter.chapterCreator._id === localStorage.getItem("userId")
-          ) {
-            setCreator(true);
-          }
-        } else {
-          setChapter(null);
-          setCreator(false);
+        if (response.data.hasJoinedChapter !== null) {
+          console.log(
+            "has joined chapter in if",
+            response.data.hasJoinedChapter
+          );
+          console.log(
+            "chapter id in has joined chapter : ",
+            response.data.hasJoinedChapter._id
+          );
+          setChapter(response.data.hasJoinedChapter._id);
         }
+
+        // if (chapterData.data && chapterData.data.length > 0) {
+        //   const chapter = chapterData.data[0];
+        //   setChapter(chapter._id);
+
+        //   // Check if user is creator
+        //   if (
+        //     chapter.chapterCreator &&
+        //     chapter.chapterCreator._id === localStorage.getItem("userId")
+        //   ) {
+        //     setCreator(true);
+        //   }
+        // } else {
+        //   setChapter(null);
+        //   setCreator(false);
+        // }
       } catch (error) {
         console.error(
           "❌ Error fetching profile:",
@@ -392,12 +438,11 @@ const UserProfile = () => {
     },
   };
 
-
   const handleRemoveBusiness = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.delete(
-        "http://localhost:5000/api/users/business/remove",
+        `${config.API_BASE_URL}/api/users/business/remove`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -418,7 +463,7 @@ const UserProfile = () => {
   };
 
   const goToChapterCreation = () => {
-    navigate("/chapterCreation");
+    navigate("/chapter/create");
   };
 
   const goToReferrals = () => {
@@ -548,10 +593,10 @@ const UserProfile = () => {
                               : "Not set"}
                             {isBirthdayToday(user.birthday) && (
                               <>
-                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-pink-400 rounded-full animate-[sparkle_3s_ease-in-out_infinite]" />
-                                <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-pink-400 rounded-full animate-[sparkle_2s_ease-in-out_infinite] delay-100" />
-                                <div className="absolute -top-1 left-1/2 w-1.5 h-1.5 bg-pink-400 rounded-full animate-[sparkle_2.5s_ease-in-out_infinite] delay-150" />
-                                <div className="absolute -bottom-1 right-1/2 w-1.5 h-1.5 bg-pink-400 rounded-full animate-[sparkle_3.5s_ease-in-out_infinite] delay-200" />
+                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-pink-400 rounded-full animate-[sparkle_3s_ease-in-out_infinite] delay-100" />
+                                <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-pink-400 rounded-full animate-[sparkle_2s_ease-in-out_infinite] delay-150" />
+                                <div className="absolute -top-1 left-1/2 w-1.5 h-1.5 bg-pink-400 rounded-full animate-[sparkle_2.5s_ease-in-out_infinite] delay-200" />
+                                <div className="absolute -bottom-1 right-1/2 w-1.5 h-1.5 bg-pink-400 rounded-full animate-[sparkle_3.5s_ease-in-out_infinite] delay-250" />
                               </>
                             )}
                           </div>
@@ -628,13 +673,31 @@ const UserProfile = () => {
                             <FiUserCheck className="text-blue-600" /> Referrals
                           </div>
                           <div
-                            onClick={goToTransactions}
-                            className="bg-green-100/50 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer lg:w-max w-full"
+                            onClick={() => {
+                              if (
+                                userMembership &&
+                                (userMembership.tier === "Professional" ||
+                                  userMembership.tier === "Enterprise")
+                              ) {
+                                goToTransactions();
+                              } else {
+                                toast.error(
+                                  "Upgrade to Professional tier to access transaction history"
+                                );
+                              }
+                            }}
+                            className={`bg-green-100/50 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer lg:w-max w-full ${
+                              !userMembership ||
+                              (userMembership.tier !== "Professional" &&
+                                userMembership.tier !== "Enterprise")
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }`}
                           >
                             <FiDollarSign className="text-green-600" /> My
                             Transactions
                           </div>
-                          {user.isSeeker && (
+                          {(user.isSeeker || (userMembership && userMembership.tier === "Enterprise")) && (
                             <div
                               onClick={handleWithdrawalrequests}
                               className="bg-purple-100/50 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer lg:w-max w-full"
@@ -766,14 +829,29 @@ const UserProfile = () => {
                               {connection.userEmail}
                             </p>
                           </div>
-                          <button
-                            onClick={() => {
-                              navigate(`/userProfile/${connection._id}`);
-                            }}
-                            className="px-4 py-2 bg-blue-100/50 text-blue-600 rounded-lg hover:bg-blue-200/30 transition-colors"
-                          >
-                            View Profile
-                          </button>
+                          {(userMembership &&
+                            userMembership.tier === "Professional") ||
+                          userMembership.tier === "Enterprise" ? (
+                            <button
+                              onClick={() => {
+                                navigate(`/userProfile/${connection._id}`);
+                              }}
+                              className="px-4 py-2 bg-blue-100/50 text-blue-600 rounded-lg hover:bg-blue-200/30 transition-colors"
+                            >
+                              View Profile
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                toast.error(
+                                  "Upgrade to Professional tier to view detailed profiles"
+                                )
+                              }
+                              className="px-4 py-2 bg-gray-100/50 text-gray-600 rounded-lg cursor-not-allowed"
+                            >
+                              View Profile
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -901,115 +979,193 @@ const UserProfile = () => {
                 {/* Funding Requests */}
                 {investmentsTab === "funding" ? (
                   <div className="p-4 space-y-6">
-                    {user.isSeeker && (
+                    {/* New Funding Request Button */}
+                    {(user.isSeeker || (userMembership && userMembership.tier === "Enterprise")) ? (
                       <button
                         onClick={() => navigate("/create-investment")}
                         className="mb-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow flex items-center gap-2"
                       >
                         <FiPlus className="text-lg" /> New Funding Request
                       </button>
+                    ) : (
+                      <button
+                        onClick={() => toast.error("Upgrade to Enterprise tier to create funding requests")}
+                        className="mb-4 px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-lg shadow-lg flex items-center gap-2 opacity-50 cursor-not-allowed"
+                      >
+                        <FiPlus className="text-lg" /> New Funding Request
+                      </button>
                     )}
 
+                    {/* Tabs for Enterprise members */}
+                    {!user.isSeeker && userMembership && userMembership.tier === "Enterprise" && (
+                      <div className="mb-6">
+                        <nav className="flex space-x-4 border-b border-white/20">
+                          <button
+                            onClick={() => setFundingRequestsTab("all")}
+                            className={`px-4 py-2 border-b-2 font-medium ${
+                              fundingRequestsTab === "all"
+                                ? "border-blue-500 text-blue-600"
+                                : "border-transparent text-gray-600 hover:text-blue-500"
+                            }`}
+                          >
+                            All Requests
+                          </button>
+                          <button
+                            onClick={() => setFundingRequestsTab("my")}
+                            className={`px-4 py-2 border-b-2 font-medium ${
+                              fundingRequestsTab === "my"
+                                ? "border-blue-500 text-blue-600"
+                                : "border-transparent text-gray-600 hover:text-blue-500"
+                            }`}
+                          >
+                            My Posted Requests
+                          </button>
+                        </nav>
+                      </div>
+                    )}
+
+                    {/* Funding Requests List */}
                     {loadingInvestments ? (
                       <div className="text-center py-8">Loading...</div>
                     ) : errorInvestments ? (
                       <div className="text-red-500 p-4">{errorInvestments}</div>
                     ) : fundingRequests.length > 0 ? (
-                      fundingRequests.map((request) => {
-                        const isDeadlinePassed =
-                          new Date(request.deadline) < new Date();
-                        const isFullyFunded =
-                          request.currentFunding >= request.amount;
-                        const canInvest = !isDeadlinePassed && !isFullyFunded;
-                        console.log("request: ", request);
-                        return (
-                          <div
-                            key={request._id}
-                            className="bg-white/30 backdrop-blur-sm p-4 rounded-lg border border-white/20 hover:bg-white/50 transition-all"
-                          >
-                            <div className="lg:flex lg:justify-between items-center">
-                              <div>
-                                <h4 className="text-lg font-semibold text-gray-800">
-                                  {request.title}
-                                  <br />
-                                </h4>
-                                <span className="text-sm text-gray-600 font-normal border-l-2 border-gray-400 pl-2">
-                                  {request.description}
-                                </span>
-                                <div className="mt-2 flex items-center gap-4 text-gray-600">
-                                  <span className="bg-blue-100/50 px-3 py-1 rounded-lg text-sm text-blue-700">
-                                    {request.type}
+                      fundingRequests
+                        .filter(request => {
+                          const canAccessSeekerFeatures = user.isSeeker || (userMembership && userMembership.tier === "Enterprise");
+                          
+                          if (!canAccessSeekerFeatures) {
+                            // For regular non-seekers, show all requests
+                            return true;
+                          }
+
+                          if (userMembership && userMembership.tier === "Enterprise") {
+                            if (fundingRequestsTab === "my") {
+                              // Show only requests created by this user
+                              return request.seeker && request.seeker._id === user.id;
+                            } else {
+                              // Show all other requests
+                              return request.seeker && request.seeker._id !== user.id;
+                            }
+                          }
+
+                          // For seekers, show all their requests
+                          return user.isSeeker;
+                        })
+                        .map((request) => {
+                          const isDeadlinePassed = new Date(request.deadline) < new Date();
+                          const isFullyFunded = request.currentFunding >= request.amount;
+                          const canInvest = !isDeadlinePassed && !isFullyFunded;
+                          const isMyRequest = request.seeker && request.seeker._id === user.id;
+                          const isEnterpriseRequest = request.seeker && 
+                                                    request.seeker.membership && 
+                                                    request.seeker.membership.tier === "Enterprise";
+
+                          return (
+                            <div
+                              key={request._id}
+                              className={`bg-white/30 backdrop-blur-sm p-4 rounded-lg border ${
+                                isMyRequest ? 'border-blue-200' : 
+                                isEnterpriseRequest ? 'border-purple-200' : 
+                                'border-white/20'
+                              } hover:bg-white/50 transition-all`}
+                            >
+                              <div className="lg:flex lg:justify-between items-center">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="text-lg font-semibold text-gray-800">
+                                      {request.title}
+                                    </h4>
+                                    {isMyRequest && (
+                                      <span className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">
+                                        My Request
+                                      </span>
+                                    )}
+                                    {isEnterpriseRequest && !isMyRequest && (
+                                      <span className="px-2 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
+                                        Enterprise Request
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-sm text-gray-600 font-normal border-l-2 border-gray-400 pl-2">
+                                    {request.description}
                                   </span>
-                                  <span
-                                    className={`flex items-center gap-1 ${
-                                      isDeadlinePassed
-                                        ? "text-red-600"
-                                        : "text-blue-600"
-                                    }`}
-                                  >
-                                    <FiClock
-                                      className={
+                                  <div className="mt-2 flex items-center gap-4 text-gray-600">
+                                    <span className="bg-blue-100/50 px-3 py-1 rounded-lg text-sm text-blue-700">
+                                      {request.type}
+                                    </span>
+                                    <span
+                                      className={`flex items-center gap-1 ${
                                         isDeadlinePassed
                                           ? "text-red-600"
                                           : "text-blue-600"
-                                      }
-                                    />
-                                    {isDeadlinePassed
-                                      ? "Deadline Passed"
-                                      : new Date(
-                                          request.deadline
-                                        ).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="lg:text-right p-2 lg:p-0">
-                                <p className="text-2xl font-bold text-blue-600">
-                                  ${request.currentFunding}/${request.amount}
-                                </p>
-                                <div className="mt-2 flex justify-end items-center gap-3 text-sm text-gray-600">
-                                  <span className="flex items-center gap-1 d-block text-nowrap">
-                                    <FiTrendingUp className="text-blue-600" />
-                                    {request.returns}
-                                  </span>
-                                  {!user.isSeeker && (
-                                    <button
-                                      onClick={() => handleInvest(request._id)}
-                                      disabled={!canInvest}
-                                      className={`px-4 py-2 rounded-lg ${
-                                        canInvest
-                                          ? "bg-green-500 text-white hover:bg-green-600"
-                                          : "bg-gray-300 text-gray-500 cursor-not-allowed"
                                       }`}
                                     >
+                                      <FiClock
+                                        className={
+                                          isDeadlinePassed
+                                            ? "text-red-600"
+                                            : "text-blue-600"
+                                        }
+                                      />
                                       {isDeadlinePassed
                                         ? "Deadline Passed"
-                                        : isFullyFunded
-                                        ? "Fully Funded"
-                                        : "Invest"}
-                                    </button>
-                                  )}
+                                        : new Date(
+                                            request.deadline
+                                          ).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="lg:text-right p-2 lg:p-0">
+                                  <p className="text-2xl font-bold text-blue-600">
+                                    ${request.currentFunding}/${request.amount}
+                                  </p>
+                                  <div className="mt-2 flex justify-end items-center gap-3 text-sm text-gray-600">
+                                    <span className="flex items-center gap-1 d-block text-nowrap">
+                                      <FiTrendingUp className="text-blue-600" />
+                                      {request.returns}
+                                    </span>
+                                    {!user.isSeeker && !isMyRequest && (
+                                      <button
+                                        onClick={() => handleInvest(request._id)}
+                                        disabled={!canInvest}
+                                        className={`px-4 py-2 rounded-lg ${
+                                          canInvest
+                                            ? "bg-green-500 text-white hover:bg-green-600"
+                                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                        }`}
+                                      >
+                                        {isDeadlinePassed
+                                          ? "Deadline Passed"
+                                          : isFullyFunded
+                                          ? "Fully Funded"
+                                          : "Invest"}
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
+                              <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className={`h-2 rounded-full ${
+                                    isFullyFunded ? "bg-green-600" : "bg-blue-600"
+                                  }`}
+                                  style={{
+                                    width: `${
+                                      (request.currentFunding / request.amount) *
+                                      100
+                                    }%`,
+                                  }}
+                                />
+                              </div>
                             </div>
-                            <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
-                              <div
-                                className={`h-2 rounded-full ${
-                                  isFullyFunded ? "bg-green-600" : "bg-blue-600"
-                                }`}
-                                style={{
-                                  width: `${
-                                    (request.currentFunding / request.amount) *
-                                    100
-                                  }%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        );
-                      })
+                          );
+                        })
                     ) : (
                       <p className="text-gray-500">
-                        No funding requests available.
+                        {fundingRequestsTab === "my" 
+                          ? "You haven't posted any funding requests yet."
+                          : "No funding requests available."}
                       </p>
                     )}
                   </div>
@@ -1105,7 +1261,8 @@ const UserProfile = () => {
                                     <button
                                       className={`px-4 py-1.5 rounded-lg transition-shadow ${
                                         hasActiveWithdrawal ||
-                                        hasCompletedWithdrawal
+                                        hasCompletedWithdrawal ||
+                                        investment.type === "donation"
                                           ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                           : "bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:shadow-lg"
                                       }`}
@@ -1114,13 +1271,16 @@ const UserProfile = () => {
                                       }
                                       disabled={
                                         hasActiveWithdrawal ||
-                                        hasCompletedWithdrawal
+                                        hasCompletedWithdrawal ||
+                                        investment.type === "donation"
                                       }
                                     >
                                       {hasActiveWithdrawal
                                         ? "Withdrawal in Progress"
                                         : hasCompletedWithdrawal
                                         ? "Already Withdrawn"
+                                        : investment.type === "donation"
+                                        ? "Donations Cannot Be Withdrawn"
                                         : "Withdraw"}
                                     </button>
                                   )}
@@ -1159,6 +1319,5 @@ const UserProfile = () => {
     </>
   );
 };
-
 
 export default UserProfile;

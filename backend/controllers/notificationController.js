@@ -5,15 +5,32 @@ import users from "../models/users.js";
 // Create notification for activity
 export const createActivityNotification = async (activity, recipientId, type) => {
   try {
+    console.log("🔹 Creating notification:", { type, recipientId, activityId: activity._id });
+    
     // Get sender and recipient details
-    const sender = await users.findById(activity.user);
+    let sender;
+    if (type === "referral_received") {
+      // For referral notifications, sender is the referrer
+      sender = await users.findById(activity.metadata.referrerId);
+      console.log("🔹 Found referrer:", sender?._id);
+    } else if (type === "activity_verified" || type === "activity_rejected") {
+      // For activity verification notifications, sender is the verifier
+      sender = await users.findById(activity.verifiedBy);
+      console.log("🔹 Found verifier:", sender?._id);
+    } else {
+      sender = await users.findById(activity.userId);
+      console.log("🔹 Found sender:", sender?._id);
+    }
     const recipient = await users.findById(recipientId);
+    console.log("🔹 Found recipient:", recipient?._id);
 
     if (!sender || !recipient) {
-      console.error("Sender or recipient not found:", {
-        senderId: activity.user,
+      console.error("❌ Sender or recipient not found:", {
+        senderId: type === "referral_received" ? activity.metadata.referrerId : activity.userId,
         recipientId,
-        activityId: activity._id
+        activityId: activity._id,
+        senderFound: !!sender,
+        recipientFound: !!recipient
       });
       throw new Error("Sender or recipient not found");
     }
@@ -93,6 +110,11 @@ export const createActivityNotification = async (activity, recipientId, type) =>
         message = `New referral completed by ${activity.metadata.userName || sender.userName}`;
         link = `/referrals/${activity.metadata.referralId}`;
         break;
+      case "referral_received":
+        message = `You've been referred by ${activity.metadata.referrerName}! Complete your first investment to earn rewards.`;
+        link = `/referrals/${activity.metadata.referralId}`;
+        priority = "high";
+        break;
       case "thank_you_slip":
         message = activity.metadata.message;
         link = `/referrals/${activity.metadata.referralId}`;
@@ -103,25 +125,44 @@ export const createActivityNotification = async (activity, recipientId, type) =>
         link = `/activity/${activity._id}`;
     }
 
-    const notification = new Notification({
+    console.log("🔹 Creating notification with:", { message, link, priority });
+
+    // Create notification object
+    const notificationData = {
       user: recipientId,
-      sender: activity.user,
+      sender: type === "referral_received" ? activity.metadata.referrerId : 
+              (type === "activity_verified" || type === "activity_rejected") ? activity.verifiedBy :
+              activity.userId,
       type,
       message,
       link,
       priority,
       metadata: {
         activityId: activity._id,
-        activityType: activity.activityType,
-        content: activity.metadata.message || activity.metadata.content
+        activityType: activity.type || activity.activityType,
+        content: type === "activity_verified" || type === "activity_rejected" ? 
+                activity.verificationNotes || activity.content :
+                activity.metadata?.message || activity.metadata?.content
       },
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days expiry
-    });
+    };
 
+    console.log("🔹 Notification data:", notificationData);
+
+    const notification = new Notification(notificationData);
+    console.log("🔹 Saving notification...");
     await notification.save();
+    console.log("✅ Notification saved successfully");
     return notification;
   } catch (error) {
-    console.error("Error creating notification:", error);
+    console.error("❌ Error creating notification:", error);
+    console.error("Error details:", {
+      type,
+      recipientId,
+      activityId: activity._id,
+      activityMetadata: activity.metadata,
+      error: error.message
+    });
     throw error;
   }
 };

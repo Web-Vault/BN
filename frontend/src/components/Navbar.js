@@ -22,6 +22,7 @@ const Navbar = () => {
                 { label: 'Chapters', path: '/chapter' },
                 { label: 'My Activity', path: '/activity' },
                 { label: 'Community Place', path: '/community' },
+                { label: 'Platform Report', path: '/reports/platform' },
         ];
 
         const utilityLinks = [
@@ -79,14 +80,14 @@ const Navbar = () => {
                                                         key={item.path}
                                                         className={`transition-all duration-300 ease-in-out py-2 relative
                                                   ${currentPath === item.path
-                                                                        ? 'after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-white'
-                                                                        : 'after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-white after:transition-all after:duration-300 hover:after:w-full'
+                                                                        ? `after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 ${isScrolled ? 'after:bg-black' : 'after:bg-white'}`
+                                                                        : `after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 ${isScrolled ? 'after:bg-black' : 'after:bg-white'} after:transition-all after:duration-300 hover:after:w-full`
                                                                 }`}
                                                 >
                                                         <Link
                                                                 to={item.path}
                                                                 className={`text-[15px] px-1 font-medium transition-colors duration-300 
-                                                                ${currentPath === item.path ? 'text-white' : 'text-black'}
+                                                                ${currentPath === item.path ? 'text-white' : 'text-white'}
                                                                 ${isScrolled ? 'text-black' : 'text-white'}`}
                                                         >
                                                                 {item.label}
@@ -102,7 +103,7 @@ const Navbar = () => {
                                         >
                                                 <button
                                                         className={`flex items-center gap-1 text-[15px] px-1 font-medium transition-colors duration-300 
-                                                        ${currentPath === '/utility' ? 'text-white' : 'text-black'}
+                                                        ${currentPath === '/utility' ? 'text-white' : 'text-white'}
                                                         ${isScrolled ? 'text-black' : 'text-white'}`}
                                                 >
                                                         Utility Links

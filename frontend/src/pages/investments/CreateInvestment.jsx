@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -138,7 +139,7 @@ const CreateInvestment = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:5000/api/investments",
+        `${config.API_BASE_URL}/api/investments`,
         formData,
         {
           headers: { Authorization: `Bearer ${token}` },

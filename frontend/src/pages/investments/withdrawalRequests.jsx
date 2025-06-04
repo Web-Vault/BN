@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
 import { FiChevronDown, FiCheck, FiX } from "react-icons/fi";
 import { toast } from "react-toastify";
 
@@ -25,7 +26,7 @@ const WithdrawalRequests = () => {
       const token = localStorage.getItem("token");
       console.log("🔍 Fetching funding requests...");
       const response = await axios.get(
-        "http://localhost:5000/api/investments/my-requests",
+        `${config.API_BASE_URL}/api/investments/my-requests`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -45,7 +46,7 @@ const WithdrawalRequests = () => {
       const token = localStorage.getItem("token");
       console.log("🔍 Fetching withdrawal requests");
       const response = await axios.get(
-        "http://localhost:5000/api/investments/withdrawals",
+        `${config.API_BASE_URL}/api/investments/withdrawals`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -78,7 +79,7 @@ const WithdrawalRequests = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/api/investments/withdrawals/${withdrawalId}/approve`,
+        `${config.API_BASE_URL}/api/investments/withdrawals/${withdrawalId}/approve`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -96,7 +97,7 @@ const WithdrawalRequests = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/api/investments/withdrawals/${withdrawalId}/reject`,
+        `${config.API_BASE_URL}/api/investments/withdrawals/${withdrawalId}/reject`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

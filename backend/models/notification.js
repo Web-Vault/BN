@@ -22,6 +22,7 @@ const notificationSchema = new mongoose.Schema(
         "withdrawal_approved",
         "withdrawal_rejected",
         "referral_completed",
+        "referral_received",
         "activity_pending_verification",
         "activity_verified",
         "activity_rejected",
@@ -31,7 +32,8 @@ const notificationSchema = new mongoose.Schema(
         "business_received",
         "business_given",
         "visitor",
-        "thank_you_slip"
+        "thank_you_slip",
+        "membership_purchased"
       ],
       required: true,
     },
@@ -87,7 +89,7 @@ notificationSchema.methods.markAsRead = async function() {
 notificationSchema.statics.markAllAsRead = async function(userId) {
   return this.updateMany(
     { user: userId, read: false },
-    { read: true }
+    { $set: { read: true } }
   );
 };
 

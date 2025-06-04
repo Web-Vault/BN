@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FiClock,
   FiCopy,
   FiShare2,
 } from "react-icons/fi";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
 import axios from "axios";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
 const ReferralsPage = () => {
@@ -21,12 +22,39 @@ const ReferralsPage = () => {
     referrals: [],
   });
   const [loading, setLoading] = useState(true);
+  const [userMembership, setUserMembership] = useState(null);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchReferrals();
+    checkMembership();
   }, []);
+
+  const checkMembership = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${config.API_BASE_URL}/api/membership/verify`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setUserMembership(response.data.membership);
+    } catch (error) {
+      console.error('Error checking membership:', error);
+    }
+  };
+
+  const handleProfileClick = (userId) => {
+    if (!userMembership || 
+        (userMembership.tier !== "Professional" && 
+         userMembership.tier !== "Enterprise")) {
+      toast.error("Upgrade to Professional tier to view user profiles");
+      return;
+    }
+    navigate(`/userProfile/${userId}`);
+  };
 
   const fetchReferrals = async () => {
     try {
@@ -38,7 +66,7 @@ const ReferralsPage = () => {
 
       console.log("🔹 Sending request with token:", token);
       const { data } = await axios.get(
-        "http://localhost:5000/api/referrals/my-referrals",
+        `${config.API_BASE_URL}/api/referrals/my-referrals`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -191,12 +219,16 @@ const ReferralsPage = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <span
-                        onClick={() => {
-                          navigate(`/userProfile/${referral.referredUser._id}`);
-                        }}
-                        className="d-block font-semibold text-gray-800 pb-2 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
+                        onClick={() => handleProfileClick(referral.referredUser._id)}
+                        className={`d-block font-semibold text-gray-800 pb-2 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full ${
+                          (!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) 
+                            ? 'opacity-50 cursor-not-allowed' 
+                            : ''
+                        }`}
                       >
                         {referral.referredUser.userName}
+                        {(!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) && 
+                          <span className="text-xs text-gray-500 ml-1">(Pro)</span>}
                       </span>
                       <p className="text-gray-600 mt-2">
                         Reward:{" "}

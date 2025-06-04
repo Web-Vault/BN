@@ -7,18 +7,24 @@ import Withdrawal from "../models/Withdrawal.js";
 import Referral from "../models/referral.js";
 import Activity from "../models/activity.js";
 import { createActivityNotification } from "../controllers/notificationController.js";
+import User from "../models/users.js";
+// import InvestmentRequest from "../models/investmentRequest.js";
 
 const router = express.Router();
 
-// Create investment request (Seeker only)
+// Create investment request (Seeker or Enterprise member)
 router.post("/", protect, async (req, res) => {
   try {
     const user = await users.findById(req.user.id);
-    if (!user.isSeeker) {
+    
+    // Check if user is either a seeker or has Enterprise membership
+    const isEnterpriseMember = user.membership && user.membership.tier === "Enterprise";
+    if (!user.isSeeker && !isEnterpriseMember) {
       return res
         .status(403)
-        .json({ msg: "Only seekers can create investments" });
+        .json({ msg: "Only seekers or Enterprise members can create investments" });
     }
+
     // console.log("🔍 Investment details:", req.body);
     const newInvestment = new Investment({
       ...req.body,
@@ -169,7 +175,7 @@ router.post("/:id/invest", protect, async (req, res) => {
           const referralActivity = await new Activity({
             user: referral.referrer,
             activityType: "referral",
-            action: "referral activity completed",
+            action: "completed",
             metadata: {
               referralId: referral._id,
               referredUser: req.user.id,
@@ -216,45 +222,63 @@ router.post("/:id/invest", protect, async (req, res) => {
   }
 });
 
-// Get my funding requests (Seeker) with detailed investor information
+// @route   GET /api/investments/my-requests
+// @desc    Get funding requests created by the user (for seekers and Enterprise members)
+// @access  Private
 router.get("/my-requests", protect, async (req, res) => {
   try {
-    const user = await users.findById(req.user.id);
-    if (!user.isSeeker) {
-      return res
-        .status(403)
-        .json({ msg: "Only seekers can view their funding requests" });
+    const user = await User.findById(req.user.id).populate('membership');
+    
+    // Check if user is either seeker or Enterprise member
+    const canAccessSeekerFeatures = user.isSeeker || (user.membership && user.membership.tier === "Enterprise");
+    
+    if (!canAccessSeekerFeatures) {
+      return res.status(403).json({ 
+        msg: "Access denied. Only seekers or Enterprise members can view their funding requests." 
+      });
     }
 
-    const requests = await Investment.find({ seeker: req.user.id }).populate({
-      path: "investors.user",
-      select: "userName userEmail",
-    });
-
-    // Calculate returns for each investor based on investment type
-    const requestsWithReturns = requests.map((request) => {
-      const requestObj = request.toObject();
-      requestObj.investors = request.investors.map((investor) => {
-        const investorObj = investor.toObject();
-        // Calculate expected returns based on investment type and returns field
-        if (request.type === "equity") {
-          const equityPercentage = parseFloat(request.returns);
-          investorObj.expectedReturn =
-            (investor.amount / request.amount) * equityPercentage;
-        } else if (request.type === "loan") {
-          const interestRate = parseFloat(request.returns);
-          investorObj.expectedReturn =
-            investor.amount * (1 + interestRate / 100);
+    // Find all funding requests created by this user using the Investment model
+    const requests = await Investment.find({ seeker: req.user.id })
+      .populate({
+        path: 'seeker',
+        select: 'name email membership',
+        populate: {
+          path: 'membership',
+          select: 'tier'
         }
-        return investorObj;
-      });
+      })
+      .populate({
+        path: 'investors.user',
+        select: 'name email'
+      })
+      .sort({ createdAt: -1 });
+
+    // Calculate expected returns for each request
+    const requestsWithReturns = requests.map(request => {
+      const requestObj = request.toObject();
+      
+      // Calculate total invested amount
+      requestObj.totalInvested = request.currentFunding;
+      
+      // Calculate expected returns based on investment type
+      if (request.type === "equity") {
+        const equityPercentage = parseFloat(request.returns);
+        requestObj.expectedReturns = (request.currentFunding * equityPercentage) / 100;
+      } else if (request.type === "loan") {
+        const interestRate = parseFloat(request.returns);
+        requestObj.expectedReturns = request.currentFunding * (1 + interestRate / 100);
+      } else {
+        requestObj.expectedReturns = 0; // For donations
+      }
+
       return requestObj;
     });
 
     res.json(requestsWithReturns);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg: "Server Error" });
+    console.error("Error fetching funding requests:", err);
+    res.status(500).json({ msg: "Server error" });
   }
 });
 
@@ -404,14 +428,25 @@ router.post("/:id/withdraw", protect, async (req, res) => {
   }
 });
 
-// Get all withdrawal requests (Seekers Only)
+// Get all withdrawal requests (Seekers and Enterprise members)
 router.get("/withdrawals", protect, async (req, res) => {
   try {
+    const user = await User.findById(req.user.id).populate('membership');
+    
+    // Check if user is either seeker or Enterprise member
+    const canAccessSeekerFeatures = user.isSeeker || (user.membership && user.membership.tier === "Enterprise");
+    
+    if (!canAccessSeekerFeatures) {
+      return res.status(403).json({ 
+        msg: "Access denied. Only seekers or Enterprise members can view withdrawal requests." 
+      });
+    }
+
     const withdrawals = await Withdrawal.find()
       .populate("investment", "title type")
       .populate("investor", "userName userEmail")
       .sort({ createdAt: -1 });
-    // console.log(withdrawals);
+    
     res.json(withdrawals);
   } catch (err) {
     console.error("Error fetching withdrawals:", err);

@@ -2,6 +2,8 @@ import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
 import users from "../models/users.js";
 import Referral from "../models/referral.js";
+import Activity from "../models/activity.js";
+import { createActivityNotification } from "../controllers/notificationController.js";
 
 const router = express.Router();
 
@@ -99,7 +101,29 @@ router.post("/apply-code", async (req, res) => {
 
     await referral.save();
 
-    res.json({ msg: "Referral code applied successfully", referral });
+    // Create activity for the referred user
+    const referralActivity = await new Activity({
+      user: user._id,
+      activityType: "referral",
+      action: "referral_received",
+      metadata: {
+        referralId: referral._id,
+        referrerId: referrer._id,
+        referrerName: referrer.userName,
+        referralCode: referralCode,
+        status: "pending",
+        task: "Complete your first investment to earn rewards for your referrer"
+      }
+    }).save();
+
+    // Create notification for the referred user
+    await createActivityNotification(referralActivity, user._id, "referral_received");
+
+    res.json({ 
+      msg: "Referral code applied successfully", 
+      referral,
+      activity: referralActivity 
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server Error" });

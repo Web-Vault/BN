@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiPhone, FiAlertCircle } from "react-icons/fi";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
 
 const VerifyMobile = () => {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ const VerifyMobile = () => {
     const initializeVerification = async () => {
       try {
         // First fetch the mobile number
-        const response = await fetch("http://localhost:5000/api/users/profile", {
+        const response = await fetch(`${config.API_BASE_URL}/api/users/profile`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -29,7 +30,7 @@ const VerifyMobile = () => {
           
           // Send initial OTP only if not already sent
           if (!initialOTPSent) {
-            const otpResponse = await fetch("http://localhost:5000/api/users/resend-mobile-otp", {
+            const otpResponse = await fetch(`${config.API_BASE_URL}/api/users/resend-mobile-otp`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -80,7 +81,7 @@ const VerifyMobile = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/verify-mobile", {
+      const response = await fetch(`${config.API_BASE_URL}/api/users/verify-mobile`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -112,7 +113,7 @@ const VerifyMobile = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/resend-mobile-otp", {
+      const response = await fetch(`${config.API_BASE_URL}/api/users/resend-mobile-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

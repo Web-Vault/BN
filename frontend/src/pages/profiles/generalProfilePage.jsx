@@ -4,13 +4,13 @@ import {
   FiBriefcase,
   FiMail,
   FiMapPin,
-  FiGlobe,
   FiClock,
   FiInfo,
   FiStar,
   FiGift,
 } from "react-icons/fi";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
@@ -44,7 +44,7 @@ const GeneralProfile = () => {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          `http://localhost:5000/api/users/${id}`,
+          `${config.API_BASE_URL}/api/users/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

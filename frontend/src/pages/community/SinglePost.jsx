@@ -7,10 +7,14 @@ import {
   FiSend,
   FiArrowLeft,
   FiDownload,
+  FiX,
+  FiClock,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import Navbar from "../../components/Navbar";
+import Navbar from "../../components/Navbar.js";
+import config from "../../config/config.js";
+import { toast } from "react-hot-toast";
 
 // Update the CSS styles at the top of the file
 const getImageGridStyles = (imageCount) => {
@@ -94,27 +98,31 @@ const SinglePost = () => {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
-  const [likes, setLikes] = useState(false);
-  const [newReply, setNewReply] = useState({});
+  const [likes, setLikes] = useState([]);
   const [expandedReplies, setExpandedReplies] = useState({});
+  const [newReply, setNewReply] = useState({});
   const [downloadingImages, setDownloadingImages] = useState({});
+  const [userMembership, setUserMembership] = useState(null);
 
   useEffect(() => {
-    const fetchPost = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get(
-          `http://localhost:5000/api/posts/${postId}`,
-          {
+        const [postResponse, membershipResponse] = await Promise.all([
+          axios.get(`${config.API_BASE_URL}/api/posts/${postId}`, {
             headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        console.log("Post data:", response.data.data);
-        setPost(response.data.data);
-        // Initialize like state based on current user
-        const currentUserId = localStorage.getItem("userId");
-        setLikes(response.data.data.likes.includes(currentUserId));
+          }),
+          axios.get(`${config.API_BASE_URL}/api/membership/verify`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        setPost(postResponse.data.data);
+        setComments(postResponse.data.data.comments || []);
+        setLikes(postResponse.data.data.likes || []);
+        setUserMembership(membershipResponse.data.membership);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching post:", err);
@@ -123,8 +131,18 @@ const SinglePost = () => {
       }
     };
 
-    fetchPost();
+    fetchData();
   }, [postId]);
+
+  const handleProfileClick = (userId) => {
+    if (!userMembership || 
+        (userMembership.tier !== "Professional" && 
+         userMembership.tier !== "Enterprise")) {
+      toast.error("Upgrade to Professional tier to view user profiles");
+      return;
+    }
+    navigate(`/userProfile/${userId}`);
+  };
 
   const handleLike = async () => {
     const token = localStorage.getItem("token");
@@ -144,7 +162,7 @@ const SinglePost = () => {
 
       // Make API call
       await axios.post(
-        `http://localhost:5000/api/posts/${postId}/like`,
+        `${config.API_BASE_URL}/api/posts/${postId}/like`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -154,7 +172,7 @@ const SinglePost = () => {
       console.error("Error liking post:", err);
       // Revert optimistic update on error
       const response = await axios.get(
-        `http://localhost:5000/api/posts/${postId}`,
+        `${config.API_BASE_URL}/api/posts/${postId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -168,7 +186,7 @@ const SinglePost = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `http://localhost:5000/api/posts/${postId}/comments`,
+        `${config.API_BASE_URL}/api/posts/${postId}/comments`,
         { content: newComment },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -191,7 +209,7 @@ const SinglePost = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `http://localhost:5000/api/posts/${postId}/comments/${commentId}`,
+        `${config.API_BASE_URL}/api/posts/${postId}/comments/${commentId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -225,7 +243,7 @@ const SinglePost = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        `http://localhost:5000/api/posts/${post._id}/comments/${commentId}/replies`,
+        `${config.API_BASE_URL}/api/posts/${post._id}/comments/${commentId}/replies`,
         { content: newReply[commentId] },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -263,7 +281,7 @@ const SinglePost = () => {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `http://localhost:5000/api/posts/${postId}/comments/${commentId}/replies/${replyId}`,
+        `${config.API_BASE_URL}/api/posts/${postId}/comments/${commentId}/replies/${replyId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -351,18 +369,22 @@ const SinglePost = () => {
             <div className="flex items-start gap-4">
               <img
                 src={post.author?.userImage || "default-avatar.png"}
-                alt={post.author?.userName || "User"}
+                alt={`${post.author?.userName || "Anonymous User"}'s profile`}
                 className="w-12 h-12 rounded-full border-2 border-white/50"
               />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <h3
-                    onClick={() => {
-                      navigate(`/userProfile/${post.author._id}`);
-                    }}
-                    className="h2 d-block text-2xl font-semibold text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
-                  >
+                    onClick={() => handleProfileClick(post.author._id)}
+                    className={`h2 d-block text-2xl font-semibold text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full ${
+                      (!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) 
+                        ? 'opacity-50 cursor-not-allowed' 
+                        : ''
+                    }`}
+                  > 
                     {post.author?.userName || "Anonymous User"}
+                    {(!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) && 
+                      <span className="text-xs text-gray-500 ml-1"></span>}
                   </h3>
                   <span className="text-sm text-black">
                     {new Date(post.createdAt).toLocaleDateString()}
@@ -470,9 +492,7 @@ const SinglePost = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h4
-                          onClick={() => {
-                            navigate(`/userProfile/${comment.author._id}`);
-                          }}
+                          onClick={() => handleProfileClick(comment.author._id)}
                           className="h2 d-block font-medium text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
                         >
                           {comment.author.userName}
@@ -521,9 +541,7 @@ const SinglePost = () => {
                               <div className="flex justify-between items-start">
                                 <div>
                                   <h5
-                                    onClick={() => {
-                                      navigate(`/userProfile/${reply.author._id}`);
-                                    }}
+                                    onClick={() => handleProfileClick(reply.author._id)}
                                     className="h2 d-block font-medium text-sm text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
                                   >
                                     {reply.author.userName}

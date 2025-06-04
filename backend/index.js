@@ -13,6 +13,11 @@ import investmentRoutes from './routes/investmentRoutes.js';
 import referralRoutes from './routes/referralRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import meetingRoutes from './routes/meetingRoutes.js';
+import eventRoutes from "./routes/eventRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
+import membershipRoutes from './routes/membershipRoutes.js';
+import membershipHistoryRoutes from './routes/membershipHistoryRoutes.js';
 
 dotenv.config();
 
@@ -21,7 +26,12 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:3000', 'https://*.ngrok-free.app'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -34,6 +44,11 @@ app.use('/api/investments', investmentRoutes);
 app.use('/api/referrals', referralRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api', meetingRoutes);
+app.use("/api", eventRoutes);
+app.use("/api/reports", reportRoutes);
+app.use('/api/membership', membershipRoutes);
+app.use('/api/membership-history', membershipHistoryRoutes);
 
 mongoose
         .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
