@@ -115,11 +115,9 @@ const UserProfile = () => {
         setLoadingInvestments(true);
         const token = localStorage.getItem("token");
 
-        // Check if user is either seeker or Enterprise member
-        const canAccessSeekerFeatures = user.isSeeker || (userMembership && userMembership.tier === "Enterprise");
-
-        if (canAccessSeekerFeatures) {
-          // Fetch funding requests for seekers and Enterprise members
+        // Only check for seeker status
+        if (user.isSeeker) {
+          // Fetch funding requests for seekers
           const fundingRes = await axios.get(
             `${config.API_BASE_URL}/api/investments/my-requests`,
             {
@@ -156,15 +154,15 @@ const UserProfile = () => {
           }
         );
 
-        if (canAccessSeekerFeatures) {
-          // For seekers and Enterprise members, merge their requests with other requests
+        if (user.isSeeker) {
+          // For seekers, merge their requests with other requests
           setFundingRequests(prevRequests => {
             const ownRequests = prevRequests.filter(req => req.seeker._id === user.id);
             const otherRequests = requestsRes.data.filter(req => req.seeker._id !== user.id);
             return [...ownRequests, ...otherRequests];
           });
         } else {
-          // For regular non-seekers, just show all requests
+          // For non-seekers, just show all requests
           setFundingRequests(requestsRes.data);
         }
       } catch (err) {
@@ -175,7 +173,7 @@ const UserProfile = () => {
     };
 
     if (user) fetchInvestmentData();
-  }, [user, userMembership]);
+  }, [user]);
 
   const handleInvest = async (investmentId) => {
     try {
@@ -697,7 +695,7 @@ const UserProfile = () => {
                             <FiDollarSign className="text-green-600" /> My
                             Transactions
                           </div>
-                          {(user.isSeeker || (userMembership && userMembership.tier === "Enterprise")) && (
+                          {user.isSeeker && (
                             <div
                               onClick={handleWithdrawalrequests}
                               className="bg-purple-100/50 px-4 py-2 rounded-lg flex items-center gap-2 cursor-pointer lg:w-max w-full"
@@ -980,7 +978,7 @@ const UserProfile = () => {
                 {investmentsTab === "funding" ? (
                   <div className="p-4 space-y-6">
                     {/* New Funding Request Button */}
-                    {(user.isSeeker || (userMembership && userMembership.tier === "Enterprise")) ? (
+                    {user.isSeeker ? (
                       <button
                         onClick={() => navigate("/create-investment")}
                         className="mb-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg shadow-lg hover:shadow-xl transition-shadow flex items-center gap-2"
@@ -989,39 +987,11 @@ const UserProfile = () => {
                       </button>
                     ) : (
                       <button
-                        onClick={() => toast.error("Upgrade to Enterprise tier to create funding requests")}
+                        onClick={() => toast.error("Only seekers can create funding requests")}
                         className="mb-4 px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-lg shadow-lg flex items-center gap-2 opacity-50 cursor-not-allowed"
                       >
                         <FiPlus className="text-lg" /> New Funding Request
                       </button>
-                    )}
-
-                    {/* Tabs for Enterprise members */}
-                    {!user.isSeeker && userMembership && userMembership.tier === "Enterprise" && (
-                      <div className="mb-6">
-                        <nav className="flex space-x-4 border-b border-white/20">
-                          <button
-                            onClick={() => setFundingRequestsTab("all")}
-                            className={`px-4 py-2 border-b-2 font-medium ${
-                              fundingRequestsTab === "all"
-                                ? "border-blue-500 text-blue-600"
-                                : "border-transparent text-gray-600 hover:text-blue-500"
-                            }`}
-                          >
-                            All Requests
-                          </button>
-                          <button
-                            onClick={() => setFundingRequestsTab("my")}
-                            className={`px-4 py-2 border-b-2 font-medium ${
-                              fundingRequestsTab === "my"
-                                ? "border-blue-500 text-blue-600"
-                                : "border-transparent text-gray-600 hover:text-blue-500"
-                            }`}
-                          >
-                            My Posted Requests
-                          </button>
-                        </nav>
-                      </div>
                     )}
 
                     {/* Funding Requests List */}
@@ -1032,23 +1002,10 @@ const UserProfile = () => {
                     ) : fundingRequests.length > 0 ? (
                       fundingRequests
                         .filter(request => {
-                          const canAccessSeekerFeatures = user.isSeeker || (userMembership && userMembership.tier === "Enterprise");
-                          
-                          if (!canAccessSeekerFeatures) {
-                            // For regular non-seekers, show all requests
+                          if (!user.isSeeker) {
+                            // For non-seekers, show all requests
                             return true;
                           }
-
-                          if (userMembership && userMembership.tier === "Enterprise") {
-                            if (fundingRequestsTab === "my") {
-                              // Show only requests created by this user
-                              return request.seeker && request.seeker._id === user.id;
-                            } else {
-                              // Show all other requests
-                              return request.seeker && request.seeker._id !== user.id;
-                            }
-                          }
-
                           // For seekers, show all their requests
                           return user.isSeeker;
                         })
@@ -1057,17 +1014,12 @@ const UserProfile = () => {
                           const isFullyFunded = request.currentFunding >= request.amount;
                           const canInvest = !isDeadlinePassed && !isFullyFunded;
                           const isMyRequest = request.seeker && request.seeker._id === user.id;
-                          const isEnterpriseRequest = request.seeker && 
-                                                    request.seeker.membership && 
-                                                    request.seeker.membership.tier === "Enterprise";
 
                           return (
                             <div
                               key={request._id}
                               className={`bg-white/30 backdrop-blur-sm p-4 rounded-lg border ${
-                                isMyRequest ? 'border-blue-200' : 
-                                isEnterpriseRequest ? 'border-purple-200' : 
-                                'border-white/20'
+                                isMyRequest ? 'border-blue-200' : 'border-white/20'
                               } hover:bg-white/50 transition-all`}
                             >
                               <div className="lg:flex lg:justify-between items-center">
@@ -1079,11 +1031,6 @@ const UserProfile = () => {
                                     {isMyRequest && (
                                       <span className="px-2 py-1 text-xs bg-blue-100 text-blue-600 rounded-full">
                                         My Request
-                                      </span>
-                                    )}
-                                    {isEnterpriseRequest && !isMyRequest && (
-                                      <span className="px-2 py-1 text-xs bg-purple-100 text-purple-600 rounded-full">
-                                        Enterprise Request
                                       </span>
                                     )}
                                   </div>

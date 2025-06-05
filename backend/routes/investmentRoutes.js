@@ -428,24 +428,25 @@ router.post("/:id/withdraw", protect, async (req, res) => {
   }
 });
 
-// Get all withdrawal requests (Seekers and Enterprise members)
+// Get all withdrawal requests
 router.get("/withdrawals", protect, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate('membership');
     
-    // Check if user is either seeker or Enterprise member
-    const canAccessSeekerFeatures = user.isSeeker || (user.membership && user.membership.tier === "Enterprise");
-    
-    if (!canAccessSeekerFeatures) {
-      return res.status(403).json({ 
-        msg: "Access denied. Only seekers or Enterprise members can view withdrawal requests." 
-      });
+    let withdrawals;
+    if (user.isSeeker) {
+      // Seekers can view all withdrawal requests
+      withdrawals = await Withdrawal.find()
+        .populate("investment", "title type")
+        .populate("investor", "userName userEmail")
+        .sort({ createdAt: -1 });
+    } else {
+      // Non-seekers can only view their own withdrawal requests
+      withdrawals = await Withdrawal.find({ investor: req.user.id })
+        .populate("investment", "title type")
+        .populate("investor", "userName userEmail")
+        .sort({ createdAt: -1 });
     }
-
-    const withdrawals = await Withdrawal.find()
-      .populate("investment", "title type")
-      .populate("investor", "userName userEmail")
-      .sort({ createdAt: -1 });
     
     res.json(withdrawals);
   } catch (err) {

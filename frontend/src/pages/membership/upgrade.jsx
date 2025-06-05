@@ -9,13 +9,11 @@ import config from "../../config/config.js";
 const MEMBERSHIP_PRICES = {
   Basic: 99,
   Professional: 299,
-  Enterprise: 999
 };
 
 const MEMBERSHIP_DURATIONS = {
   Basic: 1, // 1 month
   Professional: 6, // 6 months
-  Enterprise: 12 // 12 months
 };
 
 const MEMBERSHIP_FEATURES = {
@@ -26,14 +24,6 @@ const MEMBERSHIP_FEATURES = {
     "Unlimited chapter access",
     "Priority support",
     "Analytics dashboard"
-  ],
-  Enterprise: [
-    "All Professional features",
-    "VIP event access",
-    "Premium platform access",
-    "Dedicated account manager",
-    "Custom analytics",
-    "Priority investment opportunities"
   ]
 };
 
@@ -60,52 +50,12 @@ const UpgradePage = () => {
         console.log("Current membership:", membership);
         setCurrentMembership(membership);
 
-        // Determine next tier and calculate upgrade amount
+        // Only handle Basic to Professional upgrade
         if (membership.tier === "Basic") {
           setNextTier("Professional");
-          // Calculate pro-rated amount for Professional tier
-          const remainingDays = Math.ceil((new Date(membership.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
-          console.log("Remaining days:", remainingDays);
-          
-          // Calculate daily rates
-          const basicDailyRate = MEMBERSHIP_PRICES.Basic / 30; // Basic tier daily rate
-          const proDailyRate = MEMBERSHIP_PRICES.Professional / (MEMBERSHIP_DURATIONS.Professional * 30); // Pro tier daily rate
-          
-          console.log("Basic daily rate:", basicDailyRate);
-          console.log("Pro daily rate:", proDailyRate);
-          
-          // Calculate upgrade amount (difference in daily rates * remaining days)
-          const upgradeAmount = Math.round((proDailyRate - basicDailyRate) * remainingDays);
-          console.log("Calculated upgrade amount:", upgradeAmount);
-          
-          // For Basic to Professional, we should charge the full difference
+          // Calculate upgrade amount for Basic to Professional
           const fullUpgradeAmount = Math.round(MEMBERSHIP_PRICES.Professional - MEMBERSHIP_PRICES.Basic);
           console.log("Full upgrade amount:", fullUpgradeAmount);
-          
-          // Use the full upgrade amount instead of pro-rated
-          setUpgradeAmount(fullUpgradeAmount);
-        } else if (membership.tier === "Professional") {
-          setNextTier("Enterprise");
-          // Calculate pro-rated amount for Enterprise tier
-          const remainingDays = Math.ceil((new Date(membership.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
-          console.log("Remaining days:", remainingDays);
-          
-          // Calculate daily rates
-          const proDailyRate = MEMBERSHIP_PRICES.Professional / (MEMBERSHIP_DURATIONS.Professional * 30); // Pro tier daily rate
-          const enterpriseDailyRate = MEMBERSHIP_PRICES.Enterprise / (MEMBERSHIP_DURATIONS.Enterprise * 30); // Enterprise tier daily rate
-          
-          console.log("Pro daily rate:", proDailyRate);
-          console.log("Enterprise daily rate:", enterpriseDailyRate);
-          
-          // Calculate upgrade amount (difference in daily rates * remaining days)
-          const upgradeAmount = Math.round((enterpriseDailyRate - proDailyRate) * remainingDays);
-          console.log("Calculated upgrade amount:", upgradeAmount);
-          
-          // For Professional to Enterprise, we should charge the full difference
-          const fullUpgradeAmount = Math.round(MEMBERSHIP_PRICES.Enterprise - MEMBERSHIP_PRICES.Professional);
-          console.log("Full upgrade amount:", fullUpgradeAmount);
-          
-          // Use the full upgrade amount instead of pro-rated
           setUpgradeAmount(fullUpgradeAmount);
         }
 
