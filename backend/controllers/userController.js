@@ -3,7 +3,7 @@ import Business from "../models/Business.js";
 import Chapter from "../models/chapter.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import Referral from "../models/referral.js";
+import Referral from "../models/Referral.js";
 import nodemailer from "nodemailer";
 import twilio from "twilio";
 import dotenv from "dotenv";

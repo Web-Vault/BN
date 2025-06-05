@@ -1,4 +1,4 @@
-import Chapter from "../models/Chapter.js";
+import Chapter from "../models/chapter.js";
 import users from "../models/users.js";
 
 export const getAllChapters = async (req, res) => {
