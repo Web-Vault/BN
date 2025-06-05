@@ -46,7 +46,7 @@ const NotificationBell = ({ isScrolled }) => {
       setError(null);
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:5000/api/notifications",
+        `${config.API_BASE_URL}/api/notifications`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -74,7 +74,7 @@ const NotificationBell = ({ isScrolled }) => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        `http://localhost:5000/api/notifications/${notificationId}/read`,
+        `${config.API_BASE_URL}/api/notifications/${notificationId}/read`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -125,7 +125,7 @@ const NotificationBell = ({ isScrolled }) => {
     try {
       const token = localStorage.getItem("token");
       await axios.put(
-        "http://localhost:5000/api/notifications/read-all",
+        `${config.API_BASE_URL}/api/notifications/read-all`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );

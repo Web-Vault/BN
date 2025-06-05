@@ -117,7 +117,7 @@ const EditProfile = () => {
 
       if (businessData.name) {
         const businessResponse = await fetch(
-          `http://localhost:5000/api/users/business`,
+          `${config.API_BASE_URL}/api/users/business`,
           {
             method: "PUT",
             headers: {

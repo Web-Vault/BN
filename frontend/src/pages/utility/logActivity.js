@@ -11,7 +11,7 @@ const logActivity = async ({ activityType, action, metadata = {}, tokenOverride 
                 }
 
                 await axios.post(
-                        "http://localhost:5000/api/activity",
+                        `${config.API_BASE_URL}/api/activity`,
                         {
                                 activityType,
                                 action,

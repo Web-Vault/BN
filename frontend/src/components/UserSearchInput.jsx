@@ -36,7 +36,7 @@ const UserSearchInput = ({ onUserSelect, selectedUser, setSelectedUser }) => {
       try {
         const token = localStorage.getItem('token');
         const response = await axios.get(
-          `http://localhost:5000/api/users/search?query=${searchTerm}`,
+          `${config.API_BASE_URL}/api/users/search?query=${searchTerm}`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }

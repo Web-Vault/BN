@@ -18,7 +18,7 @@ const WithdrawalForm = ({ investment, onClose, onWithdraw }) => {
       try {
         const token = localStorage.getItem("token");
         const response = await axios.get(
-          "http://localhost:5000/api/investments/withdrawals",
+          `${config.API_BASE_URL}/api/investments/withdrawals`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

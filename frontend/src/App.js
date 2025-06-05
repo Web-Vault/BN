@@ -66,7 +66,7 @@ const App = () => {
         // Check membership status
         try {
           const membershipResponse = await axios.get(
-            "http://localhost:5000/api/membership/verify",
+            `${config.API_BASE_URL}/api/membership/verify`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
