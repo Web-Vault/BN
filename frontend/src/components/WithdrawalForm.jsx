@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiX, FiDollarSign, FiCreditCard } from 'react-icons/fi';
 import axios from 'axios';
-
+import config from '../config/config';
 const WithdrawalForm = ({ investment, onClose, onWithdraw }) => {
   const [formData, setFormData] = useState({
     bankName: '',

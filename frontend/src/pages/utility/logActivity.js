@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import config from "../../config/config";
 
 const logActivity = async ({ activityType, action, metadata = {}, tokenOverride }) => {
         try {

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import axios from "axios";
+import config from "./config/config.js";
 import Login from "./pages/auth/login";
 import Register from "./pages/auth/register";
 import Onboarding from "./pages/auth/onboarding";

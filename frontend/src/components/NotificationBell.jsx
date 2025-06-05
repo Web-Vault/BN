@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FiBell } from "react-icons/fi";
 import axios from "axios";
+import config from "../config/config.js";
 import { useNavigate } from "react-router-dom";
 
 const NotificationBell = ({ isScrolled }) => {

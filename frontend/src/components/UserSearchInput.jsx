@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import config from '../config/config';
 import { FiSearch, FiX } from 'react-icons/fi';
 
 const UserSearchInput = ({ onUserSelect, selectedUser, setSelectedUser }) => {
