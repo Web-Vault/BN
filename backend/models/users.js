@@ -91,6 +91,27 @@ const userSchema = mongoose.Schema(
                         transactionId: String,
                         paymentDate: Date
                     }
+                },
+                // Add onboarding status
+                onboardingStatus: {
+                    isCompleted: {
+                        type: Boolean,
+                        default: false
+                    },
+                    completedSteps: [{
+                        step: {
+                            type: String,
+                            enum: ['profile', 'verification', 'preferences']
+                        },
+                        completedAt: {
+                            type: Date,
+                            default: Date.now
+                        }
+                    }],
+                    lastUpdated: {
+                        type: Date,
+                        default: Date.now
+                    }
                 }
         }, {
         timestamps: true,

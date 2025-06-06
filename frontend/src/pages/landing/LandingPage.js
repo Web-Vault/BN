@@ -174,20 +174,41 @@ const LandingPage = () => {
 
   const handleMembershipVerification = async () => {
     try {
-      // TODO: Implement membership verification API call
-      const response = await fetch(`${config.API_BASE_URL}/api/verify-membership`, {
+      setIsProcessing(true);
+      setVerificationError('');
+
+      const response = await fetch(`${config.API_BASE_URL}/api/membership/verify-id`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ membershipId }),
       });
       
+      const data = await response.json();
+
       if (response.ok) {
-        navigate('/login');
+        // If membership is valid, store the token and redirect to login
+        if (data.isValid) {
+          toast.success('Membership verified successfully!');
+          setShowVerificationDialog(false);
+          navigate('/login', { 
+            state: { 
+              verifiedMembership: true,
+              membershipId: membershipId
+            }
+          });
+        } else {
+          setVerificationError(data.message || 'Invalid membership ID');
+        }
       } else {
-        setVerificationError('Invalid membership ID. Please try again or purchase a membership.');
+        setVerificationError(data.message || 'Error verifying membership. Please try again.');
       }
     } catch (error) {
+      console.error('Error verifying membership:', error);
       setVerificationError('Error verifying membership. Please try again.');
+    } finally {
+      setIsProcessing(false);
     }
   };
 

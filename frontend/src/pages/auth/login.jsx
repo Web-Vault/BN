@@ -32,22 +32,12 @@ const Login = () => {
         // Store token & user ID in localStorage
         localStorage.setItem("token", data.user.token);
         localStorage.setItem("userId", data.user.id);
-        // localStorage.setItem("onBoardingCompleted", "false");
-        // Manipulate `isAuthenticated` based on API response
-        const isAuthenticated = true; // ✅ Set it as true when login is successful
-
-        if (isAuthenticated) {
-          const onBoardingCompleted = localStorage.getItem(
-            "onBoardingCompleted"
-          );
-
-          if (onBoardingCompleted === "true") {
-            navigate("/profile");
-          } else {
-            navigate("/onboarding");
-          }
+        
+        // Check onboarding status from user data
+        if (data.user.onboardingStatus && data.user.onboardingStatus.isCompleted) {
+          navigate("/profile");
         } else {
-            navigate("/register");
+          navigate("/onboarding");
         }
       } else {
         console.error("❌ Login failed:", data.message);

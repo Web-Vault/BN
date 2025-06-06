@@ -263,43 +263,40 @@ export const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Check if user exists
+        // Find user
         const user = await users.findOne({ userEmail: email });
         if (!user) {
-            return res.status(404).json({ message: "Invalid email or password" });
+            return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        // Check if account is verified
-        if (!user.isAccountVerified) {
-            return res.status(403).json({ 
-                message: "Please verify your email first",
-                requiresVerification: true
-            });
-        }
-
-        // Validate password
+        // Check password
         const isMatch = await bcrypt.compare(password, user.userPassword);
         if (!isMatch) {
-            return res.status(400).json({ message: "Invalid email or password" });
+            return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        // Generate JWT token
-        const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+        // Generate token
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
             expiresIn: "7d",
         });
 
+        // Return user data with onboarding status
         res.json({
-            message: "Login successful",
             user: {
-                id: user._id,
-                name: user.userName,
-                email: user.userEmail,
-                token,
-            },
+                    id: user._id,
+                    name: user.userName,
+                    email: user.userEmail,
+                    token,
+                    onboardingStatus: user.onboardingStatus || {
+                        isCompleted: false,
+                        completedSteps: [],
+                        lastUpdated: new Date()
+                    }
+            }
         });
     } catch (error) {
-        console.error("Error logging in:", error);
-        res.status(500).json({ message: "Error logging in", error: error.message });
+        console.error("Login error:", error);
+        res.status(500).json({ message: "Server Error" });
     }
 };
 
@@ -342,6 +339,16 @@ export const onboarding = async (req, res) => {
                         },
                         // Set verification flags
                         isAccountVerified: 1,
+                        // Add onboarding status
+                        onboardingStatus: {
+                            isCompleted: true,
+                            completedSteps: [
+                                { step: 'profile', completedAt: new Date() },
+                                { step: 'verification', completedAt: new Date() },
+                                { step: 'preferences', completedAt: new Date() }
+                            ],
+                            lastUpdated: new Date()
+                        }
                 }, { new: true });
 
                 // Handle referral code if provided

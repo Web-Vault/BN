@@ -55,6 +55,15 @@ const Onboarding = () => {
         isAccountVerified: 1,
         isMobileVerified: 1,
         verificationFlag: 1,
+        onboardingStatus: {
+          isCompleted: true,
+          completedSteps: [
+            { step: 'profile', completedAt: new Date() },
+            { step: 'verification', completedAt: new Date() },
+            { step: 'preferences', completedAt: new Date() }
+          ],
+          lastUpdated: new Date()
+        }
       };
 
       const response = await fetch(
@@ -73,7 +82,7 @@ const Onboarding = () => {
 
       if (response.ok) {
         console.log("✅ Onboarding successful:", data);
-        localStorage.setItem("onBoardingCompleted", "true");
+        // localStorage.setItem("onBoardingCompleted", "true");
 
         await logActivity({
           activityType: "account",

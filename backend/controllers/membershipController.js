@@ -426,11 +426,19 @@ export const getMembershipDetails = async (req, res) => {
   }
 };
 
-// Verify user's membership status
+// Verify membership by ID
 export const verifyMembershipById = async (req, res) => {
   try {
     const { membershipId } = req.body;
 
+    if (!membershipId) {
+      return res.status(400).json({
+        isValid: false,
+        message: 'Membership ID is required'
+      });
+    }
+
+    // Find the membership
     const membership = await Membership.findOne({
       membershipId,
       status: 'active'
@@ -443,8 +451,11 @@ export const verifyMembershipById = async (req, res) => {
       });
     }
 
-    // Check if membership is expired
-    if (membership.isExpired()) {
+   // Check if membership is expired by comparing dates
+    const isExpired = new Date() > new Date(membership.expiryDate);
+    
+    if (isExpired) {
+      // Update membership status to expired
       membership.status = 'expired';
       await membership.save();
       

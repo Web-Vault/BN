@@ -50,7 +50,6 @@ const Register = () => {
 
         localStorage.setItem("token", data.token);
         localStorage.setItem("userId", data.user.id);
-        localStorage.setItem("onBoardingCompleted", "false");
 
         // Redirect to verification page with email
         navigate("/verify-otp", { 
