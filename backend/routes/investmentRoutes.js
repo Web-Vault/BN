@@ -4,7 +4,7 @@ import { protect } from "../middleware/authMiddleware.js";
 import Investment from "../models/investment.js";
 import users from "../models/users.js";
 import Withdrawal from "../models/Withdrawal.js";
-import Referral from "../models/referral.js";
+import Referral from "../models/Referral.js";
 import Activity from "../models/activity.js";
 import { createActivityNotification } from "../controllers/notificationController.js";
 import User from "../models/users.js";
