@@ -359,44 +359,42 @@ const SinglePost = () => {
         <div className="max-w-4xl mx-auto">
           <button
             onClick={() => navigate(-1)}
-            className="mb-6 flex items-center gap-2 text-white hover:text-blue-200 transition-colors"
+            className="mb-4 sm:mb-6 flex items-center gap-2 text-white hover:text-blue-200 transition-colors text-sm sm:text-base"
           >
             <FiArrowLeft /> Back to Community
           </button>
 
           {/* Post */}
-          <div className="bg-white/80 backdrop-blur-lg rounded-xl p-6 mb-6 shadow-lg border border-white/20">
-            <div className="flex items-start gap-4">
+          <div className="bg-white/80 backdrop-blur-lg rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-lg border border-white/20">
+            <div className="flex items-start gap-3 sm:gap-4">
               <img
                 src={post.author?.userImage || "default-avatar.png"}
                 alt={`${post.author?.userName || "Anonymous User"}'s profile`}
-                className="w-12 h-12 rounded-full border-2 border-white/50"
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-white/50"
               />
               <div className="flex-1">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
                   <h3
                     onClick={() => handleProfileClick(post.author._id)}
-                    className={`h2 d-block text-2xl font-semibold text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full ${
+                    className={`h2 d-block text-lg sm:text-2xl font-semibold text-gray-800 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full ${
                       (!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) 
                         ? 'opacity-50 cursor-not-allowed' 
                         : ''
                     }`}
                   > 
                     {post.author?.userName || "Anonymous User"}
-                    {(!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) && 
-                      <span className="text-xs text-gray-500 ml-1"></span>}
                   </h3>
-                  <span className="text-sm text-black">
+                  <span className="text-xs sm:text-sm text-black">
                     {new Date(post.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <p className="text-gray-700 mt-2 text-lg leading-relaxed">
+                <p className="text-gray-700 mt-2 text-base sm:text-lg leading-relaxed">
                   {post.content}
                 </p>
 
                 {/* Display images if they exist */}
                 {post.images && post.images.length > 0 && (
-                  <div className="mt-4">
+                  <div className="mt-3 sm:mt-4">
                     <div style={getImageGridStyles(post.images.length)}>
                       {post.images.map((imageUrl, index) => (
                         <div 
@@ -413,7 +411,6 @@ const SinglePost = () => {
                               e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
                             }}
                             onLoad={(e) => {
-                              // Calculate and set aspect ratio
                               const img = e.target;
                               const aspectRatio = img.naturalWidth / img.naturalHeight;
                               img.parentElement.style.aspectRatio = aspectRatio;
@@ -424,7 +421,7 @@ const SinglePost = () => {
                               {downloadingImages[`${postId}-${index}`] !== undefined && (
                                 <motion.div
                                   initial={{ width: 0, opacity: 0 }}
-                                  animate={{ width: "100px", opacity: 1 }}
+                                  animate={{ width: "80px", opacity: 1 }}
                                   exit={{ width: 0, opacity: 0 }}
                                   className="h-1 bg-white/80 rounded-full overflow-hidden"
                                 >
@@ -443,9 +440,9 @@ const SinglePost = () => {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={(e) => handleImageDownload(imageUrl, index, e)}
-                              className="bg-white/80 p-2 rounded-full hover:bg-white transition-colors"
+                              className="bg-white/80 p-1.5 sm:p-2 rounded-full hover:bg-white transition-colors"
                             >
-                              <FiDownload className="text-blue-600" />
+                              <FiDownload className="text-blue-600 text-sm sm:text-base" />
                             </motion.button>
                           </div>
                         </div>
@@ -454,19 +451,19 @@ const SinglePost = () => {
                   </div>
                 )}
 
-                <div className="mt-4 flex items-center gap-4">
+                <div className="mt-3 sm:mt-4 flex flex-wrap items-center gap-2 sm:gap-4">
                   <button
                     onClick={handleLike}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors text-sm sm:text-base ${
                       likes
                         ? "bg-red-100 text-red-500"
                         : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                     }`}
                   >
-                    <FiHeart className="text-lg" /> Like ({post.likes?.length || 0})
+                    <FiHeart className="text-base sm:text-lg" /> Like ({post.likes?.length || 0})
                   </button>
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 text-gray-500">
-                    <FiMessageSquare className="text-lg" /> Comments (
+                  <div className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-gray-100 text-gray-500 text-sm sm:text-base">
+                    <FiMessageSquare className="text-base sm:text-lg" /> Comments (
                     {post.comments?.reduce(
                       (total, comment) =>
                         total + 1 + (comment.replies?.length || 0),
@@ -480,31 +477,31 @@ const SinglePost = () => {
           </div>
 
           {/* Comments Section */}
-          <div className="bg-white/50 backdrop-blur-lg rounded-xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-semibold mb-6 text-gray-800">
+          <div className="bg-white/50 backdrop-blur-lg rounded-xl p-4 sm:p-6 shadow-lg border border-white/20">
+            <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 text-gray-800">
               Comments
             </h3>
 
-            <div className="mt-8 space-y-6">
+            <div className="mt-6 sm:mt-8 space-y-4 sm:space-y-6">
               {post.comments?.map((comment) => (
-                <div key={comment._id} className="bg-white/20 rounded-lg p-4">
+                <div key={comment._id} className="bg-white/20 rounded-lg p-3 sm:p-4">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <h4
                           onClick={() => handleProfileClick(comment.author._id)}
-                          className="h2 d-block font-medium text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
+                          className="h2 d-block font-medium text-gray-800 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full text-sm sm:text-base"
                         >
                           {comment.author.userName}
                         </h4>
                         <button
                           onClick={() => toggleReplyInput(comment._id)}
-                          className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                          className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
                         >
-                          <FiMessageSquare className="text-sm" /> Reply
+                          <FiMessageSquare className="text-xs sm:text-sm" /> Reply
                         </button>
                       </div>
-                      <p className="text-gray-600 mt-1">{comment.content}</p>
+                      <p className="text-gray-600 mt-1 text-sm sm:text-base">{comment.content}</p>
 
                       {/* Reply input field */}
                       {expandedReplies[comment._id] && (
@@ -523,7 +520,7 @@ const SinglePost = () => {
                           />
                           <button
                             onClick={() => handleReplySubmit(comment._id)}
-                            className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                            className="px-2 sm:px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
                           >
                             <FiSend />
                           </button>
@@ -532,29 +529,28 @@ const SinglePost = () => {
 
                       {/* Display replies */}
                       {comment.replies && comment.replies.length > 0 && (
-                        <div className="mt-3 ml-6 space-y-3">
+                        <div className="mt-3 ml-4 sm:ml-6 space-y-2 sm:space-y-3">
                           {comment.replies.map((reply) => (
                             <div
                               key={reply._id}
-                              className="bg-white/10 rounded-lg p-3"
+                              className="bg-white/10 rounded-lg p-2 sm:p-3"
                             >
                               <div className="flex justify-between items-start">
                                 <div>
                                   <h5
                                     onClick={() => handleProfileClick(reply.author._id)}
-                                    className="h2 d-block font-medium text-sm text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
+                                    className="h2 d-block font-medium text-xs sm:text-sm text-gray-800 mb-1 sm:mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
                                   >
                                     {reply.author.userName}
                                   </h5>
-                                  <p className="text-gray-600 text-sm">
+                                  <p className="text-gray-600 text-xs sm:text-sm">
                                     {reply.content}
                                   </p>
                                 </div>
-                                {reply.author._id ===
-                                  localStorage.getItem("userId") && (
+                                {reply.author._id === localStorage.getItem("userId") && (
                                   <button
                                     onClick={() => handleDeleteReply(comment._id, reply._id)}
-                                    className="text-red-500 hover:text-red-600"
+                                    className="text-red-500 hover:text-red-600 text-sm sm:text-base"
                                   >
                                     <FiTrash2 />
                                   </button>
@@ -568,7 +564,7 @@ const SinglePost = () => {
                     {comment.author._id === localStorage.getItem("userId") && (
                       <button
                         onClick={() => handleDeleteComment(comment._id)}
-                        className="text-red-500 hover:text-red-600 ml-2"
+                        className="text-red-500 hover:text-red-600 ml-2 text-sm sm:text-base"
                       >
                         <FiTrash2 />
                       </button>
@@ -578,18 +574,18 @@ const SinglePost = () => {
               ))}
 
               {/* New Comment Form */}
-              <div className="mt-6">
+              <div className="mt-4 sm:mt-6">
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Write a comment..."
-                    className="flex-1 p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    className="flex-1 p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base"
                   />
                   <button
                     onClick={handleCommentSubmit}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    className="px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base"
                   >
                     <FiSend />
                   </button>

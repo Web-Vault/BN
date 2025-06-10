@@ -521,45 +521,45 @@ const ActivityPage = () => {
           {/* User Activity Tab */}
           {activeTab === "user" && (
             <div className="p-2 lg:p-8">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold flex items-center gap-2 text-blue-600">
-                  <FiUser /> User Activities
-                </h2>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6">
+                  <h2 className="text-xl sm:text-2xl font-semibold flex items-center gap-2 text-blue-600">
+                    <FiUser /> User Activities
+                  </h2>
 
-                <div className="flex items-center gap-4">
-                  {/* Time Period Selector */}
-                  <div className="relative">
-                    <select
-                      value={selectedTimePeriod}
-                      onChange={(e) => setSelectedTimePeriod(e.target.value)}
-                      className="pl-10 pr-4 py-2 bg-white/90 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 appearance-none"
-                    >
-                      <option value="today">Today</option>
-                      <option value="thisWeek">This Week</option>
-                      <option value="lastWeek">Last Week</option>
-                      <option value="lastMonth">Last Month</option>
-                      <option value="overall">Overall</option>
-                    </select>
-                    <FiClock className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 pointer-events-none" />
-                  </div>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                    {/* Time Period Selector */}
+                    <div className="relative w-full sm:w-auto">
+                      <select
+                        value={selectedTimePeriod}
+                        onChange={(e) => setSelectedTimePeriod(e.target.value)}
+                        className="w-full sm:w-auto pl-10 pr-4 py-2 bg-white/90 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 appearance-none"
+                      >
+                        <option value="today">Today</option>
+                        <option value="thisWeek">This Week</option>
+                        <option value="lastWeek">Last Week</option>
+                        <option value="lastMonth">Last Month</option>
+                        <option value="overall">Overall</option>
+                      </select>
+                      <FiClock className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 pointer-events-none" />
+                    </div>
 
-                  {/* Activity Type Filter */}
-                  <div className="relative">
-                    <select
-                      value={selectedType}
-                      onChange={(e) => setSelectedType(e.target.value)}
-                      className="pl-10 pr-4 py-2 bg-white/90 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 appearance-none"
-                    >
-                      {activityTypes.map((type) => (
-                        <option key={type} value={type}>
-                          {type === "all" ? "All Activities" : type}
-                        </option>
-                      ))}
-                    </select>
-                    <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 pointer-events-none" />
+                    {/* Activity Type Filter */}
+                    <div className="relative w-full sm:w-auto">
+                      <select
+                        value={selectedType}
+                        onChange={(e) => setSelectedType(e.target.value)}
+                        className="w-full sm:w-auto pl-10 pr-4 py-2 bg-white/90 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 appearance-none"
+                      >
+                        {activityTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type === "all" ? "All Activities" : type}
+                          </option>
+                        ))}
+                      </select>
+                      <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
-              </div>
 
               {/* Date Range Display */}
               <div className="mb-4 flex justify-end mr-1 text-sm text-gray-600">
