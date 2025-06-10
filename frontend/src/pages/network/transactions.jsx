@@ -29,15 +29,15 @@ const TransactionsPage = () => {
     selectedPeriod: {
       earnings: 0,
       spending: 0,
-      netAmount: 0
-    }
+      netAmount: 0,
+    },
   });
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
         const token = localStorage.getItem("token");
-        
+
         // Get user profile to check if user is seeker and membership
         const userResponse = await axios.get(
           `${config.API_BASE_URL}/api/users/profile`,
@@ -48,8 +48,9 @@ const TransactionsPage = () => {
         setIsSeeker(userResponse.data.user.isSeeker);
         setUserMembership(userResponse.data.user.membership);
 
-        const isEnterpriseMember = userResponse.data.user.membership && 
-                                 userResponse.data.user.membership.tier === "Enterprise";
+        const isEnterpriseMember =
+          userResponse.data.user.membership &&
+          userResponse.data.user.membership.tier === "Enterprise";
 
         // For Enterprise members, fetch both requests and investments
         let requestsData = [];
@@ -63,7 +64,7 @@ const TransactionsPage = () => {
             }),
             axios.get(`${config.API_BASE_URL}/api/investments/my-investments`, {
               headers: { Authorization: `Bearer ${token}` },
-            })
+            }),
           ]);
           requestsData = requestsResponse.data;
           investmentsData = investmentsResponse.data;
@@ -145,7 +146,10 @@ const TransactionsPage = () => {
         // Add returns as received transactions if any
         if (withdrawalsResponse.data && withdrawalsResponse.data.length > 0) {
           withdrawalsResponse.data
-            .filter(withdrawal => withdrawal.investor._id === localStorage.getItem("userId")) // Only show withdrawals for current user
+            .filter(
+              (withdrawal) =>
+                withdrawal.investor._id === localStorage.getItem("userId")
+            ) // Only show withdrawals for current user
             .forEach((withdrawal) => {
               if (withdrawal.investment) {
                 processedTransactions.received.push({
@@ -178,7 +182,7 @@ const TransactionsPage = () => {
               amount: `+$${referral.amount}`,
               date: completionDate.toISOString().split("T")[0],
               description: `Referral bonus from ${referral.referredUser.userName}`,
-              status: "completed"
+              status: "completed",
             });
           });
         }
@@ -217,31 +221,37 @@ const TransactionsPage = () => {
       // Calculate selected period stats
       const { start, end } = getDateRange(dateFilter);
       const selectedPeriodTransactions = {
-        received: transactions.received.filter(transaction => {
+        received: transactions.received.filter((transaction) => {
           if (dateFilter === "overall") return false;
           const transactionDate = new Date(transaction.date);
           return transactionDate >= start && transactionDate <= end;
         }),
-        sent: transactions.sent.filter(transaction => {
+        sent: transactions.sent.filter((transaction) => {
           if (dateFilter === "overall") return false;
           const transactionDate = new Date(transaction.date);
           return transactionDate >= start && transactionDate <= end;
-        })
+        }),
       };
 
-      const selectedEarnings = selectedPeriodTransactions.received.reduce((sum, transaction) => {
-        const amount = parseFloat(
-          transaction.amount.replace("$", "").replace("+", "")
-        );
-        return sum + amount;
-      }, 0);
+      const selectedEarnings = selectedPeriodTransactions.received.reduce(
+        (sum, transaction) => {
+          const amount = parseFloat(
+            transaction.amount.replace("$", "").replace("+", "")
+          );
+          return sum + amount;
+        },
+        0
+      );
 
-      const selectedSpending = selectedPeriodTransactions.sent.reduce((sum, transaction) => {
-        const amount = parseFloat(
-          transaction.amount.replace("$", "").replace("-", "")
-        );
-        return sum + amount;
-      }, 0);
+      const selectedSpending = selectedPeriodTransactions.sent.reduce(
+        (sum, transaction) => {
+          const amount = parseFloat(
+            transaction.amount.replace("$", "").replace("-", "")
+          );
+          return sum + amount;
+        },
+        0
+      );
 
       setStats({
         totalEarnings: earnings,
@@ -250,8 +260,8 @@ const TransactionsPage = () => {
         selectedPeriod: {
           earnings: selectedEarnings,
           spending: selectedSpending,
-          netAmount: selectedEarnings - selectedSpending
-        }
+          netAmount: selectedEarnings - selectedSpending,
+        },
       });
     };
 
@@ -265,27 +275,27 @@ const TransactionsPage = () => {
       now.getMonth(),
       now.getDate()
     );
-    
+
     switch (filter) {
       case "today":
         return { start: startOfDay, end: now };
-      
+
       case "thisWeek":
         const startOfWeek = new Date(startOfDay);
         startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
         return { start: startOfWeek, end: now };
-      
+
       case "lastWeek":
         const lastWeekStart = new Date(startOfDay);
         lastWeekStart.setDate(startOfDay.getDate() - startOfDay.getDay() - 7);
         const lastWeekEnd = new Date(startOfDay);
         lastWeekEnd.setDate(startOfDay.getDate() - startOfDay.getDay() - 1);
         return { start: lastWeekStart, end: lastWeekEnd };
-      
+
       case "thisMonth":
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         return { start: startOfMonth, end: now };
-      
+
       case "lastMonth":
         const lastMonthStart = new Date(
           now.getFullYear(),
@@ -294,13 +304,12 @@ const TransactionsPage = () => {
         );
         const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
         return { start: lastMonthStart, end: lastMonthEnd };
-      
+
       case "overall":
       default:
         return { start: null, end: null };
     }
   };
-
 
   const transactionTypes = [
     { value: "all", label: "All Transactions" },
@@ -381,7 +390,7 @@ const TransactionsPage = () => {
 
   const filteredTransactions = transactions[activeTab]
     .filter((transaction) =>
-    selectedFilter === "all" ? true : transaction.type === selectedFilter
+      selectedFilter === "all" ? true : transaction.type === selectedFilter
     )
     .filter((transaction) => {
       if (dateFilter === "overall") return true;
@@ -449,7 +458,8 @@ const TransactionsPage = () => {
                     </p>
                     {dateFilter !== "overall" && (
                       <p className="text-lg text-green-600 mt-1">
-                        {dateFilters.find(f => f.value === dateFilter)?.label}: ${stats.selectedPeriod.earnings.toFixed(2)}
+                        {dateFilters.find((f) => f.value === dateFilter)?.label}
+                        : ${stats.selectedPeriod.earnings.toFixed(2)}
                       </p>
                     )}
                     <p className="text-sm text-gray-600 mt-2">
@@ -472,7 +482,8 @@ const TransactionsPage = () => {
                     </p>
                     {dateFilter !== "overall" && (
                       <p className="text-lg text-gray-600 mt-1">
-                        {dateFilters.find(f => f.value === dateFilter)?.label}: ${stats.selectedPeriod.spending.toFixed(2)}
+                        {dateFilters.find((f) => f.value === dateFilter)?.label}
+                        : ${stats.selectedPeriod.spending.toFixed(2)}
                       </p>
                     )}
                     <p className="text-sm text-gray-600 mt-2">
@@ -488,7 +499,9 @@ const TransactionsPage = () => {
                       </h3>
                       <div
                         className={`p-2 rounded-lg ${
-                          stats.netAmount >= 0 ? "bg-green-100/50" : "bg-red-100/50"
+                          stats.netAmount >= 0
+                            ? "bg-green-100/50"
+                            : "bg-red-100/50"
                         }`}
                       >
                         {stats.netAmount >= 0 ? (
@@ -506,10 +519,15 @@ const TransactionsPage = () => {
                       ${Math.abs(stats.netAmount).toFixed(2)}
                     </p>
                     {dateFilter !== "overall" && (
-                      <p className={`text-lg mt-1 ${
-                        stats.selectedPeriod.netAmount >= 0 ? "text-green-600" : "text-red-600"
-                      }`}>
-                        {dateFilters.find(f => f.value === dateFilter)?.label}: ${Math.abs(stats.selectedPeriod.netAmount).toFixed(2)}
+                      <p
+                        className={`text-lg mt-1 ${
+                          stats.selectedPeriod.netAmount >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {dateFilters.find((f) => f.value === dateFilter)?.label}
+                        : ${Math.abs(stats.selectedPeriod.netAmount).toFixed(2)}
                       </p>
                     )}
                     <p className="text-sm text-gray-600 mt-2">
@@ -519,43 +537,43 @@ const TransactionsPage = () => {
                 </div>
               </div>
 
-            {/* Header and Tabs */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-              <h2 className="text-2xl font-semibold mb-4 md:mb-0 flex items-center gap-2 text-blue-600">
-                <FiDollarSign className="text-lg" /> Transaction History
-              </h2>
+              {/* Header and Tabs */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <h2 className="text-2xl font-semibold mb-4 md:mb-0 flex items-center gap-2 text-blue-600">
+                  <FiDollarSign className="text-lg" /> Transaction History
+                </h2>
 
-              {/* Tabs Navigation */}
-              <div className="border-b border-white/20">
-                <nav className="flex space-x-8">
-                  {!isSeeker && (
+                {/* Tabs Navigation */}
+                <div className="border-b border-white/20">
+                  <nav className="flex space-x-8">
+                    {!isSeeker && (
+                      <button
+                        onClick={() => setActiveTab("sent")}
+                        className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
+                          activeTab === "sent"
+                            ? "text-blue-600 border-blue-500"
+                            : "text-gray-600 hover:text-blue-500"
+                        }`}
+                      >
+                        <FiArrowUp className="text-lg" /> Investments Made
+                      </button>
+                    )}
                     <button
-                      onClick={() => setActiveTab("sent")}
+                      onClick={() => setActiveTab("received")}
                       className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
-                        activeTab === "sent"
+                        activeTab === "received"
                           ? "text-blue-600 border-blue-500"
                           : "text-gray-600 hover:text-blue-500"
                       }`}
                     >
-                      <FiArrowUp className="text-lg" /> Investments Made
+                      <FiArrowDown className="text-lg" />{" "}
+                      {isSeeker || userMembership?.tier === "Enterprise"
+                        ? "Investments Received"
+                        : "Returns Received"}
                     </button>
-                  )}
-                  <button
-                    onClick={() => setActiveTab("received")}
-                    className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
-                      activeTab === "received"
-                        ? "text-blue-600 border-blue-500"
-                        : "text-gray-600 hover:text-blue-500"
-                    }`}
-                  >
-                    <FiArrowDown className="text-lg" />{" "}
-                    {isSeeker || userMembership?.tier === "Enterprise" 
-                      ? "Investments Received" 
-                      : "Returns Received"}
-                  </button>
-                </nav>
+                  </nav>
+                </div>
               </div>
-            </div>
             </div>
 
             {/* Date Filter and Type Filter Section */}
@@ -605,12 +623,12 @@ const TransactionsPage = () => {
                 filteredTransactions.map((transaction) => (
                   <div
                     key={transaction.id}
-                    className="bg-white/30 backdrop-blur-lg rounded-xl border border-white/20 p-6 transition-shadow"
+                    className="bg-white/30 backdrop-blur-lg rounded-xl border border-white/20 p-4 sm:p-6 transition-shadow"
                   >
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
                       {/* Transaction Details */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-4 mb-2">
+                      <div className="flex-1 w-full">
+                        <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-2">
                           <div
                             className={`p-2 rounded-lg ${getIconBackground(
                               transaction.type
@@ -618,28 +636,30 @@ const TransactionsPage = () => {
                           >
                             {getTransactionIcon(transaction.type)}
                           </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-800">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-800 truncate">
                               {transaction.partner}
                             </h3>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 line-clamp-2">
                               {transaction.description}
                             </p>
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <FiCalendar className="text-blue-600" />{" "}
-                            {transaction.date}
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                            <FiCalendar className="text-blue-600 flex-shrink-0" />
+                            <span className="whitespace-nowrap">
+                              {transaction.date}
+                            </span>
                           </div>
                           {getTypeBadge(transaction.type)}
                           <span
-                            className={`px-3 py-1 rounded-md text-sm ${
-                            transaction.status === "completed" 
-                              ? "bg-green-100/50 text-green-700"
-                              : transaction.status === "pending"
-                              ? "bg-yellow-100/50 text-yellow-700"
-                              : "bg-red-100/50 text-red-700"
+                            className={`px-2.5 py-1 rounded-md text-sm whitespace-nowrap ${
+                              transaction.status === "completed"
+                                ? "bg-green-100/50 text-green-700"
+                                : transaction.status === "pending"
+                                ? "bg-yellow-100/50 text-yellow-700"
+                                : "bg-red-100/50 text-red-700"
                             }`}
                           >
                             {transaction.status}
@@ -655,7 +675,7 @@ const TransactionsPage = () => {
                             ? "text-green-600"
                             : "text-red-600"
                         }`}
-                      >
+                      > 
                         {transaction.amount}
                       </div>
                     </div>

@@ -324,65 +324,65 @@ const TermsAndConditionsPage = () => {
     <>
       <Navbar />
       <div className="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 pt-[110px] lg:pt-[110px] p-3 lg:p-8">
-        <div className="max-w-7xl mx-auto bg-white/50 backdrop-blur-lg rounded-2xl shadow-xl border border-white/30">
-          <div className="p-3 lg:p-8">
+        <div className="max-w-7xl mx-auto bg-white/50 backdrop-blur-lg rounded-xl sm:rounded-2xl shadow-xl border border-white/30">
+          <div className="p-3 sm:p-6 lg:p-8">
             {/* Header */}
-            <div className="text-center mb-12">
-              <div className="inline-block p-4 bg-blue-100/50 rounded-full mb-6">
-                <FiFileText className="text-4xl text-blue-600" />
+            <div className="text-center mb-8 sm:mb-12">
+              <div className="inline-block p-3 sm:p-4 bg-blue-100/50 rounded-full mb-4 sm:mb-6">
+                <FiFileText className="text-3xl sm:text-4xl text-blue-600" />
               </div>
-              <h1 className="text-4xl font-bold text-gray-800 mb-4">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-3 sm:mb-4">
                 Terms and Conditions
               </h1>
-              <div className="flex items-center justify-center gap-4 text-gray-600">
-                <div className="flex items-center gap-2 bg-white/30 px-4 py-2 rounded-full">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-gray-600">
+                <div className="flex items-center gap-2 bg-white/30 px-3 sm:px-4 py-2 rounded-full w-full sm:w-auto">
                   <FiClock className="text-blue-600" />
-                  <span>Last updated: {termsData.lastUpdated}</span>
+                  <span className="text-sm sm:text-base">Last updated: {termsData.lastUpdated}</span>
                 </div>
-                <div className="flex items-center gap-2 bg-white/30 px-4 py-2 rounded-full">
+                <div className="flex items-center gap-2 bg-white/30 px-3 sm:px-4 py-2 rounded-full w-full sm:w-auto">
                   <FiInfo className="text-blue-600" />
-                  <span>Version: {termsData.version}</span>
+                  <span className="text-sm sm:text-base">Version: {termsData.version}</span>
                 </div>
               </div>
             </div>
 
             {/* Content Sections */}
-            <div className="space-y-12">
+            <div className="space-y-6 sm:space-y-12">
               {termsData.sections.map((section, index) => (
                 <div
                   key={index}
-                  className="bg-white/30 backdrop-blur-lg rounded-xl border border-white/20 p-8"
+                  className="bg-white/30 backdrop-blur-lg rounded-lg sm:rounded-xl border border-white/20 p-4 sm:p-6 lg:p-8"
                 >
-                  <div className="flex items-center gap-4 mb-8">
+                  <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
                     <div className="text-blue-600">
                       {section.icon}
                     </div>
-                    <h2 className="text-2xl font-semibold text-gray-800">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
                       {section.title}
                     </h2>
                   </div>
 
-                  <div className="space-y-8">
+                  <div className="space-y-6 sm:space-y-8">
                     {section.content.map((content, contentIndex) => (
-                      <div key={contentIndex} className="space-y-4">
-                        <div className="flex items-start gap-3">
+                      <div key={contentIndex} className="space-y-3 sm:space-y-4">
+                        <div className="flex items-start gap-2 sm:gap-3">
                           <FiArrowRight className="text-blue-600 mt-1 flex-shrink-0" />
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-800">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-800">
                               {content.subtitle}
                             </h3>
-                            <p className="text-gray-600 mt-1">
+                            <p className="text-sm sm:text-base text-gray-600 mt-1">
                               {content.description}
                             </p>
                           </div>
                         </div>
-                        <div className="ml-7 grid gap-4 sm:grid-cols-2">
+                        <div className="ml-5 sm:ml-7 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
                           {content.details.map((detail, detailIndex) => (
                             <div
                               key={detailIndex}
-                              className="bg-white/50 rounded-lg p-4 hover:bg-white/70 transition-colors"
+                              className="bg-white/50 rounded-lg p-3 sm:p-4 hover:bg-white/70 transition-colors"
                             >
-                              <div className="flex items-start gap-3">
+                              <div className="flex items-start gap-2 sm:gap-3">
                                 <div className="mt-1">
                                   {detailIndex === 0 && <FiEye className="text-blue-600" />}
                                   {detailIndex === 1 && <FiSettings className="text-blue-600" />}
@@ -391,10 +391,10 @@ const TermsAndConditionsPage = () => {
                                   {detailIndex === 4 && <FiRefreshCw className="text-blue-600" />}
                                 </div>
                                 <div>
-                                  <p className="font-medium text-gray-800">
+                                  <p className="text-sm sm:text-base font-medium text-gray-800">
                                     {detail.text}
                                   </p>
-                                  <p className="text-sm text-gray-600 mt-1">
+                                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
                                     {detail.description}
                                   </p>
                                 </div>
@@ -410,14 +410,14 @@ const TermsAndConditionsPage = () => {
             </div>
 
             {/* Additional Information */}
-            <div className="mt-12 bg-blue-50/30 backdrop-blur-lg rounded-xl border border-blue-200/30 p-8">
-              <div className="flex items-start gap-4">
-                <FiAlertCircle className="text-2xl text-blue-600 mt-1" />
+            <div className="mt-8 sm:mt-12 bg-blue-50/30 backdrop-blur-lg rounded-lg sm:rounded-xl border border-blue-200/30 p-4 sm:p-6 lg:p-8">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <FiAlertCircle className="text-xl sm:text-2xl text-blue-600 mt-1" />
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
                     Important Notice
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-sm sm:text-base text-gray-600">
                     These terms and conditions may be updated periodically. We encourage you to review them regularly to stay informed about your rights and responsibilities. For any questions or concerns about these terms, please contact our support team.
                   </p>
                 </div>

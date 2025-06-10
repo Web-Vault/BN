@@ -21,87 +21,87 @@ import {
   FiShield,
   FiZap,
   FiDollarSign,
-  FiTrendingDown
+  FiTrendingDown,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../../components/Navbar.js";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { toast } from 'react-hot-toast';
-import config from '../../config/config.js';
+import { toast } from "react-hot-toast";
+import config from "../../config/config.js";
 
 // Update the CSS styles at the top of the file
 const getImageGridStyles = (imageCount) => {
   if (imageCount === 1) {
     return {
-      display: 'grid',
-      gridTemplateColumns: '1fr',
-      gap: '8px',
-      padding: '8px',
+      display: "grid",
+      gridTemplateColumns: "1fr",
+      gap: "8px",
+      padding: "8px",
     };
   } else if (imageCount === 2) {
     return {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, 1fr)',
-      gap: '8px',
-      padding: '8px',
+      display: "grid",
+      gridTemplateColumns: "repeat(2, 1fr)",
+      gap: "8px",
+      padding: "8px",
     };
   } else if (imageCount === 3) {
     return {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, 1fr)',
-      gridTemplateRows: 'repeat(2, 1fr)',
-      gap: '8px',
-      padding: '8px',
+      display: "grid",
+      gridTemplateColumns: "repeat(2, 1fr)",
+      gridTemplateRows: "repeat(2, 1fr)",
+      gap: "8px",
+      padding: "8px",
     };
   } else {
     return {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-      gridAutoRows: '200px',
-      gap: '8px',
-      padding: '8px',
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+      gridAutoRows: "200px",
+      gap: "8px",
+      padding: "8px",
     };
   }
 };
 
 const getImageContainerStyles = (imageCount, index, aspectRatio) => {
   const baseStyles = {
-    position: 'relative',
-    overflow: 'hidden',
-    borderRadius: '8px',
-    cursor: 'pointer',
+    position: "relative",
+    overflow: "hidden",
+    borderRadius: "8px",
+    cursor: "pointer",
   };
 
   if (imageCount === 1) {
     return {
       ...baseStyles,
-      gridColumn: '1 / -1',
-      aspectRatio: '16/9',
+      gridColumn: "1 / -1",
+      aspectRatio: "16/9",
     };
   } else if (imageCount === 2) {
     return {
       ...baseStyles,
-      aspectRatio: '1/1',
+      aspectRatio: "1/1",
     };
   } else if (imageCount === 3) {
     if (index === 0) {
       return {
         ...baseStyles,
-        gridColumn: '1 / -1',
-        aspectRatio: '16/9',
+        gridColumn: "1 / -1",
+        aspectRatio: "16/9",
       };
     } else {
       return {
         ...baseStyles,
-        aspectRatio: '1/1',
+        aspectRatio: "1/1",
       };
     }
   } else {
     // For 4 or more images
     return {
       ...baseStyles,
-      aspectRatio: aspectRatio || '1/1',
+      aspectRatio: aspectRatio || "1/1",
     };
   }
 };
@@ -144,7 +144,7 @@ const CommunityPage = () => {
 
   const navigate = useNavigate();
   const currentUserId = localStorage.getItem("userId");
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -242,12 +242,12 @@ const CommunityPage = () => {
   const handlePostSubmit = async () => {
     try {
       const token = localStorage.getItem("token");
-      
+
       // Log the data being sent
-      console.log('Sending post data:', {
+      console.log("Sending post data:", {
         content: newPost,
         images: newPostImages,
-        type: newPostType
+        type: newPostType,
       });
 
       const response = await axios.post(
@@ -258,14 +258,14 @@ const CommunityPage = () => {
           type: newPostType,
         },
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
         }
       );
 
-      console.log('Post response:', response.data); // Log the response
+      console.log("Post response:", response.data); // Log the response
 
       // Add the new post to both posts and filteredPosts arrays
       const newPostData = response.data.data;
@@ -511,9 +511,12 @@ const CommunityPage = () => {
     const fetchMembershipDetails = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get(`${config.API_BASE_URL}/api/membership/details`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${config.API_BASE_URL}/api/membership/details`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setMembershipDetails(response.data.membership);
         setMembershipLoading(false);
       } catch (err) {
@@ -534,16 +537,21 @@ const CommunityPage = () => {
       try {
         setHistoryLoading(true);
         setHistoryError(null);
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${config.API_BASE_URL}/api/membership-history/history`, {
-          headers: {
-            Authorization: `Bearer ${token}`
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          `${config.API_BASE_URL}/api/membership-history/history`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
+        );
         setMembershipHistory(response.data.history);
       } catch (error) {
-        console.error('Error fetching membership history:', error);
-        setHistoryError(error.response?.data?.message || 'Failed to fetch membership history');
+        console.error("Error fetching membership history:", error);
+        setHistoryError(
+          error.response?.data?.message || "Failed to fetch membership history"
+        );
       } finally {
         setHistoryLoading(false);
       }
@@ -556,18 +564,23 @@ const CommunityPage = () => {
   useEffect(() => {
     const fetchMembershipStats = async () => {
       if (!showHistory) return;
-      
+
       try {
         setStatsLoading(true);
         setStatsError(null); // Reset error state before fetch
         const token = localStorage.getItem("token");
-        const response = await axios.get(`${config.API_BASE_URL}/api/membership-history/stats`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${config.API_BASE_URL}/api/membership-history/stats`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setMembershipStats(response.data.stats);
       } catch (err) {
         console.error("Error fetching membership stats:", err);
-        setStatsError(err.response?.data?.message || "Failed to load membership statistics");
+        setStatsError(
+          err.response?.data?.message || "Failed to load membership statistics"
+        );
       } finally {
         setStatsLoading(false);
       }
@@ -583,12 +596,12 @@ const CommunityPage = () => {
         const response = await axios.get(
           `${config.API_BASE_URL}/api/membership/verify`,
           {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
         setUserMembership(response.data.membership);
       } catch (error) {
-        console.error('Error checking membership:', error);
+        console.error("Error checking membership:", error);
       }
     };
 
@@ -597,30 +610,32 @@ const CommunityPage = () => {
 
   const handleTabClick = (tabName) => {
     // Define which tabs require Professional tier
-    const professionalTabs = ['birthdays', 'recent'];
-    
-    if (professionalTabs.includes(tabName) && 
-        (!userMembership || 
-         (userMembership.tier !== "Professional" && 
-          userMembership.tier !== "Enterprise"))) {
+    const professionalTabs = ["birthdays", "recent"];
+
+    if (
+      professionalTabs.includes(tabName) &&
+      (!userMembership ||
+        (userMembership.tier !== "Professional" &&
+          userMembership.tier !== "Enterprise"))
+    ) {
       toast.error("Upgrade to Professional tier to access this feature");
       return;
     }
-    
+
     setActiveTab(tabName);
   };
 
   const handleCancelMembership = async (action) => {
     try {
       const token = localStorage.getItem("token");
-      
-      if (action === 'downgrade') {
+
+      if (action === "downgrade") {
         // Call downgrade endpoint
         await axios.post(
           `${config.API_BASE_URL}/api/membership/downgrade`,
-          { tier: 'Basic' },
+          { tier: "Basic" },
           {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
         toast.success("Membership downgraded to Basic tier successfully");
@@ -630,23 +645,28 @@ const CommunityPage = () => {
           `${config.API_BASE_URL}/api/membership/cancel`,
           {},
           {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
         toast.success("Membership cancelled successfully");
       }
-      
+
       // Refresh membership details
-      const response = await axios.get(`${config.API_BASE_URL}/api/membership/details`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(
+        `${config.API_BASE_URL}/api/membership/details`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setMembershipDetails(response.data.membership);
       setShowCancelConfirm(false);
       setShowDowngradeConfirm(false);
       setShowFinalWarning(false);
     } catch (error) {
       console.error("Error processing membership change:", error);
-      toast.error(error.response?.data?.message || "Failed to process membership change");
+      toast.error(
+        error.response?.data?.message || "Failed to process membership change"
+      );
     }
   };
 
@@ -660,50 +680,68 @@ const CommunityPage = () => {
         <div className="max-w-7xl mx-auto bg-white/50 backdrop-blur-lg rounded-2xl shadow-xl border border-white/30">
           {/* Main Tabs */}
           <div className="border-b border-white/20">
-            <nav className="flex space-x-8 px-6">
+            <nav className="flex flex-wrap sm:flex-nowrap justify-center sm:justify-start gap-2 sm:gap-8 px-3 sm:px-6">
               <button
                 onClick={() => handleTabClick("announcements")}
-                className={`py-4 px-1 border-b-2 font-semibold flex items-center gap-2 ${
+                className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-semibold flex items-center gap-2 text-sm sm:text-base whitespace-nowrap ${
                   activeTab === "announcements"
                     ? "text-blue-600 border-blue-500"
                     : "text-gray-600 hover:text-blue-500"
                 }`}
               >
-                <FiBell className="text-lg" /> Announcements
+                <FiBell className="text-base sm:text-lg" /> Announcements
               </button>
               <button
                 onClick={() => handleTabClick("birthdays")}
-                className={`py-4 px-1 border-b-2 font-semibold flex items-center gap-2 ${
+                className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-semibold flex items-center gap-2 text-sm sm:text-base whitespace-nowrap ${
                   activeTab === "birthdays"
                     ? "text-blue-600 border-blue-500"
                     : "text-gray-600 hover:text-blue-500"
-                } ${(!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                } ${
+                  !userMembership ||
+                  (userMembership.tier !== "Professional" &&
+                    userMembership.tier !== "Enterprise")
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
               >
-                <FiGift className="text-lg" /> Birthdays
-                {(!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) && 
-                    <span className="text-xs text-gray-500 ml-1">(Pro)</span>}
+                <FiGift className="text-base sm:text-lg" /> Birthdays
+                {(!userMembership ||
+                  (userMembership.tier !== "Professional" &&
+                    userMembership.tier !== "Enterprise")) && (
+                  <span className="text-xs text-gray-500 ml-1">(Pro)</span>
+                )}
               </button>
               <button
                 onClick={() => handleTabClick("recent")}
-                className={`py-4 px-1 border-b-2 font-semibold flex items-center gap-2 ${
+                className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-semibold flex items-center gap-2 text-sm sm:text-base whitespace-nowrap ${
                   activeTab === "recent"
                     ? "text-blue-600 border-blue-500"
                     : "text-gray-600 hover:text-blue-500"
-                } ${(!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                } ${
+                  !userMembership ||
+                  (userMembership.tier !== "Professional" &&
+                    userMembership.tier !== "Enterprise")
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
               >
-                <FiUsers className="text-lg" /> Recent Joiners
-                {(!userMembership || (userMembership.tier !== "Professional" && userMembership.tier !== "Enterprise")) && 
-                    <span className="text-xs text-gray-500 ml-1">(Pro)</span>}
+                <FiUsers className="text-base sm:text-lg" /> Recent Joiners
+                {(!userMembership ||
+                  (userMembership.tier !== "Professional" &&
+                    userMembership.tier !== "Enterprise")) && (
+                  <span className="text-xs text-gray-500 ml-1">(Pro)</span>
+                )}
               </button>
               <button
                 onClick={() => handleTabClick("membership")}
-                className={`py-4 px-1 border-b-2 font-semibold flex items-center gap-2 ${
+                className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-semibold flex items-center gap-2 text-sm sm:text-base whitespace-nowrap ${
                   activeTab === "membership"
                     ? "text-blue-600 border-blue-500"
                     : "text-gray-600 hover:text-blue-500"
                 }`}
               >
-                <FiAward className="text-lg" /> Membership
+                <FiAward className="text-base sm:text-lg" /> Membership
               </button>
             </nav>
           </div>
@@ -757,86 +795,96 @@ const CommunityPage = () => {
 
                   {/* New Post Form */}
                   <div className="p-4 space-y-6">
-                    {userMembership && (userMembership.tier === "Professional" || userMembership.tier === "Enterprise") ? (
-                    <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6">
-                      <textarea
-                        value={newPost}
-                        onChange={(e) => setNewPost(e.target.value)}
-                        placeholder="Share something with the community..."
-                        className="w-full p-4 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                        rows="3"
-                      />
-                      <div className="mt-4 space-y-4">
-                        {/* Image Input Section */}
-                        <div className="space-y-4">
-                          <div className="flex gap-2">
-                            <input
-                              type="text"
-                              value={newImageUrl}
-                              onChange={(e) => setNewImageUrl(e.target.value)}
-                              placeholder="Enter image URL"
-                              className="flex-1 p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                            />
-                            <button
-                              onClick={handleAddImage}
-                              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-                            >
-                              <FiPlus /> Add Image
-                            </button>
+                    {userMembership &&
+                    (userMembership.tier === "Professional" ||
+                      userMembership.tier === "Enterprise") ? (
+                      <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6">
+                        <textarea
+                          value={newPost}
+                          onChange={(e) => setNewPost(e.target.value)}
+                          placeholder="Share something with the community..."
+                          className="w-full p-4 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                          rows="3"
+                        />
+                        <div className="mt-4 space-y-4">
+                          {/* Image Input Section */}
+                          <div className="space-y-4">
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={newImageUrl}
+                                onChange={(e) => setNewImageUrl(e.target.value)}
+                                placeholder="Enter image URL"
+                                className="flex-1 p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                              />
+                              <button
+                                onClick={handleAddImage}
+                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                              >
+                                <FiPlus /> Add Image
+                              </button>
+                            </div>
+
+                            {/* Preview Added Images */}
+                            {newPostImages.length > 0 && (
+                              <div
+                                style={getImageGridStyles(newPostImages.length)}
+                              >
+                                {newPostImages.map((imageUrl, index) => (
+                                  <div
+                                    key={index}
+                                    style={getImageContainerStyles(
+                                      newPostImages.length,
+                                      index
+                                    )}
+                                    className="group"
+                                  >
+                                    <img
+                                      src={imageUrl}
+                                      alt={`Preview ${index + 1}`}
+                                      className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+                                      onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src =
+                                          "https://via.placeholder.com/400x300?text=Image+Not+Found";
+                                      }}
+                                      onLoad={(e) => {
+                                        const img = e.target;
+                                        const aspectRatio =
+                                          img.naturalWidth / img.naturalHeight;
+                                        img.parentElement.style.aspectRatio =
+                                          aspectRatio;
+                                      }}
+                                    />
+                                    <button
+                                      onClick={() => handleRemoveImage(index)}
+                                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-600"
+                                    >
+                                      <FiX />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
 
-                          {/* Preview Added Images */}
-                          {newPostImages.length > 0 && (
-                            <div style={getImageGridStyles(newPostImages.length)}>
-                              {newPostImages.map((imageUrl, index) => (
-                                <div 
-                                  key={index} 
-                                  style={getImageContainerStyles(newPostImages.length, index)}
-                                  className="group"
-                                >
-                                  <img
-                                    src={imageUrl}
-                                    alt={`Preview ${index + 1}`}
-                                    className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                                    onError={(e) => {
-                                      e.target.onerror = null;
-                                      e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
-                                    }}
-                                    onLoad={(e) => {
-                                      const img = e.target;
-                                      const aspectRatio = img.naturalWidth / img.naturalHeight;
-                                      img.parentElement.style.aspectRatio = aspectRatio;
-                                    }}
-                                  />
-                                  <button
-                                    onClick={() => handleRemoveImage(index)}
-                                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-600"
-                                  >
-                                    <FiX />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          <select
+                            value={newPostType}
+                            onChange={(e) => setNewPostType(e.target.value)}
+                            className="w-full p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                          >
+                            <option value="news">News</option>
+                            <option value="events">Events</option>
+                            <option value="others">Others</option>
+                          </select>
                         </div>
-
-                        <select
-                          value={newPostType}
-                          onChange={(e) => setNewPostType(e.target.value)}
-                          className="w-full p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                        <button
+                          onClick={handlePostSubmit}
+                          className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
                         >
-                          <option value="news">News</option>
-                          <option value="events">Events</option>
-                          <option value="others">Others</option>
-                        </select>
+                          <FiPlus /> Post
+                        </button>
                       </div>
-                      <button
-                        onClick={handlePostSubmit}
-                        className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-                      >
-                        <FiPlus /> Post
-                      </button>
-                    </div>
                     ) : (
                       <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6 text-center">
                         <div className="flex flex-col items-center gap-4">
@@ -845,13 +893,23 @@ const CommunityPage = () => {
                           </div>
                           <div>
                             <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                              Upgrade to <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent font-bold"> Professional </span>
-                              <span className="text-gray-800"> or </span> 
-                              <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent font-bold"> Enterprise </span> Tier
+                              Upgrade to{" "}
+                              <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent font-bold">
+                                {" "}
+                                Professional{" "}
+                              </span>
+                              <span className="text-gray-800"> or </span>
+                              <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent font-bold">
+                                {" "}
+                                Enterprise{" "}
+                              </span>{" "}
+                              Tier
                             </h3>
-                            <p className="text-gray-600 mb-4">Create and share announcements with the community</p>
+                            <p className="text-gray-600 mb-4">
+                              Create and share announcements with the community
+                            </p>
                             <button
-                              onClick={() => navigate('/membership/upgrade')}
+                              onClick={() => navigate("/membership/upgrade")}
                               className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 flex items-center gap-2 mx-auto"
                             >
                               <FiTrendingUp />
@@ -881,7 +939,8 @@ const CommunityPage = () => {
                                     : "bg-gray-100 text-gray-800"
                                 }`}
                               >
-                                {post.type.charAt(0).toUpperCase() + post.type.slice(1)}
+                                {post.type.charAt(0).toUpperCase() +
+                                  post.type.slice(1)}
                               </span>
                             )}
                             {/* Delete button for user's own posts */}
@@ -923,11 +982,18 @@ const CommunityPage = () => {
                               {/* Display images if they exist */}
                               {post.images && post.images.length > 0 && (
                                 <div className="mt-4">
-                                  <div style={getImageGridStyles(post.images.length)}>
+                                  <div
+                                    style={getImageGridStyles(
+                                      post.images.length
+                                    )}
+                                  >
                                     {post.images.map((imageUrl, index) => (
-                                      <div 
-                                        key={index} 
-                                        style={getImageContainerStyles(post.images.length, index)}
+                                      <div
+                                        key={index}
+                                        style={getImageContainerStyles(
+                                          post.images.length,
+                                          index
+                                        )}
                                         className="group"
                                         onClick={(e) => e.stopPropagation()}
                                       >
@@ -937,28 +1003,44 @@ const CommunityPage = () => {
                                           className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
                                           onError={(e) => {
                                             e.target.onerror = null;
-                                            e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
+                                            e.target.src =
+                                              "https://via.placeholder.com/400x300?text=Image+Not+Found";
                                           }}
                                           onLoad={(e) => {
                                             // Calculate and set aspect ratio
                                             const img = e.target;
-                                            const aspectRatio = img.naturalWidth / img.naturalHeight;
-                                            img.parentElement.style.aspectRatio = aspectRatio;
+                                            const aspectRatio =
+                                              img.naturalWidth /
+                                              img.naturalHeight;
+                                            img.parentElement.style.aspectRatio =
+                                              aspectRatio;
                                           }}
                                         />
                                         <div className="absolute bottom-2 right-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                           <AnimatePresence>
-                                            {downloadingImages[`${post._id}-${index}`] !== undefined && (
+                                            {downloadingImages[
+                                              `${post._id}-${index}`
+                                            ] !== undefined && (
                                               <motion.div
-                                                initial={{ width: 0, opacity: 0 }}
-                                                animate={{ width: "100px", opacity: 1 }}
+                                                initial={{
+                                                  width: 0,
+                                                  opacity: 0,
+                                                }}
+                                                animate={{
+                                                  width: "100px",
+                                                  opacity: 1,
+                                                }}
                                                 exit={{ width: 0, opacity: 0 }}
                                                 className="h-1 bg-white/80 rounded-full overflow-hidden"
                                               >
                                                 <motion.div
                                                   initial={{ width: "0%" }}
                                                   animate={{
-                                                    width: `${downloadingImages[`${post._id}-${index}`]}%`,
+                                                    width: `${
+                                                      downloadingImages[
+                                                        `${post._id}-${index}`
+                                                      ]
+                                                    }%`,
                                                   }}
                                                   className="h-full bg-blue-500"
                                                   transition={{ duration: 0.1 }}
@@ -969,7 +1051,14 @@ const CommunityPage = () => {
                                           <motion.button
                                             whileHover={{ scale: 1.1 }}
                                             whileTap={{ scale: 0.9 }}
-                                            onClick={(e) => handleImageDownload(imageUrl, post._id, index, e)}
+                                            onClick={(e) =>
+                                              handleImageDownload(
+                                                imageUrl,
+                                                post._id,
+                                                index,
+                                                e
+                                              )
+                                            }
                                             className="bg-white/80 p-2 rounded-full hover:bg-white transition-colors"
                                           >
                                             <FiDownload className="text-blue-600" />
@@ -1358,14 +1447,20 @@ const CommunityPage = () => {
               <div className="p-8">
                 <div className="max-w-5xl mx-auto">
                   <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-2">Membership Information</h2>
-                    <p className="text-gray-600">View and manage your membership status</p>
+                    <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                      Membership Information
+                    </h2>
+                    <p className="text-gray-600">
+                      View and manage your membership status
+                    </p>
                   </div>
-                  
+
                   {membershipLoading ? (
-              <div className="text-center py-12">
+                    <div className="text-center py-12">
                       <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto"></div>
-                      <p className="mt-4 text-gray-600 text-lg">Loading your membership details...</p>
+                      <p className="mt-4 text-gray-600 text-lg">
+                        Loading your membership details...
+                      </p>
                     </div>
                   ) : membershipError ? (
                     <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center max-w-2xl mx-auto">
@@ -1382,23 +1477,32 @@ const CommunityPage = () => {
                               <FiAward className="text-3xl" />
                             </div>
                             <div>
-                              <h3 className="text-2xl font-bold">{membershipDetails.tier} Membership</h3>
-                              <p className="text-white/80">Membership ID: {membershipDetails.membershipId}</p>
+                              <h3 className="text-2xl font-bold">
+                                {membershipDetails.tier} Membership
+                              </h3>
+                              <p className="text-white/80">
+                                Membership ID: {membershipDetails.membershipId}
+                              </p>
                             </div>
                           </div>
-                          <div className={`px-4 py-2 rounded-full ${
-                            membershipDetails.status === 'active' 
-                              ? 'bg-green-500/20 text-green-100' 
-                              : 'bg-red-500/20 text-red-100'
-                          }`}>
+                          <div
+                            className={`px-4 py-2 rounded-full ${
+                              membershipDetails.status === "active"
+                                ? "bg-green-500/20 text-green-100"
+                                : "bg-red-500/20 text-red-100"
+                            }`}
+                          >
                             <span className="flex items-center space-x-2">
-                              {membershipDetails.status === 'active' ? (
+                              {membershipDetails.status === "active" ? (
                                 <FiCheckCircle className="text-xl" />
                               ) : (
                                 <FiXCircle className="text-xl" />
                               )}
                               <span className="font-medium">
-                                {membershipDetails.status.charAt(0).toUpperCase() + membershipDetails.status.slice(1)}
+                                {membershipDetails.status
+                                  .charAt(0)
+                                  .toUpperCase() +
+                                  membershipDetails.status.slice(1)}
                               </span>
                             </span>
                           </div>
@@ -1418,9 +1522,13 @@ const CommunityPage = () => {
                                 <FiCalendar className="text-blue-600 text-xl" />
                               </div>
                               <div>
-                                <p className="text-sm text-gray-500">Purchase Date</p>
+                                <p className="text-sm text-gray-500">
+                                  Purchase Date
+                                </p>
                                 <p className="text-lg font-medium text-gray-800">
-                                  {new Date(membershipDetails.purchaseDate).toLocaleDateString()}
+                                  {new Date(
+                                    membershipDetails.purchaseDate
+                                  ).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
@@ -1429,9 +1537,13 @@ const CommunityPage = () => {
                                 <FiClock className="text-purple-600 text-xl" />
                               </div>
                               <div>
-                                <p className="text-sm text-gray-500">Expiry Date</p>
+                                <p className="text-sm text-gray-500">
+                                  Expiry Date
+                                </p>
                                 <p className="text-lg font-medium text-gray-800">
-                                  {new Date(membershipDetails.expiryDate).toLocaleDateString()}
+                                  {new Date(
+                                    membershipDetails.expiryDate
+                                  ).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
@@ -1441,9 +1553,13 @@ const CommunityPage = () => {
                                   <FiCreditCard className="text-green-600 text-xl" />
                                 </div>
                                 <div>
-                                  <p className="text-sm text-gray-500">Payment Date</p>
+                                  <p className="text-sm text-gray-500">
+                                    Payment Date
+                                  </p>
                                   <p className="text-lg font-medium text-gray-800">
-                                    {new Date(membershipDetails.paymentDetails.paymentDate).toLocaleDateString()}
+                                    {new Date(
+                                      membershipDetails.paymentDetails.paymentDate
+                                    ).toLocaleDateString()}
                                   </p>
                                 </div>
                               </div>
@@ -1457,51 +1573,69 @@ const CommunityPage = () => {
                             <FiStar className="mr-2" /> Membership Benefits
                           </h3>
                           <div className="space-y-4">
-                            {membershipDetails.tier === 'Basic' && (
+                            {membershipDetails.tier === "Basic" && (
                               <>
                                 <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
                                   <FiUsers className="text-blue-500 text-xl" />
-                                  <span className="text-gray-700">Basic community access</span>
+                                  <span className="text-gray-700">
+                                    Basic community access
+                                  </span>
                                 </div>
                                 <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
                                   <FiCalendar className="text-blue-500 text-xl" />
-                                  <span className="text-gray-700">Access to community events</span>
+                                  <span className="text-gray-700">
+                                    Access to community events
+                                  </span>
                                 </div>
                                 <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
                                   <FiClock className="text-blue-500 text-xl" />
-                                  <span className="text-gray-700">1 month validity</span>
+                                  <span className="text-gray-700">
+                                    1 month validity
+                                  </span>
                                 </div>
                               </>
                             )}
-                            {membershipDetails.tier === 'Professional' && (
+                            {membershipDetails.tier === "Professional" && (
                               <>
                                 <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
                                   <FiTrendingUp className="text-purple-500 text-xl" />
-                                  <span className="text-gray-700">Enhanced networking features</span>
+                                  <span className="text-gray-700">
+                                    Enhanced networking features
+                                  </span>
                                 </div>
                                 <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
                                   <FiShield className="text-purple-500 text-xl" />
-                                  <span className="text-gray-700">Priority event access</span>
+                                  <span className="text-gray-700">
+                                    Priority event access
+                                  </span>
                                 </div>
                                 <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
                                   <FiClock className="text-purple-500 text-xl" />
-                                  <span className="text-gray-700">6 months validity</span>
+                                  <span className="text-gray-700">
+                                    6 months validity
+                                  </span>
                                 </div>
                               </>
                             )}
-                            {membershipDetails.tier === 'Enterprise' && (
+                            {membershipDetails.tier === "Enterprise" && (
                               <>
                                 <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
                                   <FiAward className="text-yellow-500 text-xl" />
-                                  <span className="text-gray-700">Premium platform access</span>
+                                  <span className="text-gray-700">
+                                    Premium platform access
+                                  </span>
                                 </div>
                                 <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
                                   <FiGift className="text-yellow-500 text-xl" />
-                                  <span className="text-gray-700">VIP event access</span>
+                                  <span className="text-gray-700">
+                                    VIP event access
+                                  </span>
                                 </div>
                                 <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
                                   <FiClock className="text-yellow-500 text-xl" />
-                                  <span className="text-gray-700">1 year validity</span>
+                                  <span className="text-gray-700">
+                                    1 year validity
+                                  </span>
                                 </div>
                               </>
                             )}
@@ -1512,22 +1646,23 @@ const CommunityPage = () => {
                       {/* Action Buttons */}
                       <div className="flex justify-center space-x-4 mt-8">
                         <button
-                          onClick={() => navigate('/membership/upgrade')}
+                          onClick={() => navigate("/membership/upgrade")}
                           className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl"
                         >
                           <FiTrendingUp />
                           <span>Upgrade Membership</span>
                         </button>
-                        {membershipDetails?.status === 'active' && membershipDetails?.tier !== 'Basic' && (
-                          <button
-                            onClick={() => setShowDowngradeConfirm(true)}
-                            className="px-6 py-3 bg-yellow-500/20 backdrop-blur-lg text-yellow-600 rounded-xl hover:bg-yellow-500/30 transition-all duration-300 flex items-center space-x-2 border border-yellow-200"
-                          >
-                            <FiTrendingDown />
-                            <span>Downgrade to Basic</span>
-                          </button>
-                        )}
-                        {membershipDetails?.status === 'active' && (
+                        {membershipDetails?.status === "active" &&
+                          membershipDetails?.tier !== "Basic" && (
+                            <button
+                              onClick={() => setShowDowngradeConfirm(true)}
+                              className="px-6 py-3 bg-yellow-500/20 backdrop-blur-lg text-yellow-600 rounded-xl hover:bg-yellow-500/30 transition-all duration-300 flex items-center space-x-2 border border-yellow-200"
+                            >
+                              <FiTrendingDown />
+                              <span>Downgrade to Basic</span>
+                            </button>
+                          )}
+                        {membershipDetails?.status === "active" && (
                           <button
                             onClick={() => setShowCancelConfirm(true)}
                             className="px-6 py-3 bg-red-500/20 backdrop-blur-lg text-red-600 rounded-xl hover:bg-red-500/30 transition-all duration-300 flex items-center space-x-2 border border-red-200"
@@ -1542,10 +1677,14 @@ const CommunityPage = () => {
                       {showDowngradeConfirm && (
                         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
                           <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-                            <h3 className="text-xl font-bold text-gray-800 mb-4">Downgrade Membership</h3>
+                            <h3 className="text-xl font-bold text-gray-800 mb-4">
+                              Downgrade Membership
+                            </h3>
                             <p className="text-gray-600 mb-6">
-                              Are you sure you want to downgrade your {membershipDetails?.tier} membership to Basic tier? 
-                              You will lose access to premium features but can still use your account.
+                              Are you sure you want to downgrade your{" "}
+                              {membershipDetails?.tier} membership to Basic
+                              tier? You will lose access to premium features but
+                              can still use your account.
                             </p>
                             <div className="flex justify-end space-x-4">
                               <button
@@ -1555,7 +1694,9 @@ const CommunityPage = () => {
                                 Keep Current Tier
                               </button>
                               <button
-                                onClick={() => handleCancelMembership('downgrade')}
+                                onClick={() =>
+                                  handleCancelMembership("downgrade")
+                                }
                                 className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
                               >
                                 Yes, Downgrade to Basic
@@ -1569,13 +1710,18 @@ const CommunityPage = () => {
                       {showCancelConfirm && (
                         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
                           <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-                            <h3 className="text-xl font-bold text-gray-800 mb-4">Cancel Membership</h3>
+                            <h3 className="text-xl font-bold text-gray-800 mb-4">
+                              Cancel Membership
+                            </h3>
                             <p className="text-gray-600 mb-6">
-                              {membershipDetails?.tier !== 'Basic' ? (
+                              {membershipDetails?.tier !== "Basic" ? (
                                 <>
-                                  Before cancelling, consider downgrading to Basic tier instead. 
-                                  This will allow you to keep using your account while reducing your subscription cost.
-                                  <br /><br />
+                                  Before cancelling, consider downgrading to
+                                  Basic tier instead. This will allow you to
+                                  keep using your account while reducing your
+                                  subscription cost.
+                                  <br />
+                                  <br />
                                   Would you like to:
                                 </>
                               ) : (
@@ -1589,7 +1735,7 @@ const CommunityPage = () => {
                               >
                                 Keep Membership
                               </button>
-                              {membershipDetails?.tier !== 'Basic' ? (
+                              {membershipDetails?.tier !== "Basic" ? (
                                 <button
                                   onClick={() => {
                                     setShowCancelConfirm(false);
@@ -1619,13 +1765,19 @@ const CommunityPage = () => {
                       {showFinalWarning && (
                         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
                           <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
-                            <h3 className="text-xl font-bold text-red-600 mb-4">Important Warning</h3>
+                            <h3 className="text-xl font-bold text-red-600 mb-4">
+                              Important Warning
+                            </h3>
                             <div className="bg-red-50 p-4 rounded-lg mb-6">
                               <p className="text-gray-800 mb-4">
-                                Cancelling your membership will not delete your account, but you will not be able to log in without an active membership.
+                                Cancelling your membership will not delete your
+                                account, but you will not be able to log in
+                                without an active membership.
                               </p>
                               <p className="text-gray-800">
-                                To continue using this account in the future, you will need to purchase at least a Basic membership again.
+                                To continue using this account in the future,
+                                you will need to purchase at least a Basic
+                                membership again.
                               </p>
                             </div>
                             <div className="flex justify-end space-x-4">
@@ -1639,7 +1791,7 @@ const CommunityPage = () => {
                                 Go Back
                               </button>
                               <button
-                                onClick={() => handleCancelMembership('cancel')}
+                                onClick={() => handleCancelMembership("cancel")}
                                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                               >
                                 Yes, I Understand - Cancel Membership
@@ -1676,117 +1828,192 @@ const CommunityPage = () => {
                         {showHistory && (
                           <div className="space-y-8">
                             {/* Membership Statistics */}
-                            {!statsLoading && !statsError && membershipStats && (
-                              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                                <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-                                  <h4 className="text-sm font-medium text-gray-500 mb-2">Total Purchases</h4>
-                                  <p className="text-2xl font-bold text-gray-800">{membershipStats.totalPurchases}</p>
+                            {!statsLoading &&
+                              !statsError &&
+                              membershipStats && (
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                                  <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+                                    <h4 className="text-sm font-medium text-gray-500 mb-2">
+                                      Total Purchases
+                                    </h4>
+                                    <p className="text-2xl font-bold text-gray-800">
+                                      {membershipStats.totalPurchases}
+                                    </p>
+                                  </div>
+                                  <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+                                    <h4 className="text-sm font-medium text-gray-500 mb-2">
+                                      Total Spent
+                                    </h4>
+                                    <p className="text-2xl font-bold text-gray-800">
+                                      ${membershipStats.totalSpent}
+                                    </p>
+                                  </div>
+                                  <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+                                    <h4 className="text-sm font-medium text-gray-500 mb-2">
+                                      Average Duration
+                                    </h4>
+                                    <p className="text-2xl font-bold text-gray-800">
+                                      {membershipStats.averageDuration} days
+                                    </p>
+                                  </div>
+                                  <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+                                    <h4 className="text-sm font-medium text-gray-500 mb-2">
+                                      Most Used Tier
+                                    </h4>
+                                    <p className="text-2xl font-bold text-gray-800">
+                                      {membershipStats.tierDistribution.sort(
+                                        (a, b) => b.count - a.count
+                                      )[0]?.tier || "N/A"}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-                                  <h4 className="text-sm font-medium text-gray-500 mb-2">Total Spent</h4>
-                                  <p className="text-2xl font-bold text-gray-800">${membershipStats.totalSpent}</p>
-                                </div>
-                                <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-                                  <h4 className="text-sm font-medium text-gray-500 mb-2">Average Duration</h4>
-                                  <p className="text-2xl font-bold text-gray-800">{membershipStats.averageDuration} days</p>
-                                </div>
-                                <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-                                  <h4 className="text-sm font-medium text-gray-500 mb-2">Most Used Tier</h4>
-                                  <p className="text-2xl font-bold text-gray-800">
-                                    {membershipStats.tierDistribution.sort((a, b) => b.count - a.count)[0]?.tier || 'N/A'}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
+                              )}
 
                             {/* History Table */}
                             <div className="bg-white/30 backdrop-blur-lg rounded-2xl border border-white/20 shadow-lg overflow-hidden">
                               {historyLoading ? (
                                 <div className="p-8 text-center">
                                   <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto"></div>
-                                  <p className="mt-4 text-gray-600">Loading membership history...</p>
+                                  <p className="mt-4 text-gray-600">
+                                    Loading membership history...
+                                  </p>
                                 </div>
                               ) : historyError ? (
                                 <div className="p-8 text-center">
                                   <FiXCircle className="text-red-500 text-4xl mx-auto mb-4" />
                                   <p className="text-red-600">{historyError}</p>
                                 </div>
-                              ) : !membershipHistory || membershipHistory.length === 0 ? (
+                              ) : !membershipHistory ||
+                                membershipHistory.length === 0 ? (
                                 <div className="p-8 text-center">
                                   <FiClock className="text-gray-400 text-4xl mx-auto mb-4" />
-                                  <p className="text-gray-600">No membership history found</p>
+                                  <p className="text-gray-600">
+                                    No membership history found
+                                  </p>
                                 </div>
                               ) : (
                                 <div className="overflow-x-auto">
                                   <table className="w-full">
                                     <thead>
                                       <tr className="bg-white/20">
-                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Membership Tier</th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Purchase Date</th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Expiry Date</th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Amount</th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Renewal</th>
-                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Payment Method</th>
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                          Membership Tier
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                          Purchase Date
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                          Expiry Date
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                          Status
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                          Amount
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                          Renewal
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                                          Payment Method
+                                        </th>
                                       </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/10">
-                                      {membershipHistory.map((history, index) => (
-                                        <tr key={index} className="hover:bg-white/10 transition-colors">
-                                          <td className="px-6 py-4">
-                                            <div className="flex items-center space-x-3">
-                                              <div className={`p-2 rounded-lg ${
-                                                history.tier === 'Basic' ? 'bg-blue-100' :
-                                                history.tier === 'Professional' ? 'bg-purple-100' :
-                                                'bg-yellow-100'
-                                              }`}>
-                                                <FiAward className={`text-xl ${
-                                                  history.tier === 'Basic' ? 'text-blue-600' :
-                                                  history.tier === 'Professional' ? 'text-purple-600' :
-                                                  'text-yellow-600'
-                                                }`} />
+                                      {membershipHistory.map(
+                                        (history, index) => (
+                                          <tr
+                                            key={index}
+                                            className="hover:bg-white/10 transition-colors"
+                                          >
+                                            <td className="px-6 py-4">
+                                              <div className="flex items-center space-x-3">
+                                                <div
+                                                  className={`p-2 rounded-lg ${
+                                                    history.tier === "Basic"
+                                                      ? "bg-blue-100"
+                                                      : history.tier ===
+                                                        "Professional"
+                                                      ? "bg-purple-100"
+                                                      : "bg-yellow-100"
+                                                  }`}
+                                                >
+                                                  <FiAward
+                                                    className={`text-xl ${
+                                                      history.tier === "Basic"
+                                                        ? "text-blue-600"
+                                                        : history.tier ===
+                                                          "Professional"
+                                                        ? "text-purple-600"
+                                                        : "text-yellow-600"
+                                                    }`}
+                                                  />
+                                                </div>
+                                                <div>
+                                                  <span className="font-medium text-gray-800">
+                                                    {history.tier}
+                                                  </span>
+                                                  <p className="text-xs text-gray-500">
+                                                    ID: {history.membershipId}
+                                                  </p>
+                                                </div>
                                               </div>
-                                              <div>
-                                                <span className="font-medium text-gray-800">{history.tier}</span>
-                                                <p className="text-xs text-gray-500">ID: {history.membershipId}</p>
-                                              </div>
-                                            </div>
-                                          </td>
-                                          <td className="px-6 py-4 text-gray-600">
-                                            {new Date(history.purchaseDate).toLocaleDateString()}
-                                          </td>
-                                          <td className="px-6 py-4 text-gray-600">
-                                            {new Date(history.expiryDate).toLocaleDateString()}
-                                          </td>
-                                          <td className="px-6 py-4">
-                                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                              history.status === 'active' ? 'bg-green-100 text-green-800' :
-                                              history.status === 'expired' ? 'bg-red-100 text-red-800' :
-                                              'bg-gray-100 text-gray-800'
-                                            }`}>
-                                              {history.status.charAt(0).toUpperCase() + history.status.slice(1)}
-                                            </span>
-                                          </td>
-                                          <td className="px-6 py-4 text-gray-600">
-                                            ${history.paymentDetails?.amount || 'N/A'}
-                                          </td>
-                                          <td className="px-6 py-4 text-gray-600">
-                                            {history.renewalCount > 0 ? (
-                                              <span className="flex items-center space-x-1">
-                                                <FiClock className="text-blue-500" />
-                                                <span>{history.renewalCount} times</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-600">
+                                              {new Date(
+                                                history.purchaseDate
+                                              ).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-600">
+                                              {new Date(
+                                                history.expiryDate
+                                              ).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                              <span
+                                                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                                  history.status === "active"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : history.status ===
+                                                      "expired"
+                                                    ? "bg-red-100 text-red-800"
+                                                    : "bg-gray-100 text-gray-800"
+                                                }`}
+                                              >
+                                                {history.status
+                                                  .charAt(0)
+                                                  .toUpperCase() +
+                                                  history.status.slice(1)}
                                               </span>
-                                            ) : (
-                                              'First Purchase'
-                                            )}
-                                          </td>
-                                          <td className="px-6 py-4 text-gray-600">
-                                            <span className="capitalize">
-                                              {history.paymentDetails?.paymentMethod?.replace('_', ' ') || 'N/A'}
-                                            </span>
-                                          </td>
-                                        </tr>
-                                      ))}
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-600">
+                                              $
+                                              {history.paymentDetails?.amount ||
+                                                "N/A"}
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-600">
+                                              {history.renewalCount > 0 ? (
+                                                <span className="flex items-center space-x-1">
+                                                  <FiClock className="text-blue-500" />
+                                                  <span>
+                                                    {history.renewalCount} times
+                                                  </span>
+                                                </span>
+                                              ) : (
+                                                "First Purchase"
+                                              )}
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-600">
+                                              <span className="capitalize">
+                                                {history.paymentDetails?.paymentMethod?.replace(
+                                                  "_",
+                                                  " "
+                                                ) || "N/A"}
+                                              </span>
+                                            </td>
+                                          </tr>
+                                        )
+                                      )}
                                     </tbody>
                                   </table>
                                 </div>
@@ -1801,18 +2028,23 @@ const CommunityPage = () => {
                       <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
                         <FiAward className="text-blue-600 text-3xl" />
                       </div>
-                      <h3 className="text-2xl font-bold text-gray-800 mb-3">No Active Membership</h3>
-                      <p className="text-gray-600 mb-8">Join our community and unlock exclusive benefits with a membership plan.</p>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-3">
+                        No Active Membership
+                      </h3>
+                      <p className="text-gray-600 mb-8">
+                        Join our community and unlock exclusive benefits with a
+                        membership plan.
+                      </p>
                       <div className="flex justify-center space-x-4">
                         <button
-                          onClick={() => navigate('/membership')}
+                          onClick={() => navigate("/membership")}
                           className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl"
                         >
                           <FiDollarSign />
                           <span>Purchase Membership</span>
                         </button>
                         <button
-                          onClick={() => navigate('/membership/compare')}
+                          onClick={() => navigate("/membership/compare")}
                           className="px-8 py-3 bg-white/20 backdrop-blur-lg text-gray-800 rounded-xl hover:bg-white/30 transition-all duration-300 flex items-center space-x-2 border border-white/20"
                         >
                           <FiZap />

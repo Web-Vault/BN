@@ -54,7 +54,9 @@ const GroupDashboard = () => {
   // Add state for attendance
   const [meetingAttendance, setMeetingAttendance] = useState({});
   const [loadingAttendance, setLoadingAttendance] = useState({});
-  const [hiddenAttendanceMeetings, setHiddenAttendanceMeetings] = useState(new Set());
+  const [hiddenAttendanceMeetings, setHiddenAttendanceMeetings] = useState(
+    new Set()
+  );
 
   // Add a new state for tracking which meetings have attendance data loaded
   const [loadedAttendanceMeetings, setLoadedAttendanceMeetings] = useState(
@@ -69,7 +71,9 @@ const GroupDashboard = () => {
   const [isEditingEvent, setIsEditingEvent] = useState(false);
   const [showBookingConfirmation, setShowBookingConfirmation] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [expandedBookingDetails, setExpandedBookingDetails] = useState(new Set());
+  const [expandedBookingDetails, setExpandedBookingDetails] = useState(
+    new Set()
+  );
   const [eventData, setEventData] = useState({
     title: "",
     description: "",
@@ -414,7 +418,7 @@ const GroupDashboard = () => {
       console.log("Fetching attendance for meeting:", meetingId);
       setLoadingAttendance((prev) => ({ ...prev, [meetingId]: true }));
       const token = localStorage.getItem("token");
-      
+
       const response = await axios.get(
         `${config.API_BASE_URL}/api/chapters/${chapterId}/meetings/${meetingId}/attendance`,
         {
@@ -423,7 +427,7 @@ const GroupDashboard = () => {
       );
 
       console.log("Raw attendance response:", response.data);
-      
+
       // Validate the response data
       if (!response.data || !response.data.attendance) {
         console.error("Invalid attendance data received from API");
@@ -650,7 +654,10 @@ const GroupDashboard = () => {
       console.error("❌ Error booking event:", error);
       if (error.response) {
         console.error("Error response:", error.response.data);
-        alert(error.response.data.message || "Failed to book event. Please try again.");
+        alert(
+          error.response.data.message ||
+            "Failed to book event. Please try again."
+        );
       } else {
         alert("Failed to book event. Please try again.");
       }
@@ -733,64 +740,65 @@ const GroupDashboard = () => {
 
             {/* Main Tabs Navigation */}
             <div className="border-b border-white/20 mb-6">
-              <nav className="flex space-x-8 justify-between">
-                <div className="flex space-x-8">
+              <nav className="flex flex-col lg:flex-row lg:space-x-8 lg:justify-between">
+                <div className="grid grid-cols-2 lg:flex lg:flex-nowrap lg:space-x-8 gap-1 lg:gap-0 w-full lg:w-auto">
                   <button
                     onClick={() => setActiveTab("activity")}
-                    className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
+                    className={`py-2.5 lg:py-4 px-2 lg:px-1 border-b-2 font-medium flex items-center justify-center lg:justify-start gap-1.5 lg:gap-2 text-sm lg:text-base ${
                       activeTab === "activity"
                         ? "text-blue-600 border-blue-500"
                         : "text-gray-600 hover:text-blue-500"
                     }`}
                   >
-                    <FiFileText className="text-lg" /> Activity
+                    <FiFileText className="text-base lg:text-lg" /> Activity
                   </button>
                   <button
                     onClick={() => setActiveTab("members")}
-                    className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
+                    className={`py-2.5 lg:py-4 px-2 lg:px-1 border-b-2 font-medium flex items-center justify-center lg:justify-start gap-1.5 lg:gap-2 text-sm lg:text-base ${
                       activeTab === "members"
                         ? "text-blue-600 border-blue-500"
                         : "text-gray-600 hover:text-blue-500"
                     }`}
                   >
-                    <FiUsers className="text-lg" /> Members
+                    <FiUsers className="text-base lg:text-lg" /> Members
                   </button>
                   <button
                     onClick={() => setActiveTab("meetings")}
-                    className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
+                    className={`py-2.5 lg:py-4 px-2 lg:px-1 border-b-2 font-medium flex items-center justify-center lg:justify-start gap-1.5 lg:gap-2 text-sm lg:text-base ${
                       activeTab === "meetings"
                         ? "text-blue-600 border-blue-500"
                         : "text-gray-600 hover:text-blue-500"
                     }`}
                   >
-                    <FiCalendar className="text-lg" /> Meetings
+                    <FiCalendar className="text-base lg:text-lg" /> Meetings
                   </button>
                   <button
                     onClick={() => setActiveTab("events")}
-                    className={`py-4 px-1 border-b-2 font-medium flex items-center gap-2 ${
+                    className={`py-2.5 lg:py-4 px-2 lg:px-1 border-b-2 font-medium flex items-center justify-center lg:justify-start gap-1.5 lg:gap-2 text-sm lg:text-base ${
                       activeTab === "events"
                         ? "text-blue-600 border-blue-500"
                         : "text-gray-600 hover:text-blue-500"
                     }`}
                   >
-                    <FiCalendar className="text-lg" /> Events
+                    <FiCalendar className="text-base lg:text-lg" /> Events
                   </button>
                 </div>
-                <div>
+                <div className="mt-3 lg:mt-0 flex justify-center lg:justify-end w-full lg:w-auto">
                   {activeTab === "meetings" && isCreator && (
                     <span
                       onClick={() => setShowMeetingForm(true)}
-                      className="relative right-0 bg-purple-100/50 px-4 py-2 ml-auto m-3 rounded-lg flex items-center w-max gap-2 cursor-pointer hover:bg-purple-200 transition"
+                      className="relative right-0 bg-purple-100/50 px-3 lg:px-4 py-2 ml-auto m-2 lg:m-3 rounded-lg flex items-center justify-center lg:justify-start w-full lg:w-auto gap-1.5 lg:gap-2 cursor-pointer hover:bg-purple-200 transition text-sm lg:text-base"
                     >
-                      <FiPlus className="text-lg" /> Schedule Meeting
+                      <FiPlus className="text-base lg:text-lg" /> Schedule
+                      Meeting
                     </span>
                   )}
                   {activeTab === "activity" && (
                     <span
                       onClick={() => setShowPostForm(true)}
-                      className="relative right-0 bg-purple-100/50 px-4 py-2 ml-auto m-3 rounded-lg flex items-center w-max gap-2 cursor-pointer hover:bg-purple-200 transition"
+                      className="relative right-0 bg-purple-100/50 px-3 lg:px-4 py-2 ml-auto m-2 lg:m-3 rounded-lg flex items-center justify-center lg:justify-start w-full lg:w-auto gap-1.5 lg:gap-2 cursor-pointer hover:bg-purple-200 transition text-sm lg:text-base"
                     >
-                      <FiPlus className="text-lg" /> Add Post
+                      <FiPlus className="text-base lg:text-lg" /> Add Post
                     </span>
                   )}
                 </div>
@@ -1130,22 +1138,30 @@ const GroupDashboard = () => {
                                 Meeting Attendance
                               </h4>
                               <div className="flex gap-2">
-                                {!loadedAttendanceMeetings.has(meeting._id) && !loadingAttendance[meeting._id] && (
-                                  <button
-                                    onClick={() => {
-                                      console.log("View Attendance clicked for meeting:", meeting._id);
-                                      console.log("Current loaded meetings:", Array.from(loadedAttendanceMeetings));
-                                      fetchMeetingAttendance(meeting._id);
-                                    }}
-                                    className="px-4 py-2 bg-purple-100/50 hover:bg-purple-200/50 text-purple-600 rounded-lg transition-colors flex items-center gap-2"
-                                  >
-                                    <FiUsers className="text-lg" /> View Attendance
-                                  </button>
-                                )}
+                                {!loadedAttendanceMeetings.has(meeting._id) &&
+                                  !loadingAttendance[meeting._id] && (
+                                    <button
+                                      onClick={() => {
+                                        console.log(
+                                          "View Attendance clicked for meeting:",
+                                          meeting._id
+                                        );
+                                        console.log(
+                                          "Current loaded meetings:",
+                                          Array.from(loadedAttendanceMeetings)
+                                        );
+                                        fetchMeetingAttendance(meeting._id);
+                                      }}
+                                      className="px-4 py-2 bg-purple-100/50 hover:bg-purple-200/50 text-purple-600 rounded-lg transition-colors flex items-center gap-2"
+                                    >
+                                      <FiUsers className="text-lg" /> View
+                                      Attendance
+                                    </button>
+                                  )}
                                 {loadedAttendanceMeetings.has(meeting._id) && (
                                   <button
                                     onClick={() => {
-                                      setHiddenAttendanceMeetings(prev => {
+                                      setHiddenAttendanceMeetings((prev) => {
                                         const newSet = new Set(prev);
                                         if (newSet.has(meeting._id)) {
                                           newSet.delete(meeting._id);
@@ -1157,13 +1173,17 @@ const GroupDashboard = () => {
                                     }}
                                     className="px-4 py-2 bg-blue-100/50 hover:bg-blue-200/50 text-blue-600 rounded-lg transition-colors flex items-center gap-2"
                                   >
-                                    {hiddenAttendanceMeetings.has(meeting._id) ? (
+                                    {hiddenAttendanceMeetings.has(
+                                      meeting._id
+                                    ) ? (
                                       <>
-                                        <FiUsers className="text-lg" /> Show Attendance
+                                        <FiUsers className="text-lg" /> Show
+                                        Attendance
                                       </>
                                     ) : (
                                       <>
-                                        <FiX className="text-lg" /> Hide Attendance
+                                        <FiX className="text-lg" /> Hide
+                                        Attendance
                                       </>
                                     )}
                                   </button>
@@ -1178,7 +1198,8 @@ const GroupDashboard = () => {
                                   Loading attendance data...
                                 </p>
                               </div>
-                            ) : loadedAttendanceMeetings.has(meeting._id) && !hiddenAttendanceMeetings.has(meeting._id) ? (
+                            ) : loadedAttendanceMeetings.has(meeting._id) &&
+                              !hiddenAttendanceMeetings.has(meeting._id) ? (
                               <div className="space-y-4">
                                 {/* Overall Attendance Rate */}
                                 <div className="bg-white/50 p-4 rounded-lg flex items-center justify-between">
@@ -1186,31 +1207,59 @@ const GroupDashboard = () => {
                                     <div className="text-center">
                                       <div className="text-3xl font-bold text-blue-600">
                                         {(() => {
-                                          const attendance = meetingAttendance[meeting._id];
-                                          console.log("Current attendance data:", attendance);
-                                          console.log("Chapter members:", chapterMembers);
-                                          
+                                          const attendance =
+                                            meetingAttendance[meeting._id];
+                                          console.log(
+                                            "Current attendance data:",
+                                            attendance
+                                          );
+                                          console.log(
+                                            "Chapter members:",
+                                            chapterMembers
+                                          );
+
                                           if (!Array.isArray(attendance)) {
-                                            console.log("Attendance is not an array");
+                                            console.log(
+                                              "Attendance is not an array"
+                                            );
                                             return "0%";
                                           }
-                                          
-                                          const presentCount = attendance.filter(a => a.status === "present" || a.status === "late").length;
-                                          const rate = Math.round((presentCount / chapterMembers.length) * 100);
-                                          console.log("Present count:", presentCount);
+
+                                          const presentCount =
+                                            attendance.filter(
+                                              (a) =>
+                                                a.status === "present" ||
+                                                a.status === "late"
+                                            ).length;
+                                          const rate = Math.round(
+                                            (presentCount /
+                                              chapterMembers.length) *
+                                              100
+                                          );
+                                          console.log(
+                                            "Present count:",
+                                            presentCount
+                                          );
                                           console.log("Attendance rate:", rate);
                                           return `${rate}%`;
                                         })()}
                                       </div>
-                                      <div className="text-sm text-gray-600">Attendance Rate</div>
+                                      <div className="text-sm text-gray-600">
+                                        Attendance Rate
+                                      </div>
                                     </div>
                                     <div className="text-sm text-gray-500">
                                       {(() => {
-                                        const attendance = meetingAttendance[meeting._id];
+                                        const attendance =
+                                          meetingAttendance[meeting._id];
                                         if (!Array.isArray(attendance)) {
                                           return `0 of ${chapterMembers.length} members attended`;
                                         }
-                                        const presentCount = attendance.filter(a => a.status === "present" || a.status === "late").length;
+                                        const presentCount = attendance.filter(
+                                          (a) =>
+                                            a.status === "present" ||
+                                            a.status === "late"
+                                        ).length;
                                         return `${presentCount} of ${chapterMembers.length} members attended`;
                                       })()}
                                     </div>
@@ -1222,96 +1271,155 @@ const GroupDashboard = () => {
                                   <div className="text-center p-3 bg-green-100 rounded-lg">
                                     <div className="text-2xl font-bold text-green-800">
                                       {(() => {
-                                        const attendance = meetingAttendance[meeting._id];
-                                        if (!Array.isArray(attendance)) return 0;
-                                        return attendance.filter(a => a.status === "present").length;
+                                        const attendance =
+                                          meetingAttendance[meeting._id];
+                                        if (!Array.isArray(attendance))
+                                          return 0;
+                                        return attendance.filter(
+                                          (a) => a.status === "present"
+                                        ).length;
                                       })()}
                                     </div>
-                                    <div className="text-sm text-green-600">Present</div>
+                                    <div className="text-sm text-green-600">
+                                      Present
+                                    </div>
                                   </div>
                                   <div className="text-center p-3 bg-yellow-100 rounded-lg">
                                     <div className="text-2xl font-bold text-yellow-800">
                                       {(() => {
-                                        const attendance = meetingAttendance[meeting._id];
-                                        if (!Array.isArray(attendance)) return 0;
-                                        return attendance.filter(a => a.status === "late").length;
+                                        const attendance =
+                                          meetingAttendance[meeting._id];
+                                        if (!Array.isArray(attendance))
+                                          return 0;
+                                        return attendance.filter(
+                                          (a) => a.status === "late"
+                                        ).length;
                                       })()}
                                     </div>
-                                    <div className="text-sm text-yellow-600">Late</div>
+                                    <div className="text-sm text-yellow-600">
+                                      Late
+                                    </div>
                                   </div>
                                   <div className="text-center p-3 bg-orange-100 rounded-lg">
                                     <div className="text-2xl font-bold text-orange-800">
                                       {(() => {
-                                        const attendance = meetingAttendance[meeting._id];
-                                        if (!Array.isArray(attendance)) return 0;
-                                        return attendance.filter(a => a.status === "left_early").length;
+                                        const attendance =
+                                          meetingAttendance[meeting._id];
+                                        if (!Array.isArray(attendance))
+                                          return 0;
+                                        return attendance.filter(
+                                          (a) => a.status === "left_early"
+                                        ).length;
                                       })()}
                                     </div>
-                                    <div className="text-sm text-orange-600">Left Early</div>
+                                    <div className="text-sm text-orange-600">
+                                      Left Early
+                                    </div>
                                   </div>
                                   <div className="text-center p-3 bg-red-100 rounded-lg">
                                     <div className="text-2xl font-bold text-red-800">
                                       {(() => {
-                                        const attendance = meetingAttendance[meeting._id];
-                                        if (!Array.isArray(attendance)) return chapterMembers.length;
-                                        const presentCount = attendance.filter(a => a.status === "present" || a.status === "late").length;
-                                        return chapterMembers.length - presentCount;
+                                        const attendance =
+                                          meetingAttendance[meeting._id];
+                                        if (!Array.isArray(attendance))
+                                          return chapterMembers.length;
+                                        const presentCount = attendance.filter(
+                                          (a) =>
+                                            a.status === "present" ||
+                                            a.status === "late"
+                                        ).length;
+                                        return (
+                                          chapterMembers.length - presentCount
+                                        );
                                       })()}
                                     </div>
-                                    <div className="text-sm text-red-600">Absent</div>
+                                    <div className="text-sm text-red-600">
+                                      Absent
+                                    </div>
                                   </div>
                                 </div>
 
                                 {/* Attendee Details */}
                                 <div className="mt-6">
-                                  <h5 className="font-medium text-gray-700 mb-3">Attendee Details</h5>
+                                  <h5 className="font-medium text-gray-700 mb-3">
+                                    Attendee Details
+                                  </h5>
                                   <div className="space-y-2 max-h-60 overflow-y-auto">
-                                    {Array.isArray(meetingAttendance[meeting._id]) ? 
-                                      meetingAttendance[meeting._id].map((record) => (
-                                        <div
-                                          key={record._id}
-                                          className="flex items-center justify-between bg-white/50 p-3 rounded-lg hover:bg-white/70 transition-colors"
-                                        >
-                                          <div className="flex items-center gap-3">
-                                            <img
-                                              src={record.user?.userImage || "/default-avatar.png"}
-                                              alt={record.user?.userName || "User"}
-                                              className="w-10 h-10 rounded-full border-2 border-white object-cover"
-                                            />
-                                            <div>
-                                              <div
-                                                onClick={() => record.user?._id && navigate(`/userProfile/${record.user._id}`)}
-                                                className="h2 d-block text-xl font-medium text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
-                                              >
-                                                {record.user?.userName || "Unknown User"}
-                                              </div>
-                                              <div className="text-sm text-gray-500">
-                                                Joined:{" "}
-                                                {record.joinTime ? new Date(record.joinTime).toLocaleTimeString() : "N/A"}
-                                                {record.leaveTime &&
-                                                  ` - Left: ${new Date(record.leaveTime).toLocaleTimeString()}`}
+                                    {Array.isArray(
+                                      meetingAttendance[meeting._id]
+                                    ) ? (
+                                      meetingAttendance[meeting._id].map(
+                                        (record) => (
+                                          <div
+                                            key={record._id}
+                                            className="flex items-center justify-between bg-white/50 p-3 rounded-lg hover:bg-white/70 transition-colors"
+                                          >
+                                            <div className="flex items-center gap-3">
+                                              <img
+                                                src={
+                                                  record.user?.userImage ||
+                                                  "/default-avatar.png"
+                                                }
+                                                alt={
+                                                  record.user?.userName ||
+                                                  "User"
+                                                }
+                                                className="w-10 h-10 rounded-full border-2 border-white object-cover"
+                                              />
+                                              <div>
+                                                <div
+                                                  onClick={() =>
+                                                    record.user?._id &&
+                                                    navigate(
+                                                      `/userProfile/${record.user._id}`
+                                                    )
+                                                  }
+                                                  className="h2 d-block text-xl font-medium text-gray-800 mb-2 p-1 relative cursor-pointer after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-gray-400 after:transition-all after:duration-300 hover:after:w-full rounded-full"
+                                                >
+                                                  {record.user?.userName ||
+                                                    "Unknown User"}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                  Joined:{" "}
+                                                  {record.joinTime
+                                                    ? new Date(
+                                                        record.joinTime
+                                                      ).toLocaleTimeString()
+                                                    : "N/A"}
+                                                  {record.leaveTime &&
+                                                    ` - Left: ${new Date(
+                                                      record.leaveTime
+                                                    ).toLocaleTimeString()}`}
+                                                </div>
                                               </div>
                                             </div>
+                                            <span
+                                              className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                                record.status === "present"
+                                                  ? "bg-green-100 text-green-800"
+                                                  : record.status === "late"
+                                                  ? "bg-yellow-100 text-yellow-800"
+                                                  : record.status ===
+                                                    "left_early"
+                                                  ? "bg-orange-100 text-orange-800"
+                                                  : "bg-red-100 text-red-800"
+                                              }`}
+                                            >
+                                              {record.status
+                                                ? record.status
+                                                    .charAt(0)
+                                                    .toUpperCase() +
+                                                  record.status.slice(1)
+                                                : "Unknown"}
+                                            </span>
                                           </div>
-                                          <span
-                                            className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                              record.status === "present"
-                                                ? "bg-green-100 text-green-800"
-                                                : record.status === "late"
-                                                ? "bg-yellow-100 text-yellow-800"
-                                                : record.status === "left_early"
-                                                ? "bg-orange-100 text-orange-800"
-                                                : "bg-red-100 text-red-800"
-                                            }`}
-                                          >
-                                            {record.status
-                                              ? record.status.charAt(0).toUpperCase() + record.status.slice(1)
-                                              : "Unknown"}
-                                          </span>
-                                        </div>
-                                      ))
-                                      : <div className="text-center py-4 text-gray-600">No attendance records available</div>
-                                    }
+                                        )
+                                      )
+                                    ) : (
+                                      <div className="text-center py-4 text-gray-600">
+                                        No attendance records available
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -1541,10 +1649,14 @@ const GroupDashboard = () => {
                               {event.title}
                             </h3>
                             <span className="px-3 py-1 rounded-full text-sm bg-blue-100/50 text-blue-600">
-                              {event.entryFee > 0 ? `₹${event.entryFee}` : "Free Entry"}
+                              {event.entryFee > 0
+                                ? `₹${event.entryFee}`
+                                : "Free Entry"}
                             </span>
                           </div>
-                          <p className="text-gray-600 mb-4">{event.description}</p>
+                          <p className="text-gray-600 mb-4">
+                            {event.description}
+                          </p>
                           <p className="text-gray-600 mb-4">
                             <strong>Purpose:</strong> {event.purpose}
                           </p>
@@ -1553,8 +1665,8 @@ const GroupDashboard = () => {
                             <div className="flex items-center gap-2 text-gray-600">
                               <FiCalendar className="text-blue-600" />
                               <span>
-                                {new Date(event.date).toLocaleDateString()} from {event.time} to{" "}
-                                {event.endTime}
+                                {new Date(event.date).toLocaleDateString()} from{" "}
+                                {event.time} to {event.endTime}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-gray-600">
@@ -1564,7 +1676,8 @@ const GroupDashboard = () => {
                             <div className="flex items-center gap-2 text-gray-600">
                               <FiUsers className="text-blue-600" />
                               <span>
-                                {event.availableSeats} of {event.totalSeats} seats available
+                                {event.availableSeats} of {event.totalSeats}{" "}
+                                seats available
                               </span>
                             </div>
                           </div>
@@ -1574,140 +1687,200 @@ const GroupDashboard = () => {
                             <button
                               onClick={() => openBookingConfirmation(event)}
                               disabled={
-                                event.availableSeats === 0 || 
-                                event.bookings?.some(booking => booking.user === localStorage.getItem("userId")) ||
-                                new Date(event.date) <= new Date(Date.now() + 24 * 60 * 60 * 1000)
+                                event.availableSeats === 0 ||
+                                event.bookings?.some(
+                                  (booking) =>
+                                    booking.user ===
+                                    localStorage.getItem("userId")
+                                ) ||
+                                new Date(event.date) <=
+                                  new Date(Date.now() + 24 * 60 * 60 * 1000)
                               }
                               className={`mt-4 px-4 py-2 rounded-lg ${
-                                event.availableSeats > 0 && 
-                                !event.bookings?.some(booking => booking.user === localStorage.getItem("userId")) &&
-                                new Date(event.date) > new Date(Date.now() + 24 * 60 * 60 * 1000)
+                                event.availableSeats > 0 &&
+                                !event.bookings?.some(
+                                  (booking) =>
+                                    booking.user ===
+                                    localStorage.getItem("userId")
+                                ) &&
+                                new Date(event.date) >
+                                  new Date(Date.now() + 24 * 60 * 60 * 1000)
                                   ? "bg-blue-600 text-white hover:bg-blue-700"
                                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
                               } transition-colors`}
                             >
-                              {event.bookings?.some(booking => booking.user === localStorage.getItem("userId"))
+                              {event.bookings?.some(
+                                (booking) =>
+                                  booking.user ===
+                                  localStorage.getItem("userId")
+                              )
                                 ? "Already Booked"
                                 : event.availableSeats === 0
                                 ? "No Seats Available"
-                                : new Date(event.date) <= new Date(Date.now() + 24 * 60 * 60 * 1000)
+                                : new Date(event.date) <=
+                                  new Date(Date.now() + 24 * 60 * 60 * 1000)
                                 ? "Booking Closed"
                                 : "Book Seat"}
                             </button>
                           )}
 
                           {/* Booking Details for Chapter Creator */}
-                          {isCreator && event.bookings && event.bookings.length > 0 && (
-                            <div className="mt-6 pt-6 border-t border-white/20">
-                              <div className="flex justify-between items-center mb-4">
-                                <h4 className="text-lg font-semibold text-gray-800">Booking Details</h4>
-                                <button
-                                  onClick={() => {
-                                    setExpandedBookingDetails(prev => {
-                                      const newSet = new Set(prev);
-                                      if (newSet.has(event._id)) {
-                                        newSet.delete(event._id);
-                                      } else {
-                                        newSet.add(event._id);
-                                      }
-                                      return newSet;
-                                    });
-                                  }}
-                                  className="px-4 py-2 bg-blue-100/50 hover:bg-blue-200/50 text-blue-600 rounded-lg transition-colors flex items-center gap-2"
-                                >
-                                  {expandedBookingDetails.has(event._id) ? (
-                                    <>
-                                      <FiX className="text-lg" /> Hide Details
-                                    </>
-                                  ) : (
-                                    <>
-                                      <FiUsers className="text-lg" /> Show Details
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                              {expandedBookingDetails.has(event._id) && (
-                                <div className="space-y-4">
-                                  {/* Booking Statistics */}
-                                  <div className="grid grid-cols-3 gap-4">
-                                    <div className="bg-white/50 p-4 rounded-lg text-center">
-                                      <div className="text-2xl font-bold text-blue-600">
-                                        {event.bookings.length}
+                          {isCreator &&
+                            event.bookings &&
+                            event.bookings.length > 0 && (
+                              <div className="mt-6 pt-6 border-t border-white/20">
+                                <div className="flex justify-between items-center mb-4">
+                                  <h4 className="text-lg font-semibold text-gray-800">
+                                    Booking Details
+                                  </h4>
+                                  <button
+                                    onClick={() => {
+                                      setExpandedBookingDetails((prev) => {
+                                        const newSet = new Set(prev);
+                                        if (newSet.has(event._id)) {
+                                          newSet.delete(event._id);
+                                        } else {
+                                          newSet.add(event._id);
+                                        }
+                                        return newSet;
+                                      });
+                                    }}
+                                    className="px-4 py-2 bg-blue-100/50 hover:bg-blue-200/50 text-blue-600 rounded-lg transition-colors flex items-center gap-2"
+                                  >
+                                    {expandedBookingDetails.has(event._id) ? (
+                                      <>
+                                        <FiX className="text-lg" /> Hide Details
+                                      </>
+                                    ) : (
+                                      <>
+                                        <FiUsers className="text-lg" /> Show
+                                        Details
+                                      </>
+                                    )}
+                                  </button>
+                                </div>
+                                {expandedBookingDetails.has(event._id) && (
+                                  <div className="space-y-4">
+                                    {/* Booking Statistics */}
+                                    <div className="grid grid-cols-3 gap-4">
+                                      <div className="bg-white/50 p-4 rounded-lg text-center">
+                                        <div className="text-2xl font-bold text-blue-600">
+                                          {event.bookings.length}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                          Total Bookings
+                                        </div>
                                       </div>
-                                      <div className="text-sm text-gray-600">Total Bookings</div>
-                                    </div>
-                                    <div className="bg-white/50 p-4 rounded-lg text-center">
-                                      <div className="text-2xl font-bold text-green-600">
-                                        {event.bookings.filter(b => b.paymentStatus === "completed").length}
-                                      </div>
-                                      <div className="text-sm text-gray-600">Completed Bookings</div>
-                                    </div>
-                                    <div className="bg-white/50 p-4 rounded-lg text-center">
-                                      <div className="text-2xl font-bold text-purple-600">
-                                        ₹{event.bookings.reduce((total, booking) => {
-                                          if (booking.paymentStatus === "completed") {
-                                            return total + (event.entryFee || 0);
+                                      <div className="bg-white/50 p-4 rounded-lg text-center">
+                                        <div className="text-2xl font-bold text-green-600">
+                                          {
+                                            event.bookings.filter(
+                                              (b) =>
+                                                b.paymentStatus === "completed"
+                                            ).length
                                           }
-                                          return total;
-                                        }, 0)}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                          Completed Bookings
+                                        </div>
                                       </div>
-                                      <div className="text-sm text-gray-600">Total Revenue</div>
+                                      <div className="bg-white/50 p-4 rounded-lg text-center">
+                                        <div className="text-2xl font-bold text-purple-600">
+                                          ₹
+                                          {event.bookings.reduce(
+                                            (total, booking) => {
+                                              if (
+                                                booking.paymentStatus ===
+                                                "completed"
+                                              ) {
+                                                return (
+                                                  total + (event.entryFee || 0)
+                                                );
+                                              }
+                                              return total;
+                                            },
+                                            0
+                                          )}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                          Total Revenue
+                                        </div>
+                                      </div>
                                     </div>
-                                  </div>
 
-                                  {/* Booked Members List */}
-                                  <div className="mt-4">
-                                    <h5 className="font-medium text-gray-700 mb-3">Booked Members</h5>
-                                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                                      {event.bookings.map((booking) => (
-                                        <div
-                                          key={booking._id}
-                                          className="flex items-center justify-between bg-white/50 p-3 rounded-lg"
-                                        >
-                                          <div className="flex items-center gap-3">
-                                            <img
-                                              src={booking.user?.userImage || "/default-avatar.png"}
-                                              alt={booking.user?.userName || "User"}
-                                              className="w-10 h-10 rounded-full border-2 border-white object-cover"
-                                            />
-                                            <div>
-                                              <div 
-                                                onClick={() => booking.user?._id && navigate(`/userProfile/${booking.user._id}`)}
-                                                className="font-medium text-gray-800 cursor-pointer hover:text-blue-600 transition-colors"
-                                              >
-                                                {booking.user?.userName || "Unknown User"}
-                                              </div>
-                                              <div className="text-sm text-gray-500">
-                                                {booking.user?.userEmail}
-                                              </div>
-                                              <div className="text-sm text-gray-500">
-                                                Booked on: {new Date(booking.bookingDate).toLocaleDateString()}
+                                    {/* Booked Members List */}
+                                    <div className="mt-4">
+                                      <h5 className="font-medium text-gray-700 mb-3">
+                                        Booked Members
+                                      </h5>
+                                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                                        {event.bookings.map((booking) => (
+                                          <div
+                                            key={booking._id}
+                                            className="flex items-center justify-between bg-white/50 p-3 rounded-lg"
+                                          >
+                                            <div className="flex items-center gap-3">
+                                              <img
+                                                src={
+                                                  booking.user?.userImage ||
+                                                  "/default-avatar.png"
+                                                }
+                                                alt={
+                                                  booking.user?.userName ||
+                                                  "User"
+                                                }
+                                                className="w-10 h-10 rounded-full border-2 border-white object-cover"
+                                              />
+                                              <div>
+                                                <div
+                                                  onClick={() =>
+                                                    booking.user?._id &&
+                                                    navigate(
+                                                      `/userProfile/${booking.user._id}`
+                                                    )
+                                                  }
+                                                  className="font-medium text-gray-800 cursor-pointer hover:text-blue-600 transition-colors"
+                                                >
+                                                  {booking.user?.userName ||
+                                                    "Unknown User"}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                  {booking.user?.userEmail}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                  Booked on:{" "}
+                                                  {new Date(
+                                                    booking.bookingDate
+                                                  ).toLocaleDateString()}
+                                                </div>
                                               </div>
                                             </div>
+                                            <div className="flex items-center gap-2">
+                                              <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                                Confirmed
+                                              </span>
+                                              {event.entryFee > 0 && (
+                                                <div className="flex flex-col items-end">
+                                                  <span className="text-sm font-medium text-gray-800">
+                                                    ₹{event.entryFee}
+                                                  </span>
+                                                  <span className="text-xs text-gray-500">
+                                                    {booking.paymentStatus ===
+                                                    "completed"
+                                                      ? "Paid"
+                                                      : "Pending"}
+                                                  </span>
+                                                </div>
+                                              )}
+                                            </div>
                                           </div>
-                                          <div className="flex items-center gap-2">
-                                            <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                                              Confirmed
-                                            </span>
-                                            {event.entryFee > 0 && (
-                                              <div className="flex flex-col items-end">
-                                                <span className="text-sm font-medium text-gray-800">
-                                                  ₹{event.entryFee}
-                                                </span>
-                                                <span className="text-xs text-gray-500">
-                                                  {booking.paymentStatus === "completed" ? "Paid" : "Pending"}
-                                                </span>
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      ))}
+                                        ))}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
+                                )}
+                              </div>
+                            )}
                         </div>
 
                         {isCreator && (
@@ -1916,7 +2089,9 @@ const GroupDashboard = () => {
                       Cancel
                     </button>
                     <button
-                      onClick={isEditingEvent ? handleEditEvent : handleCreateEvent}
+                      onClick={
+                        isEditingEvent ? handleEditEvent : handleCreateEvent
+                      }
                       className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
                     >
                       {isEditingEvent ? "Update Event" : "Create Event"}

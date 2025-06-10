@@ -156,9 +156,13 @@ const UserProfile = () => {
 
         if (user.isSeeker) {
           // For seekers, merge their requests with other requests
-          setFundingRequests(prevRequests => {
-            const ownRequests = prevRequests.filter(req => req.seeker._id === user.id);
-            const otherRequests = requestsRes.data.filter(req => req.seeker._id !== user.id);
+          setFundingRequests((prevRequests) => {
+            const ownRequests = prevRequests.filter(
+              (req) => req.seeker._id === user.id
+            );
+            const otherRequests = requestsRes.data.filter(
+              (req) => req.seeker._id !== user.id
+            );
             return [...ownRequests, ...otherRequests];
           });
         } else {
@@ -166,7 +170,9 @@ const UserProfile = () => {
           setFundingRequests(requestsRes.data);
         }
       } catch (err) {
-        setErrorInvestments(err.response?.data?.msg || "Error loading investment data");
+        setErrorInvestments(
+          err.response?.data?.msg || "Error loading investment data"
+        );
       } finally {
         setLoadingInvestments(false);
       }
@@ -987,7 +993,11 @@ const UserProfile = () => {
                       </button>
                     ) : (
                       <button
-                        onClick={() => toast.error("Only seekers can create funding requests")}
+                        onClick={() =>
+                          toast.error(
+                            "Only seekers can create funding requests"
+                          )
+                        }
                         className="mb-4 px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-lg shadow-lg flex items-center gap-2 opacity-50 cursor-not-allowed"
                       >
                         <FiPlus className="text-lg" /> New Funding Request
@@ -1001,7 +1011,7 @@ const UserProfile = () => {
                       <div className="text-red-500 p-4">{errorInvestments}</div>
                     ) : fundingRequests.length > 0 ? (
                       fundingRequests
-                        .filter(request => {
+                        .filter((request) => {
                           if (!user.isSeeker) {
                             // For non-seekers, show all requests
                             return true;
@@ -1010,21 +1020,26 @@ const UserProfile = () => {
                           return user.isSeeker;
                         })
                         .map((request) => {
-                          const isDeadlinePassed = new Date(request.deadline) < new Date();
-                          const isFullyFunded = request.currentFunding >= request.amount;
+                          const isDeadlinePassed =
+                            new Date(request.deadline) < new Date();
+                          const isFullyFunded =
+                            request.currentFunding >= request.amount;
                           const canInvest = !isDeadlinePassed && !isFullyFunded;
-                          const isMyRequest = request.seeker && request.seeker._id === user.id;
+                          const isMyRequest =
+                            request.seeker && request.seeker._id === user.id;
 
                           return (
                             <div
                               key={request._id}
-                              className={`bg-white/30 backdrop-blur-sm p-4 rounded-lg border ${
-                                isMyRequest ? 'border-blue-200' : 'border-white/20'
+                              className={`bg-white/30 backdrop-blur-sm p-3 lg:p-4 rounded-lg border ${
+                                isMyRequest
+                                  ? "border-blue-200"
+                                  : "border-white/20"
                               } hover:bg-white/50 transition-all`}
                             >
-                              <div className="lg:flex lg:justify-between items-center">
-                                <div>
-                                  <div className="flex items-center gap-2">
+                              <div className="flex flex-col lg:flex-row lg:justify-between gap-3 lg:gap-0">
+                                <div className="w-full lg:w-auto">
+                                  <div className="flex flex-wrap items-center gap-2">
                                     <h4 className="text-lg font-semibold text-gray-800">
                                       {request.title}
                                     </h4>
@@ -1034,10 +1049,10 @@ const UserProfile = () => {
                                       </span>
                                     )}
                                   </div>
-                                  <span className="text-sm text-gray-600 font-normal border-l-2 border-gray-400 pl-2">
+                                  <span className="text-sm text-gray-600 font-normal border-l-2 border-gray-400 pl-2 block mt-2">
                                     {request.description}
                                   </span>
-                                  <div className="mt-2 flex items-center gap-4 text-gray-600">
+                                  <div className="mt-2 flex flex-wrap items-center gap-2 lg:gap-4 text-gray-600">
                                     <span className="bg-blue-100/50 px-3 py-1 rounded-lg text-sm text-blue-700">
                                       {request.type}
                                     </span>
@@ -1063,20 +1078,22 @@ const UserProfile = () => {
                                     </span>
                                   </div>
                                 </div>
-                                <div className="lg:text-right p-2 lg:p-0">
+                                <div className="w-full lg:w-auto lg:text-right">
                                   <p className="text-2xl font-bold text-blue-600">
                                     ${request.currentFunding}/${request.amount}
                                   </p>
-                                  <div className="mt-2 flex justify-end items-center gap-3 text-sm text-gray-600">
+                                  <div className="mt-2 lg:mt-3 flex flex-wrap justify-start lg:justify-end items-center gap-2">
                                     <span className="flex items-center gap-1 d-block text-nowrap">
                                       <FiTrendingUp className="text-blue-600" />
                                       {request.returns}
                                     </span>
                                     {!user.isSeeker && !isMyRequest && (
                                       <button
-                                        onClick={() => handleInvest(request._id)}
+                                        onClick={() =>
+                                          handleInvest(request._id)
+                                        }
                                         disabled={!canInvest}
-                                        className={`px-4 py-2 rounded-lg ${
+                                        className={`px-4 py-2 rounded-lg w-full lg:w-auto ${
                                           canInvest
                                             ? "bg-green-500 text-white hover:bg-green-600"
                                             : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -1095,11 +1112,14 @@ const UserProfile = () => {
                               <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
                                 <div
                                   className={`h-2 rounded-full ${
-                                    isFullyFunded ? "bg-green-600" : "bg-blue-600"
+                                    isFullyFunded
+                                      ? "bg-green-600"
+                                      : "bg-blue-600"
                                   }`}
                                   style={{
                                     width: `${
-                                      (request.currentFunding / request.amount) *
+                                      (request.currentFunding /
+                                        request.amount) *
                                       100
                                     }%`,
                                   }}
@@ -1110,7 +1130,7 @@ const UserProfile = () => {
                         })
                     ) : (
                       <p className="text-gray-500">
-                        {fundingRequestsTab === "my" 
+                        {fundingRequestsTab === "my"
                           ? "You haven't posted any funding requests yet."
                           : "No funding requests available."}
                       </p>
@@ -1151,14 +1171,14 @@ const UserProfile = () => {
                         return (
                           <div
                             key={investment._id}
-                            className="bg-white/30 backdrop-blur-sm p-4 rounded-lg border border-white/20 hover:bg-white/50 transition-all"
+                            className="bg-white/30 backdrop-blur-sm p-3 lg:p-4 rounded-lg border border-white/20 hover:bg-white/50 transition-all"
                           >
-                            <div className="lg:flex lg:justify-between items-center">
-                              <div>
+                            <div className="flex flex-col lg:flex-row lg:justify-between gap-3 lg:gap-0">
+                              <div className="w-full lg:w-auto">
                                 <h4 className="text-lg font-semibold text-gray-800">
                                   {investment.title}
                                 </h4>
-                                <div className="mt-2 flex items-center gap-4 text-gray-600">
+                                <div className="mt-2 flex flex-wrap items-center gap-2 lg:gap-4 text-gray-600">
                                   <span className="bg-purple-100/50 px-3 py-1 rounded-lg text-sm text-purple-700">
                                     {investment.type}
                                   </span>
@@ -1180,11 +1200,11 @@ const UserProfile = () => {
                                   </span>
                                 </div>
                               </div>
-                              <div className="mt-3 lg:mt-0 lg:text-right">
+                              <div className="w-full lg:w-auto lg:text-right">
                                 <p className="text-xl font-bold text-blue-600">
                                   Returns: ${investment.returns.toFixed(2)}
                                 </p>
-                                <div className="mt-3 flex justify-end items-center gap-2">
+                                <div className="mt-2 lg:mt-3 flex flex-wrap justify-start lg:justify-end items-center gap-2">
                                   <span
                                     className={`px-2 py-1 text-sm rounded-lg ${
                                       investment.status === "Active"
@@ -1206,7 +1226,7 @@ const UserProfile = () => {
                                   )}
                                   {isDeadlinePassed && (
                                     <button
-                                      className={`px-4 py-1.5 rounded-lg transition-shadow ${
+                                      className={`px-4 py-1.5 rounded-lg transition-shadow w-full lg:w-auto ${
                                         hasActiveWithdrawal ||
                                         hasCompletedWithdrawal ||
                                         investment.type === "donation"
@@ -1232,7 +1252,8 @@ const UserProfile = () => {
                                     </button>
                                   )}
                                   {!isDeadlinePassed && (
-                                    <span className="px-2 py-1 text-sm rounded-lg bg-yellow-100/50 text-yellow-700">
+                                    <span className="px-2 py-1 text-sm rounded-lg bg-yellow-100/50 text-yellow-700 w-full lg:w-auto text-center">
+                                      {" "}
                                       Wait for Deadline
                                     </span>
                                   )}
