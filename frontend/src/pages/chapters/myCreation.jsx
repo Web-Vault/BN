@@ -1762,17 +1762,17 @@ const GroupDashboard = () => {
                                 {expandedBookingDetails.has(event._id) && (
                                   <div className="space-y-4">
                                     {/* Booking Statistics */}
-                                    <div className="grid grid-cols-3 gap-4">
-                                      <div className="bg-white/50 p-4 rounded-lg text-center">
-                                        <div className="text-2xl font-bold text-blue-600">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                                      <div className="bg-white/50 p-3 sm:p-4 rounded-lg text-center">
+                                        <div className="text-xl sm:text-2xl font-bold text-blue-600">
                                           {event.bookings.length}
                                         </div>
-                                        <div className="text-sm text-gray-600">
+                                        <div className="text-xs sm:text-sm text-gray-600">
                                           Total Bookings
                                         </div>
                                       </div>
-                                      <div className="bg-white/50 p-4 rounded-lg text-center">
-                                        <div className="text-2xl font-bold text-green-600">
+                                      <div className="bg-white/50 p-3 sm:p-4 rounded-lg text-center">
+                                        <div className="text-xl sm:text-2xl font-bold text-green-600">
                                           {
                                             event.bookings.filter(
                                               (b) =>
@@ -1780,12 +1780,12 @@ const GroupDashboard = () => {
                                             ).length
                                           }
                                         </div>
-                                        <div className="text-sm text-gray-600">
+                                        <div className="text-xs sm:text-sm text-gray-600">
                                           Completed Bookings
                                         </div>
                                       </div>
-                                      <div className="bg-white/50 p-4 rounded-lg text-center">
-                                        <div className="text-2xl font-bold text-purple-600">
+                                      <div className="bg-white/50 p-3 sm:p-4 rounded-lg text-center sm:col-span-2 lg:col-span-1">
+                                        <div className="text-xl sm:text-2xl font-bold text-purple-600">
                                           ₹
                                           {event.bookings.reduce(
                                             (total, booking) => {
@@ -1802,24 +1802,24 @@ const GroupDashboard = () => {
                                             0
                                           )}
                                         </div>
-                                        <div className="text-sm text-gray-600">
+                                        <div className="text-xs sm:text-sm text-gray-600">
                                           Total Revenue
                                         </div>
                                       </div>
                                     </div>
 
                                     {/* Booked Members List */}
-                                    <div className="mt-4">
-                                      <h5 className="font-medium text-gray-700 mb-3">
+                                    <div className="mt-3 sm:mt-4">
+                                      <h5 className="font-medium text-gray-700 mb-2 sm:mb-3 text-sm sm:text-base">
                                         Booked Members
                                       </h5>
-                                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                                      <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto">
                                         {event.bookings.map((booking) => (
                                           <div
                                             key={booking._id}
-                                            className="flex items-center justify-between bg-white/50 p-3 rounded-lg"
+                                            className="flex items-center justify-between bg-white/50 p-2 sm:p-3 rounded-lg"
                                           >
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2 sm:gap-3">
                                               <img
                                                 src={
                                                   booking.user?.userImage ||
@@ -1829,7 +1829,7 @@ const GroupDashboard = () => {
                                                   booking.user?.userName ||
                                                   "User"
                                                 }
-                                                className="w-10 h-10 rounded-full border-2 border-white object-cover"
+                                                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white object-cover"
                                               />
                                               <div>
                                                 <div
@@ -1839,15 +1839,15 @@ const GroupDashboard = () => {
                                                       `/userProfile/${booking.user._id}`
                                                     )
                                                   }
-                                                  className="font-medium text-gray-800 cursor-pointer hover:text-blue-600 transition-colors"
+                                                  className="font-medium text-gray-800 cursor-pointer hover:text-blue-600 transition-colors text-sm sm:text-base"
                                                 >
                                                   {booking.user?.userName ||
                                                     "Unknown User"}
                                                 </div>
-                                                <div className="text-sm text-gray-500">
+                                                <div className="text-xs sm:text-sm text-gray-500">
                                                   {booking.user?.userEmail}
                                                 </div>
-                                                <div className="text-sm text-gray-500">
+                                                <div className="text-xs sm:text-sm text-gray-500">
                                                   Booked on:{" "}
                                                   {new Date(
                                                     booking.bookingDate
@@ -1855,16 +1855,16 @@ const GroupDashboard = () => {
                                                 </div>
                                               </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                              <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                            <div className="flex items-center gap-1 sm:gap-2">
+                                              <span className="px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-green-100 text-green-800">
                                                 Confirmed
                                               </span>
                                               {event.entryFee > 0 && (
                                                 <div className="flex flex-col items-end">
-                                                  <span className="text-sm font-medium text-gray-800">
+                                                  <span className="text-xs sm:text-sm font-medium text-gray-800">
                                                     ₹{event.entryFee}
                                                   </span>
-                                                  <span className="text-xs text-gray-500">
+                                                  <span className="text-[10px] sm:text-xs text-gray-500">
                                                     {booking.paymentStatus ===
                                                     "completed"
                                                       ? "Paid"

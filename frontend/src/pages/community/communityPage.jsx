@@ -798,28 +798,28 @@ const CommunityPage = () => {
                     {userMembership &&
                     (userMembership.tier === "Professional" ||
                       userMembership.tier === "Enterprise") ? (
-                      <div className="bg-white/30 backdrop-blur-lg rounded-xl p-6">
+                      <div className="bg-white/30 backdrop-blur-lg rounded-xl p-4 sm:p-6">
                         <textarea
                           value={newPost}
                           onChange={(e) => setNewPost(e.target.value)}
                           placeholder="Share something with the community..."
-                          className="w-full p-4 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                          className="w-full p-3 sm:p-4 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base"
                           rows="3"
                         />
                         <div className="mt-4 space-y-4">
                           {/* Image Input Section */}
                           <div className="space-y-4">
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <input
                                 type="text"
                                 value={newImageUrl}
                                 onChange={(e) => setNewImageUrl(e.target.value)}
                                 placeholder="Enter image URL"
-                                className="flex-1 p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                                className="flex-1 p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base"
                               />
                               <button
                                 onClick={handleAddImage}
-                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                                className="px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
                               >
                                 <FiPlus /> Add Image
                               </button>
@@ -871,7 +871,7 @@ const CommunityPage = () => {
                           <select
                             value={newPostType}
                             onChange={(e) => setNewPostType(e.target.value)}
-                            className="w-full p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                            className="w-full p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm sm:text-base"
                           >
                             <option value="news">News</option>
                             <option value="events">Events</option>
@@ -880,7 +880,7 @@ const CommunityPage = () => {
                         </div>
                         <button
                           onClick={handlePostSubmit}
-                          className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                          className="mt-4 w-full sm:w-auto px-4 sm:px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
                         >
                           <FiPlus /> Post
                         </button>
@@ -1444,49 +1444,51 @@ const CommunityPage = () => {
 
             {/* Membership Tab */}
             {activeTab === "membership" && (
-              <div className="p-8">
+              <div className="p-3 sm:p-8">
                 <div className="max-w-5xl mx-auto">
-                  <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                  <div className="text-center mb-6 sm:mb-8">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
                       Membership Information
                     </h2>
-                    <p className="text-gray-600">
+                    <p className="text-sm sm:text-base text-gray-600">
                       View and manage your membership status
                     </p>
                   </div>
 
                   {membershipLoading ? (
-                    <div className="text-center py-12">
-                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mx-auto"></div>
-                      <p className="mt-4 text-gray-600 text-lg">
+                    <div className="text-center py-8 sm:py-12">
+                      <div className="animate-spin rounded-full h-12 sm:h-16 w-12 sm:w-16 border-4 border-blue-500 border-t-transparent mx-auto"></div>
+                      <p className="mt-4 text-sm sm:text-lg text-gray-600">
                         Loading your membership details...
                       </p>
                     </div>
                   ) : membershipError ? (
-                    <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center max-w-2xl mx-auto">
-                      <FiXCircle className="text-red-500 text-5xl mx-auto mb-4" />
-                      <p className="text-red-600 text-lg">{membershipError}</p>
+                    <div className="bg-red-50 border border-red-200 rounded-xl sm:rounded-2xl p-4 sm:p-8 text-center max-w-2xl mx-auto">
+                      <FiXCircle className="text-red-500 text-4xl sm:text-5xl mx-auto mb-4" />
+                      <p className="text-base sm:text-lg text-red-600">
+                        {membershipError}
+                      </p>
                     </div>
                   ) : membershipDetails ? (
-                    <div className="space-y-8">
+                    <div className="space-y-6 sm:space-y-8">
                       {/* Membership Status Card */}
-                      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="bg-white/20 p-3 rounded-xl">
-                              <FiAward className="text-3xl" />
+                      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl sm:rounded-2xl p-4 sm:p-8 text-white shadow-xl">
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 sm:gap-0">
+                          <div className="flex items-center space-x-3 sm:space-x-4">
+                            <div className="bg-white/20 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                              <FiAward className="text-2xl sm:text-3xl" />
                             </div>
                             <div>
-                              <h3 className="text-2xl font-bold">
+                              <h3 className="text-xl sm:text-2xl font-bold">
                                 {membershipDetails.tier} Membership
                               </h3>
-                              <p className="text-white/80">
+                              <p className="text-sm sm:text-base text-white/80">
                                 Membership ID: {membershipDetails.membershipId}
                               </p>
                             </div>
                           </div>
                           <div
-                            className={`px-4 py-2 rounded-full ${
+                            className={`px-3 sm:px-4 py-2 rounded-full ${
                               membershipDetails.status === "active"
                                 ? "bg-green-500/20 text-green-100"
                                 : "bg-red-500/20 text-red-100"
@@ -1494,11 +1496,11 @@ const CommunityPage = () => {
                           >
                             <span className="flex items-center space-x-2">
                               {membershipDetails.status === "active" ? (
-                                <FiCheckCircle className="text-xl" />
+                                <FiCheckCircle className="text-lg sm:text-xl" />
                               ) : (
-                                <FiXCircle className="text-xl" />
+                                <FiXCircle className="text-lg sm:text-xl" />
                               )}
-                              <span className="font-medium">
+                              <span className="font-medium text-sm sm:text-base">
                                 {membershipDetails.status
                                   .charAt(0)
                                   .toUpperCase() +
@@ -1510,37 +1512,37 @@ const CommunityPage = () => {
                       </div>
 
                       {/* Membership Details Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         {/* Left Column - Membership Info */}
-                        <div className="bg-white/30 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg">
-                          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <div className="bg-white/30 backdrop-blur-lg rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20 shadow-lg">
+                          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6 flex items-center">
                             <FiClock className="mr-2" /> Membership Timeline
                           </h3>
-                          <div className="space-y-6">
-                            <div className="flex items-start space-x-4">
-                              <div className="bg-blue-100 p-3 rounded-xl">
-                                <FiCalendar className="text-blue-600 text-xl" />
+                          <div className="space-y-4 sm:space-y-6">
+                            <div className="flex items-start space-x-3 sm:space-x-4">
+                              <div className="bg-blue-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                                <FiCalendar className="text-blue-600 text-lg sm:text-xl" />
                               </div>
                               <div>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-xs sm:text-sm text-gray-500">
                                   Purchase Date
                                 </p>
-                                <p className="text-lg font-medium text-gray-800">
+                                <p className="text-base sm:text-lg font-medium text-gray-800">
                                   {new Date(
                                     membershipDetails.purchaseDate
                                   ).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex items-start space-x-4">
-                              <div className="bg-purple-100 p-3 rounded-xl">
-                                <FiClock className="text-purple-600 text-xl" />
+                            <div className="flex items-start space-x-3 sm:space-x-4">
+                              <div className="bg-purple-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                                <FiClock className="text-purple-600 text-lg sm:text-xl" />
                               </div>
                               <div>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-xs sm:text-sm text-gray-500">
                                   Expiry Date
                                 </p>
-                                <p className="text-lg font-medium text-gray-800">
+                                <p className="text-base sm:text-lg font-medium text-gray-800">
                                   {new Date(
                                     membershipDetails.expiryDate
                                   ).toLocaleDateString()}
@@ -1548,15 +1550,15 @@ const CommunityPage = () => {
                               </div>
                             </div>
                             {membershipDetails.paymentDetails && (
-                              <div className="flex items-start space-x-4">
-                                <div className="bg-green-100 p-3 rounded-xl">
-                                  <FiCreditCard className="text-green-600 text-xl" />
+                              <div className="flex items-start space-x-3 sm:space-x-4">
+                                <div className="bg-green-100 p-2 sm:p-3 rounded-lg sm:rounded-xl">
+                                  <FiCreditCard className="text-green-600 text-lg sm:text-xl" />
                                 </div>
                                 <div>
-                                  <p className="text-sm text-gray-500">
+                                  <p className="text-xs sm:text-sm text-gray-500">
                                     Payment Date
                                   </p>
-                                  <p className="text-lg font-medium text-gray-800">
+                                  <p className="text-base sm:text-lg font-medium text-gray-800">
                                     {new Date(
                                       membershipDetails.paymentDetails.paymentDate
                                     ).toLocaleDateString()}
@@ -1568,28 +1570,28 @@ const CommunityPage = () => {
                         </div>
 
                         {/* Right Column - Membership Benefits */}
-                        <div className="bg-white/30 backdrop-blur-lg rounded-2xl p-6 border border-white/20 shadow-lg">
-                          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <div className="bg-white/30 backdrop-blur-lg rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20 shadow-lg">
+                          <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4 sm:mb-6 flex items-center">
                             <FiStar className="mr-2" /> Membership Benefits
                           </h3>
-                          <div className="space-y-4">
+                          <div className="space-y-3 sm:space-y-4">
                             {membershipDetails.tier === "Basic" && (
                               <>
-                                <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
-                                  <FiUsers className="text-blue-500 text-xl" />
-                                  <span className="text-gray-700">
+                                <div className="flex items-center space-x-3 p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl">
+                                  <FiUsers className="text-blue-500 text-lg sm:text-xl" />
+                                  <span className="text-sm sm:text-base text-gray-700">
                                     Basic community access
                                   </span>
                                 </div>
-                                <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
-                                  <FiCalendar className="text-blue-500 text-xl" />
-                                  <span className="text-gray-700">
+                                <div className="flex items-center space-x-3 p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl">
+                                  <FiCalendar className="text-blue-500 text-lg sm:text-xl" />
+                                  <span className="text-sm sm:text-base text-gray-700">
                                     Access to community events
                                   </span>
                                 </div>
-                                <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
-                                  <FiClock className="text-blue-500 text-xl" />
-                                  <span className="text-gray-700">
+                                <div className="flex items-center space-x-3 p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl">
+                                  <FiClock className="text-blue-500 text-lg sm:text-xl" />
+                                  <span className="text-sm sm:text-base text-gray-700">
                                     1 month validity
                                   </span>
                                 </div>
@@ -1597,21 +1599,21 @@ const CommunityPage = () => {
                             )}
                             {membershipDetails.tier === "Professional" && (
                               <>
-                                <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
-                                  <FiTrendingUp className="text-purple-500 text-xl" />
-                                  <span className="text-gray-700">
+                                <div className="flex items-center space-x-3 p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl">
+                                  <FiTrendingUp className="text-purple-500 text-lg sm:text-xl" />
+                                  <span className="text-sm sm:text-base text-gray-700">
                                     Enhanced networking features
                                   </span>
                                 </div>
-                                <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
-                                  <FiShield className="text-purple-500 text-xl" />
-                                  <span className="text-gray-700">
+                                <div className="flex items-center space-x-3 p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl">
+                                  <FiShield className="text-purple-500 text-lg sm:text-xl" />
+                                  <span className="text-sm sm:text-base text-gray-700">
                                     Priority event access
                                   </span>
                                 </div>
-                                <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
-                                  <FiClock className="text-purple-500 text-xl" />
-                                  <span className="text-gray-700">
+                                <div className="flex items-center space-x-3 p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl">
+                                  <FiClock className="text-purple-500 text-lg sm:text-xl" />
+                                  <span className="text-sm sm:text-base text-gray-700">
                                     6 months validity
                                   </span>
                                 </div>
@@ -1619,21 +1621,21 @@ const CommunityPage = () => {
                             )}
                             {membershipDetails.tier === "Enterprise" && (
                               <>
-                                <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
-                                  <FiAward className="text-yellow-500 text-xl" />
-                                  <span className="text-gray-700">
+                                <div className="flex items-center space-x-3 p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl">
+                                  <FiAward className="text-yellow-500 text-lg sm:text-xl" />
+                                  <span className="text-sm sm:text-base text-gray-700">
                                     Premium platform access
                                   </span>
                                 </div>
-                                <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
-                                  <FiGift className="text-yellow-500 text-xl" />
-                                  <span className="text-gray-700">
+                                <div className="flex items-center space-x-3 p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl">
+                                  <FiGift className="text-yellow-500 text-lg sm:text-xl" />
+                                  <span className="text-sm sm:text-base text-gray-700">
                                     VIP event access
                                   </span>
                                 </div>
-                                <div className="flex items-center space-x-3 p-3 bg-white/20 rounded-xl">
-                                  <FiClock className="text-yellow-500 text-xl" />
-                                  <span className="text-gray-700">
+                                <div className="flex items-center space-x-3 p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl">
+                                  <FiClock className="text-yellow-500 text-lg sm:text-xl" />
+                                  <span className="text-sm sm:text-base text-gray-700">
                                     1 year validity
                                   </span>
                                 </div>
@@ -1644,10 +1646,10 @@ const CommunityPage = () => {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex justify-center space-x-4 mt-8">
+                      <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-6 sm:mt-8">
                         <button
                           onClick={() => navigate("/membership/upgrade")}
-                          className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                          className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg sm:rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl text-sm sm:text-base"
                         >
                           <FiTrendingUp />
                           <span>Upgrade Membership</span>
@@ -1656,7 +1658,7 @@ const CommunityPage = () => {
                           membershipDetails?.tier !== "Basic" && (
                             <button
                               onClick={() => setShowDowngradeConfirm(true)}
-                              className="px-6 py-3 bg-yellow-500/20 backdrop-blur-lg text-yellow-600 rounded-xl hover:bg-yellow-500/30 transition-all duration-300 flex items-center space-x-2 border border-yellow-200"
+                              className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-yellow-500/20 backdrop-blur-lg text-yellow-600 rounded-lg sm:rounded-xl hover:bg-yellow-500/30 transition-all duration-300 flex items-center justify-center space-x-2 border border-yellow-200 text-sm sm:text-base"
                             >
                               <FiTrendingDown />
                               <span>Downgrade to Basic</span>
@@ -1665,7 +1667,7 @@ const CommunityPage = () => {
                         {membershipDetails?.status === "active" && (
                           <button
                             onClick={() => setShowCancelConfirm(true)}
-                            className="px-6 py-3 bg-red-500/20 backdrop-blur-lg text-red-600 rounded-xl hover:bg-red-500/30 transition-all duration-300 flex items-center space-x-2 border border-red-200"
+                            className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-red-500/20 backdrop-blur-lg text-red-600 rounded-lg sm:rounded-xl hover:bg-red-500/30 transition-all duration-300 flex items-center justify-center space-x-2 border border-red-200 text-sm sm:text-base"
                           >
                             <FiXCircle />
                             <span>Cancel Membership</span>
@@ -1753,7 +1755,7 @@ const CommunityPage = () => {
                                   }}
                                   className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                                 >
-                                  Yes, Cancel Membership
+                                  Yes, I Understand - Cancel Membership
                                 </button>
                               )}
                             </div>
