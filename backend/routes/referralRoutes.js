@@ -1,7 +1,7 @@
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
 import users from "../models/users.js";
-import Referral from "../models/referral.js";
+import Referral from "../models/Referral.js";
 import Activity from "../models/activity.js";
 import { createActivityNotification } from "../controllers/notificationController.js";
 
