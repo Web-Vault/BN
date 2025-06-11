@@ -15,6 +15,7 @@ import {
 import Navbar from "../../components/Navbar.js";
 import axios from "axios";
 import config from "../../config/config.js";
+import { toast } from "react-hot-toast";
 
 const GroupsPage = () => {
   const [activeTab, setActiveTab] = useState("all");
@@ -24,8 +25,6 @@ const GroupsPage = () => {
   const [error, setError] = useState("");
   const [isUserInAnyChapter, setIsUserInAnyChapter] = useState(false);
   const [userChapterStatus, setUserChapterStatus] = useState(null);
-  const [showStatusMessage, setShowStatusMessage] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
 
   // Filter states
   const [selectedRegion, setSelectedRegion] = useState("");
@@ -105,30 +104,12 @@ const GroupsPage = () => {
     setSelectedTech("");
   };
 
-  console.log("users : ", users);
-  console.log("chapters : ", chapters);
-  // Mock data for all groups
-
-  // chapters.map((group) => {
-  //   if (group.chapterCreator?._id === userId) {
-  //     setMemberAction("Creator");
-  //   } else {
-  //     group.members.map((member) => {
-  //       if (member._id === userId) {
-  //         setMemberAction("Member");
-  //       }
-  //     });
-  //   }
-  // });
-
   // Handle joining a group
   const handleJoinGroup = async (chapterId, chapterRegion) => {
     if (isUserInAnyChapter) {
-      setStatusMessage(userChapterStatus === 'creator' 
+      toast.error(userChapterStatus === 'creator' 
         ? "You are a creator of a chapter. You cannot join other chapters."
         : "You are already a member of a chapter. You cannot join other chapters.");
-      setShowStatusMessage(true);
-      setTimeout(() => setShowStatusMessage(false), 3000);
       return;
     }
 
@@ -136,16 +117,12 @@ const GroupsPage = () => {
     const userState = users?.state || users?.address?.state;
     
     if (!userState) {
-      setStatusMessage("Please update your profile with your state information before joining a chapter.");
-      setShowStatusMessage(true);
-      setTimeout(() => setShowStatusMessage(false), 3000);
+      toast.error("Please update your profile with your state information before joining a chapter.");
       return;
     }
 
     if (userState.toLowerCase() !== chapterRegion?.toLowerCase()) {
-      setStatusMessage(`You can only join chapters in your region (${userState}). This chapter is in ${chapterRegion}.`);
-      setShowStatusMessage(true);
-      setTimeout(() => setShowStatusMessage(false), 3000);
+      toast.error(`You can only join chapters in your region (${userState}). This chapter is in ${chapterRegion}.`);
       return;
     }
 
@@ -161,18 +138,12 @@ const GroupsPage = () => {
         }
       );
       console.log("✅ Join Request Sent:", response.data);
-      setStatusMessage("Join request sent successfully!");
-      setShowStatusMessage(true);
-      setTimeout(() => setShowStatusMessage(false), 3000);
+      toast.success("Join request sent successfully!");
     } catch (err) {
       console.error("❌ Error joining group:", err.response?.data || err.message);
-      setStatusMessage("Already requested to Join. Kindly wait for approval.");
-      setShowStatusMessage(true);
-      setTimeout(() => setShowStatusMessage(false), 3000);
+      toast.error("Already requested to Join. Kindly wait for approval.");
     }
   };
-
-  // Filter groups by category
 
   return (
     <>
@@ -248,14 +219,6 @@ const GroupsPage = () => {
               </div>
             )}
           </div>
-
-          {/* Show error message when trying to join while already in a chapter */}
-          {showStatusMessage && (
-            <div className="mx-6 mt-4 p-3 rounded-lg bg-red-100/50 text-red-700 flex items-center gap-2 animate-fade-in">
-              <FiAlertCircle className="text-lg" />
-              {statusMessage}
-            </div>
-          )}
 
           {/* Error Message */}
           {error && (
