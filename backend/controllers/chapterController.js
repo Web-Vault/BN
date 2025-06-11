@@ -1,5 +1,8 @@
 import Chapter from "../models/chapter.js";
 import users from "../models/users.js";
+import { areTechnologiesSimilar } from "../utils/techNormalizer.js";
+import Notification from "../models/notification.js";
+import jwt from "jsonwebtoken";
 
 export const getAllChapters = async (req, res) => {
         try {
@@ -240,32 +243,165 @@ export const removeMemberFromChapter = async (req, res) => {
         }
 };
 
+export const checkChapterExists = async (req, res) => {
+    try {
+        const { region, tech } = req.query;
+        
+        if (!region || !tech) {
+            return res.status(400).json({ 
+                message: "Region and technology are required" 
+            });
+        }
+
+        // Find all chapters in the same region
+        const chaptersInRegion = await Chapter.find({ chapterRegion: region });
+
+        // Check for similar technologies
+        const similarChapters = chaptersInRegion.filter(chapter => 
+            areTechnologiesSimilar(chapter.chapterTech, tech)
+        );
+
+        if (similarChapters.length > 0) {
+            return res.status(200).json({ 
+                exists: true,
+                similar: true,
+                chapters: similarChapters.map(chapter => ({
+                    name: chapter.chapterName,
+                    region: chapter.chapterRegion,
+                    tech: chapter.chapterTech
+                }))
+            });
+        }
+
+        res.status(200).json({ 
+            exists: false,
+            similar: false,
+            chapters: []
+        });
+    } catch (error) {
+        console.error("❌ Error checking chapter existence:", error);
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
 export const createChapter = async (req, res) => {
-  try {
-    const { chapterName, chapterDesc, chapterTech } = req.body;
-    const userId = req.user._id;
+    try {
+        const { 
+            chapterName, 
+            chapterDesc, 
+            chapterTech,
+            chapterRegion,
+            chapterCity,
+            chapterLocation,
+            chapterWebsite,
+            chapterEmail,
+            confirmSimilarTech // New field to confirm if user wants to proceed with similar tech
+        } = req.body;
+        const userId = req.user._id;
 
-    const newChapter = new Chapter({
-      chapterName,
-      chapterDesc,
-      chapterTech,
-      chapterCreator: userId,
-      members: [userId], // Creator is automatically a member
-    });
+        // Find all chapters in the same region
+        const chaptersInRegion = await Chapter.find({ chapterRegion });
 
-    await newChapter.save();
+        // Check for similar technologies
+        const similarChapters = chaptersInRegion.filter(chapter => 
+            areTechnologiesSimilar(chapter.chapterTech, chapterTech)
+        );
 
-    // Update user's groupJoined status
-    await users.findByIdAndUpdate(userId, {
-      groupJoined: {
-        Joined: true,
-        JoinedGroupId: newChapter._id
-      }
-    });
+        // If similar chapters exist and user hasn't confirmed, return error
+        if (similarChapters.length > 0 && !confirmSimilarTech) {
+            return res.status(400).json({ 
+                message: "Similar technology chapters exist in this region",
+                similar: true,
+                chapters: similarChapters.map(chapter => ({
+                    name: chapter.chapterName,
+                    region: chapter.chapterRegion,
+                    tech: chapter.chapterTech
+                }))
+            });
+        }
 
-    res.status(201).json(newChapter);
-  } catch (error) {
-    console.error("❌ Error creating chapter:", error);
-    res.status(500).json({ message: "Failed to create chapter", error: error.message });
-  }
+        const newChapter = new Chapter({
+            chapterName,
+            chapterDesc,
+            chapterTech,
+            chapterRegion,
+            chapterCity,
+            chapterLocation,
+            chapterWebsite,
+            chapterEmail,
+            chapterCreator: userId,
+            members: [userId]
+        });
+
+        await newChapter.save();
+
+        // Update user's groupJoined status
+        await users.findByIdAndUpdate(userId, {
+            groupJoined: {
+                Joined: true,
+                JoinedGroupId: newChapter._id
+            }
+        });
+
+        res.status(201).json(newChapter);
+    } catch (error) {
+        console.error("❌ Error creating chapter:", error);
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+};
+
+export const deleteChapter = async (req, res) => {
+    try {
+        const chapterId = req.params.id;
+        const userId = req.user._id; // Get userId from the auth middleware
+
+        // Find the chapter
+        const chapter = await Chapter.findById(chapterId);
+        if (!chapter) {
+            return res.status(404).json({ message: "Chapter not found" });
+        }
+
+        // Check if user is the creator
+        if (chapter.chapterCreator.toString() !== userId.toString()) {
+            return res.status(403).json({ message: "Only chapter creator can delete the chapter" });
+        }
+
+        // Get all members before deletion
+        const members = chapter.members || [];
+        const memberIds = members.map(member => member._id);
+
+        // Update all members' joinedChapter status
+        await users.updateMany(
+            { _id: { $in: memberIds } },
+            { $set: { joinedChapter: false } }
+        );
+
+        // Create notifications for all members
+        const notifications = memberIds.map(memberId => ({
+            user: memberId,
+            sender: userId,
+            type: "one_to_one", // Using a valid notification type
+            title: "Chapter Deleted",
+            message: `The chapter "${chapter.chapterName}" has been deleted. You have been automatically removed from the chapter.`,
+            metadata: {
+                chapterId: chapterId,
+                action: "chapter_deleted"
+            },
+            read: false,
+            priority: "high"
+        }));
+
+        await Notification.insertMany(notifications);
+
+        // Delete the chapter
+        await Chapter.findByIdAndDelete(chapterId);
+
+        res.status(200).json({ 
+            message: "Chapter deleted successfully",
+            notificationsSent: notifications.length
+        });
+    } catch (error) {
+        console.error("Error deleting chapter:", error);
+        res.status(500).json({ message: "Error deleting chapter" });
+    }
 };

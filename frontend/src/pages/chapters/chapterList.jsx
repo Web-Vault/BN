@@ -8,6 +8,9 @@ import {
   FiCheck,
   FiClock,
   FiInfo,
+  FiX,
+  FiMapPin,
+  FiAlertCircle,
 } from "react-icons/fi";
 import Navbar from "../../components/Navbar.js";
 import axios from "axios";
@@ -17,10 +20,20 @@ const GroupsPage = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [users, setUsers] = useState();
   const [chapters, setChapters] = useState([]);
+  const [filteredChapters, setFilteredChapters] = useState([]);
   const [error, setError] = useState("");
   const [isUserInAnyChapter, setIsUserInAnyChapter] = useState(false);
-  const [userChapterStatus, setUserChapterStatus] = useState(null); // 'creator' or 'member' or null
+  const [userChapterStatus, setUserChapterStatus] = useState(null);
   const [showStatusMessage, setShowStatusMessage] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+
+  // Filter states
+  const [selectedRegion, setSelectedRegion] = useState("");
+  const [selectedTech, setSelectedTech] = useState("");
+
+  // Get unique regions and technologies from chapters
+  const regions = [...new Set(chapters.map(chapter => chapter.chapterRegion))].filter(Boolean);
+  const technologies = [...new Set(chapters.map(chapter => chapter.chapterTech))].filter(Boolean);
 
   const userId = localStorage.getItem("userId");
 
@@ -38,7 +51,12 @@ const GroupsPage = () => {
         ]);
 
         setChapters(chaptersRes.data);
-        setUsers(userRes.data);
+        setFilteredChapters(chaptersRes.data);
+        setUsers(userRes.data.user);
+
+        console.log("Fetched User Data:", userRes.data.user);
+        console.log("User Address:", userRes.data.user?.address);
+        console.log("User State:", userRes.data.user?.address?.state);
 
         // Check if user is a creator or member of any chapter
         const isCreator = chaptersRes.data.some(
@@ -67,6 +85,26 @@ const GroupsPage = () => {
     fetchChapters();
   }, [userId]);
 
+  // Apply filters whenever filter states change
+  useEffect(() => {
+    let filtered = [...chapters];
+
+    if (selectedRegion) {
+      filtered = filtered.filter(chapter => chapter.chapterRegion === selectedRegion);
+    }
+
+    if (selectedTech) {
+      filtered = filtered.filter(chapter => chapter.chapterTech === selectedTech);
+    }
+
+    setFilteredChapters(filtered);
+  }, [selectedRegion, selectedTech, chapters]);
+
+  const clearFilters = () => {
+    setSelectedRegion("");
+    setSelectedTech("");
+  };
+
   console.log("users : ", users);
   console.log("chapters : ", chapters);
   // Mock data for all groups
@@ -84,14 +122,33 @@ const GroupsPage = () => {
   // });
 
   // Handle joining a group
-  const handleJoinGroup = async (chapterId) => {
+  const handleJoinGroup = async (chapterId, chapterRegion) => {
     if (isUserInAnyChapter) {
+      setStatusMessage(userChapterStatus === 'creator' 
+        ? "You are a creator of a chapter. You cannot join other chapters."
+        : "You are already a member of a chapter. You cannot join other chapters.");
       setShowStatusMessage(true);
-      setTimeout(() => setShowStatusMessage(false), 3000); // Hide message after 3 seconds
+      setTimeout(() => setShowStatusMessage(false), 3000);
       return;
     }
 
-    console.log("Joining Chapter ID:", chapterId);
+    // Check if user's state matches chapter's region
+    const userState = users?.state || users?.address?.state;
+    
+    if (!userState) {
+      setStatusMessage("Please update your profile with your state information before joining a chapter.");
+      setShowStatusMessage(true);
+      setTimeout(() => setShowStatusMessage(false), 3000);
+      return;
+    }
+
+    if (userState.toLowerCase() !== chapterRegion?.toLowerCase()) {
+      setStatusMessage(`You can only join chapters in your region (${userState}). This chapter is in ${chapterRegion}.`);
+      setShowStatusMessage(true);
+      setTimeout(() => setShowStatusMessage(false), 3000);
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
@@ -104,9 +161,14 @@ const GroupsPage = () => {
         }
       );
       console.log("✅ Join Request Sent:", response.data);
+      setStatusMessage("Join request sent successfully!");
+      setShowStatusMessage(true);
+      setTimeout(() => setShowStatusMessage(false), 3000);
     } catch (err) {
       console.error("❌ Error joining group:", err.response?.data || err.message);
-      alert("Already requested to Join. Kindly wait for approval.");
+      setStatusMessage("Already requested to Join. Kindly wait for approval.");
+      setShowStatusMessage(true);
+      setTimeout(() => setShowStatusMessage(false), 3000);
     }
   };
 
@@ -133,17 +195,69 @@ const GroupsPage = () => {
             </nav>
           </div>
 
+          {/* Filters Section */}
+          <div className="px-4 sm:px-6 py-4 border-b border-white/20">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-end">
+              <div className={`w-full ${(selectedRegion || selectedTech) ? 'sm:w-2/5' : 'sm:w-1/2'}`}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Region
+                </label>
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80 backdrop-blur-sm"
+                >
+                  <option value="">All Regions</option>
+                  {regions.map((region) => (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={`w-full ${(selectedRegion || selectedTech) ? 'sm:w-2/5' : 'sm:w-1/2'}`}>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Technology
+                </label>
+                <select
+                  value={selectedTech}
+                  onChange={(e) => setSelectedTech(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80 backdrop-blur-sm"
+                >
+                  <option value="">All Technologies</option>
+                  {technologies.map((tech) => (
+                    <option key={tech} value={tech}>
+                      {tech}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {(selectedRegion || selectedTech) && (
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-100/50 backdrop-blur-sm text-red-600 hover:text-red-700 transition-colors"
+                >
+                  <FiX className="text-lg" />
+                  Remove Filters
+                </button>
+              )}
+            </div>
+            {filteredChapters.length === 0 && (
+              <div className="mt-4 text-center text-gray-600">
+                No chapters found matching the selected filters.
+              </div>
+            )}
+          </div>
+
           {/* Show error message when trying to join while already in a chapter */}
           {showStatusMessage && (
             <div className="mx-6 mt-4 p-3 rounded-lg bg-red-100/50 text-red-700 flex items-center gap-2 animate-fade-in">
-              <FiInfo className="text-lg" />
-              {userChapterStatus === 'creator' 
-                ? "You are a creator of a chapter. You cannot join other chapters."
-                : "You are already a member of a chapter. You cannot join other chapters."}
+              <FiAlertCircle className="text-lg" />
+              {statusMessage}
             </div>
           )}
 
-          {/* Category Filter Dropdown */}
+          {/* Error Message */}
           {error && (
             <div className="text-red-600 bg-red-100 rounded-lg p-3 mx-6 mt-4 shadow">
               {error}
@@ -152,7 +266,7 @@ const GroupsPage = () => {
 
           {/* Groups Grid */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-3 lg:p-8">
-            {chapters.map((group) => (
+            {filteredChapters.map((group) => (
               <div
                 key={group._id}
                 className="bg-white/30 backdrop-blur-lg rounded-xl border border-white/20 p-6 transition-shadow"
@@ -187,10 +301,14 @@ const GroupsPage = () => {
                     <FiMail className="text-blue-600" />
                     <span>{group.chapterCreator?.userEmail}</span>
                   </div>
+                  <div className="bg-green-100/50 p-2 rounded-lg flex items-center gap-2 text-sm w-full">
+                    <FiMapPin className="text-blue-600" />
+                    <span>{group.chapterRegion}</span>
+                  </div>
                 </div>
                 {/* Join Button */}
                 <button
-                  onClick={() => handleJoinGroup(group._id)}
+                  onClick={() => handleJoinGroup(group._id, group.chapterRegion)}
                   disabled={group.chapterCreator?._id === userId || group.members?.some((member) => member._id === userId)}
                   className={`w-full px-4 py-2 rounded-lg flex items-center justify-center gap-2 ${
                     group.chapterCreator?._id === userId || group.members?.some((member) => member._id === userId)

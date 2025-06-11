@@ -21,6 +21,8 @@ const CreateChapter = () => {
     chapterName: "",
     chapterDesc: "",
     chapterTech: "",
+    chapterRegion: "",
+    chapterCity: "",
     chapterLocation: "",
     chapterWebsite: "",
     chapterEmail: "",
@@ -28,6 +30,9 @@ const CreateChapter = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [currentUser, setCurrentUser] = useState(null);
+  const [similarChapters, setSimilarChapters] = useState([]);
+  const [showSimilarDialog, setShowSimilarDialog] = useState(false);
+  const [confirmSimilarTech, setConfirmSimilarTech] = useState(false);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -103,6 +108,12 @@ const CreateChapter = () => {
     if (!formData.chapterTech.trim()) {
       newErrors.chapterTech = "Chapter technology is required";
     }
+    if (!formData.chapterRegion.trim()) {
+      newErrors.chapterRegion = "Region is required";
+    }
+    if (!formData.chapterCity.trim()) {
+      newErrors.chapterCity = "City is required";
+    }
     if (!formData.chapterLocation.trim()) {
       newErrors.chapterLocation = "Chapter location is required";
     }
@@ -145,21 +156,61 @@ const CreateChapter = () => {
 
     try {
       const token = localStorage.getItem("token");
+      
+      // First check if a chapter with same region and technology exists
+      const checkResponse = await axios.get(
+        `${config.API_BASE_URL}/api/chapters/check-exists`,
+        {
+          params: {
+            region: formData.chapterRegion,
+            tech: formData.chapterTech
+          },
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      if (checkResponse.data.similar) {
+        setSimilarChapters(checkResponse.data.chapters);
+        setShowSimilarDialog(true);
+        setLoading(false);
+        return;
+      }
+
       const response = await axios.post(
         `${config.API_BASE_URL}/api/chapters/create`,
-        formData,
+        {
+          ...formData,
+          confirmSimilarTech
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       toast.success("Chapter created successfully!");
-      navigate(`/chapters/${response.data._id}`);
+      navigate(`/chapterDashboard/${response.data._id}`);
     } catch (error) {
       console.error("Error creating chapter:", error);
-      toast.error(error.response?.data?.message || "Failed to create chapter");
+      if (error.response?.data?.similar) {
+        setSimilarChapters(error.response.data.chapters);
+        setShowSimilarDialog(true);
+      } else {
+        toast.error(error.response?.data?.message || "Failed to create chapter");
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleConfirmSimilar = async () => {
+    setConfirmSimilarTech(true);
+    setShowSimilarDialog(false);
+    // Retry the submission
+    await handleSubmit(new Event('submit'));
+  };
+
+  const handleCancelSimilar = () => {
+    setShowSimilarDialog(false);
+    setConfirmSimilarTech(false);
   };
 
   return (
@@ -286,6 +337,62 @@ const CreateChapter = () => {
                 {errors.chapterTech && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.chapterTech}
+                  </p>
+                )}
+              </div>
+
+              {/* Chapter Region */}
+              <div>
+                <label
+                  className="block text-gray-800 text-sm font-medium mb-2"
+                  htmlFor="chapterRegion"
+                >
+                  Region (State)
+                </label>
+                <div className="relative">
+                  <FiMapPin className="absolute left-3 top-3.5 text-gray-500" />
+                  <input
+                    type="text"
+                    id="chapterRegion"
+                    name="chapterRegion"
+                    value={formData.chapterRegion}
+                    onChange={handleChange}
+                    placeholder="Enter region/state"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-800 placeholder-gray-500"
+                    required
+                  />
+                </div>
+                {errors.chapterRegion && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.chapterRegion}
+                  </p>
+                )}
+              </div>
+
+              {/* Chapter City */}
+              <div>
+                <label
+                  className="block text-gray-800 text-sm font-medium mb-2"
+                  htmlFor="chapterCity"
+                >
+                  City
+                </label>
+                <div className="relative">
+                  <FiMapPin className="absolute left-3 top-3.5 text-gray-500" />
+                  <input
+                    type="text"
+                    id="chapterCity"
+                    name="chapterCity"
+                    value={formData.chapterCity}
+                    onChange={handleChange}
+                    placeholder="Enter city"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white/50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-800 placeholder-gray-500"
+                    required
+                  />
+                </div>
+                {errors.chapterCity && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.chapterCity}
                   </p>
                 )}
               </div>
@@ -440,6 +547,45 @@ const CreateChapter = () => {
             </form>
           </div>
         </div>
+
+        {/* Similar Technology Dialog */}
+        {showSimilarDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                Similar Technology Found
+              </h3>
+              <p className="text-gray-600 mb-4">
+                We found {similarChapters.length} chapter(s) in {formData.chapterRegion} with similar technology:
+              </p>
+              <div className="space-y-3 mb-6">
+                {similarChapters.map((chapter, index) => (
+                  <div key={index} className="bg-gray-50 p-3 rounded">
+                    <p className="font-medium text-gray-800">{chapter.name}</p>
+                    <p className="text-sm text-gray-600">Technology: {chapter.tech}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-gray-600 mb-6">
+                Is your technology different from these? If yes, you can proceed with creating your chapter.
+              </p>
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={handleCancelSimilar}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmSimilar}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Yes, My Technology is Different
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

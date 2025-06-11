@@ -482,7 +482,8 @@ export const getProfile = async (req, res) => {
                                 isMobileVerified: user.isMobileVerified,
                                 isEmailVerified: user.isAccountVerified,
                                 birthday: user.birthday,
-                                membership: user.membership
+                                membership: user.membership,
+                                address: user.address
                         },
                         business: business || null,
                         hasJoinedChapter: chapter || null,

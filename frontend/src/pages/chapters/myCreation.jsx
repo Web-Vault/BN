@@ -88,6 +88,8 @@ const GroupDashboard = () => {
     image: "",
   });
 
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+
   const fetchChapter = useCallback(async () => {
     try {
       const token = localStorage.getItem("token");
@@ -135,11 +137,6 @@ const GroupDashboard = () => {
 
   // const goToOthersProfile = () => {
   //   navigate(`/userProfile/${userId}`);
-  // };
-
-  // const handleDeleteChapter = () => {
-  //   alert("Chapter '" + chapter.ChapterName + "' Deleted successfully!");
-  //   navigate("/chapter");
   // };
 
   const handleAcceptRequest = async (userId) => {
@@ -669,6 +666,43 @@ const GroupDashboard = () => {
     setShowBookingConfirmation(true);
   };
 
+  const handleDeleteChapter = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Please login to delete the chapter");
+        return;
+      }
+      
+      // Call the delete chapter API
+      const response = await axios.delete(
+        `${config.API_BASE_URL}/api/chapters/${chapterId}`,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+        }
+      );
+
+      console.log("✅ Chapter deleted:", response.data);
+      
+      // Show success message
+      alert("Chapter deleted successfully!");
+      
+      // Navigate back to chapters page
+      navigate("/chapter");
+    } catch (error) {
+      console.error("❌ Error deleting chapter:", error);
+      if (error.response) {
+        console.error("Error response:", error.response.data);
+        alert(error.response.data.message || "Failed to delete chapter. Please try again.");
+      } else {
+        alert("Failed to delete chapter. Please try again.");
+      }
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -703,9 +737,9 @@ const GroupDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  {isCreator ? (
+                  {isCreator && (
                     <div
-                      // onClick={handleDeleteChapter}
+                      onClick={() => setShowDeleteConfirmation(true)}
                       className="flex items-center gap-2 hover:bg-red-100/50 p-2 rounded-lg transition-all cursor-pointer"
                     >
                       <div className="p-3 bg-red-100/50 rounded-lg">
@@ -715,8 +749,6 @@ const GroupDashboard = () => {
                         <p className="text-sm text-red-600">Delete Chapter</p>
                       </div>
                     </div>
-                  ) : (
-                    <></>
                   )}
                 </div>
                 <div className="mt-6 space-y-4">
@@ -2169,6 +2201,54 @@ const GroupDashboard = () => {
                       className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
                     >
                       Confirm Booking
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirmation && (
+              <div
+                className="fixed inset-0 bg-black/20 z-20 flex items-center justify-center"
+                onClick={() => setShowDeleteConfirmation(false)}
+              >
+                <div
+                  className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md space-y-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h3 className="text-lg font-semibold text-red-600">
+                    Delete Chapter
+                  </h3>
+                  <div className="space-y-4">
+                    <p className="text-gray-600">
+                      Are you sure you want to delete this chapter? This action cannot be undone.
+                    </p>
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-red-800 mb-2">This will:</h4>
+                      <ul className="list-disc list-inside text-sm text-red-700 space-y-1">
+                        <li>Remove all members from the chapter</li>
+                        <li>Delete all chapter activities and posts</li>
+                        <li>Cancel all scheduled meetings and events</li>
+                        <li>Send notifications to all members</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => setShowDeleteConfirmation(false)}
+                      className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleDeleteChapter();
+                        setShowDeleteConfirmation(false);
+                      }}
+                      className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                    >
+                      Delete Chapter
                     </button>
                   </div>
                 </div>
