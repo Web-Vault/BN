@@ -21,7 +21,7 @@ export const protect = async (req, res, next) => {
                                 return res.status(401).json({ message: "User not found, authorization denied" });
                         }
 
-                        console.log("✅ User Authenticated:", req.user);
+                        // console.log("✅ User Authenticated:", req.user);
                         next();
                 } catch (error) {
                         console.error("❌ Token Verification Failed:", error);

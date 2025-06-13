@@ -78,7 +78,7 @@ export const getChapterMeetings = async (req, res) => {
       .populate("createdBy", "userName userEmail userImage")
       .sort({ date: 1, time: 1 });
 
-    console.log("Fetched meetings:", meetings); // Debug log
+    // console.log("Fetched meetings:", meetings); // Debug log
     res.status(200).json(meetings);
   } catch (error) {
     console.error("Error fetching meetings:", error);

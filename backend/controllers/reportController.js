@@ -70,7 +70,7 @@ export const getPlatformStats = async (req, res) => {
                 meeting: { $in: meetings.map(m => m._id) }
             });
         } catch (error) {
-            console.log('Meeting attendance records not found:', error.message);
+            // console.log('Meeting attendance records not found:', error.message);
         }
 
         // Get user's business activities from userActivity model

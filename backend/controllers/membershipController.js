@@ -70,7 +70,7 @@ export const purchaseMembership = async (req, res) => {
     const { tier, paymentDetails } = req.body;
     const userId = req.user._id;
 
-    console.log('Purchase request:', { tier, paymentDetails, userId });
+    // console.log('Purchase request:', { tier, paymentDetails, userId });
 
     // Validate tier
     if (!['Basic', 'Professional', 'Enterprise'].includes(tier)) {

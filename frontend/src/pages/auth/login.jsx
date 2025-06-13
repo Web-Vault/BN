@@ -33,6 +33,11 @@ const Login = () => {
         localStorage.setItem("token", data.user.token);
         localStorage.setItem("userId", data.user.id);
         
+        if (data.redirectTo === '/admin-panel') {
+            navigate('/admin');
+            return;
+        }
+
         // Check onboarding status from user data
         if (data.user.onboardingStatus && data.user.onboardingStatus.isCompleted) {
           navigate("/profile");

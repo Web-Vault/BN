@@ -5,24 +5,24 @@ import users from "../models/users.js";
 // Create notification for activity
 export const createActivityNotification = async (activity, recipientId, type) => {
   try {
-    console.log("🔹 Creating notification:", { type, recipientId, activityId: activity._id });
+    // console.log("🔹 Creating notification:", { type, recipientId, activityId: activity._id });
     
     // Get sender and recipient details
     let sender;
     if (type === "referral_received") {
       // For referral notifications, sender is the referrer
       sender = await users.findById(activity.metadata.referrerId);
-      console.log("🔹 Found referrer:", sender?._id);
+      // console.log("🔹 Found referrer:", sender?._id);
     } else if (type === "activity_verified" || type === "activity_rejected") {
       // For activity verification notifications, sender is the verifier
       sender = await users.findById(activity.verifiedBy);
-      console.log("🔹 Found verifier:", sender?._id);
+      // console.log("🔹 Found verifier:", sender?._id);
     } else {
       sender = await users.findById(activity.userId);
-      console.log("🔹 Found sender:", sender?._id);
+      // console.log("🔹 Found sender:", sender?._id);
     }
     const recipient = await users.findById(recipientId);
-    console.log("🔹 Found recipient:", recipient?._id);
+    // console.log("🔹 Found recipient:", recipient?._id);
 
     if (!sender || !recipient) {
       console.error("❌ Sender or recipient not found:", {
@@ -125,7 +125,7 @@ export const createActivityNotification = async (activity, recipientId, type) =>
         link = `/activity/${activity._id}`;
     }
 
-    console.log("🔹 Creating notification with:", { message, link, priority });
+    // console.log("🔹 Creating notification with:", { message, link, priority });
 
     // Create notification object
     const notificationData = {
@@ -147,12 +147,12 @@ export const createActivityNotification = async (activity, recipientId, type) =>
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days expiry
     };
 
-    console.log("🔹 Notification data:", notificationData);
+    // console.log("🔹 Notification data:", notificationData);
 
     const notification = new Notification(notificationData);
-    console.log("🔹 Saving notification...");
+    // console.log("🔹 Saving notification...");
     await notification.save();
-    console.log("✅ Notification saved successfully");
+    // console.log("✅ Notification saved successfully");
     return notification;
   } catch (error) {
     console.error("❌ Error creating notification:", error);

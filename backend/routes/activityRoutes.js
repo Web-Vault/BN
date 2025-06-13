@@ -8,22 +8,31 @@ import {
     getPendingVerifications,
     getRejectedActivities,
     verifyActivity,
-    getActivityStats
+    getActivityStats,
+    getActivitiesByUserId
 } from "../controllers/activityController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-// auto generated activity routes
-router.post("/", protect, createActivity); // POST /api/activity
-router.get("/user", protect, getUserActivities); // GET /api/activity/user
 
-// user entered activity routes
-// Add these:
-router.post("/userActivity", protect, addUserActivity);
-router.get("/userActivity", protect, getManualActivities);
-router.get("/pending-verifications", protect, getPendingVerifications);
-router.get("/rejected", protect, getRejectedActivities);
-router.put("/verify/:activityId", protect, verifyActivity);
-router.get("/stats", protect, getActivityStats);
+// All routes are protected with authentication
+router.use(protect);
+
+// Get activities by user ID (must be before other routes to avoid conflicts)
+router.get("/user/:userId", getActivitiesByUserId);
+
+// Create a new activity
+router.post("/", createActivity);
+
+// Get user's activities
+router.get("/user", getUserActivities);
+
+// User entered activity routes
+router.post("/userActivity", addUserActivity);
+router.get("/userActivity", getManualActivities);
+router.get("/pending-verifications", getPendingVerifications);
+router.get("/rejected", getRejectedActivities);
+router.put("/verify/:activityId", verifyActivity);
+router.get("/stats", getActivityStats);
 
 export default router;

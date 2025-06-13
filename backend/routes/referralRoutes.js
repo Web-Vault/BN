@@ -211,4 +211,32 @@ router.put("/reward-settings", protect, async (req, res) => {
   }
 });
 
+// Get referrals for a specific user (Admin only)
+router.get("/user/:userId", protect, async (req, res) => {
+  try {
+    // Get the target user's referral code
+    const targetUser = await users.findById(req.params.userId);
+    if (!targetUser) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    const referrals = await Referral.find({ referrer: req.params.userId })
+      .populate('referredUser', 'userName userEmail')
+      .sort({ createdAt: -1 });
+
+    const stats = {
+      totalReferrals: referrals.length,
+      completedReferrals: referrals.filter(r => r.status === 'completed').length,
+      pendingReferrals: referrals.filter(r => r.status === 'pending').length,
+      totalEarnings: referrals.reduce((sum, r) => sum + r.rewardAmount, 0),
+      referralCode: targetUser.referralCode || targetUser._id.toString().slice(-6).toUpperCase()
+    };
+
+    res.json({ stats, referrals });
+  } catch (err) {
+    console.error("Error fetching user referrals:", err);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
 export default router; 

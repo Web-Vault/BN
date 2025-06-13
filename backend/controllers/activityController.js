@@ -341,3 +341,41 @@ export const getActivityStats = async (req, res) => {
                 res.status(500).json({ message: "Failed to fetch activity statistics" });
         }
 };
+
+// Get activities by user ID
+export const getActivitiesByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Fetch system activities
+    const systemActivities = await Activity.find({ user: userId })
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    // Fetch user activities
+    const userActivities = await userActivity.find({
+      $or: [
+        { userId: userId, status: "verified" },
+        { relatedUser: userId, status: "verified" }
+      ]
+    })
+    .sort({ createdAt: -1 })
+    .populate('userId', 'userName userImage')
+    .populate('relatedUser', 'userName userImage');
+
+    res.status(200).json({
+      success: true,
+      data: {
+        systemActivities,
+        userActivities
+      }
+    });
+  } catch (error) {
+    console.error("❌ Error fetching activities by user ID:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch activities",
+      error: error.message
+    });
+  }
+};

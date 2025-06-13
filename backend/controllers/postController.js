@@ -8,7 +8,7 @@ export const createPost = async (req, res) => {
     const { content, isAnnouncement, type, images } = req.body;
     const userId = req.user._id; // From auth middleware
 
-    console.log('Received post data:', { content, isAnnouncement, type, images }); // Debug log
+    // console.log('Received post data:', { content, isAnnouncement, type, images }); // Debug log
 
     const newPost = new Post({
       content,
@@ -23,7 +23,7 @@ export const createPost = async (req, res) => {
     // Populate author details
     await savedPost.populate('author', 'userName userImage');
     
-    console.log('Saved post:', savedPost); // Debug log
+    // console.log('Saved post:', savedPost); // Debug log
 
     res.status(201).json({
       success: true,

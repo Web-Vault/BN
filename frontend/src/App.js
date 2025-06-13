@@ -32,6 +32,14 @@ import LandingPage from "./pages/landing/LandingPage";
 import toast from 'react-hot-toast';
 import UserProfile from "./pages/profiles/userProfile";
 import UpgradePage from "./pages/membership/upgrade.jsx";
+import Dashboard from "./pages/admin/Dashboard";
+import Users from "./pages/admin/Users";
+import Settings from "./pages/admin/Settings";
+import UserManagement from "./pages/admin/UserManagement";
+import ChapterManagement from "./pages/admin/ChapterManagement";
+import CommunityManagement from "./pages/admin/CommunityManagement";
+import UserDetails from './pages/admin/UserDetails';
+import ChapterDetails from './pages/admin/ChapterDetails';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -58,13 +66,32 @@ const App = () => {
 
         // If no token or userId, go directly to landing page
         if (!token || !userId) {
-          console.log("No token or userId found, redirecting to landing page");
           setInitialRoute("/");
           setIsLoading(false);
           return;
         }
 
-        // Check membership status
+        // First check if user is admin
+        try {
+          const userResponse = await axios.get(
+            `${config.API_BASE_URL}/api/users/profile`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+
+          if (userResponse.data.user.isAdmin) {
+            // If user is admin, redirect to admin panel
+            setInitialRoute("/admin");
+            setIsLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error("Error checking user status:", error);
+          // If there's an error checking user status, continue with normal flow
+        }
+
+        // If not admin, check membership status
         try {
           const membershipResponse = await axios.get(
             `${config.API_BASE_URL}/api/membership/verify`,
@@ -73,20 +100,15 @@ const App = () => {
             }
           );
 
-          console.log("Membership response:", membershipResponse.data);
-
           if (membershipResponse.data.hasActiveMembership) {
             // User has active membership, check onboarding
             if (onboardingCompleted === "true") {
-              console.log("Onboarding completed, redirecting to dashboard");
               setInitialRoute("/profile");
             } else {
-              console.log("Onboarding not completed, redirecting to onboarding");
               setInitialRoute("/onboarding");
             }
           } else {
             // No active membership or expired, redirect to landing page
-            console.log("No active membership or expired, redirecting to landing page");
             toast.error(membershipResponse.data.message || 'Membership expired or not found');
             // Clear any existing membership data
             localStorage.removeItem('membershipId');
@@ -304,6 +326,64 @@ const App = () => {
           element={
             <ProtectedRoute>
               <UpgradePage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute>
+              <UserManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users/:userId"
+          element={
+            <ProtectedRoute>
+              <UserDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/chapters"
+          element={
+            <ProtectedRoute>
+              <ChapterManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/chapters/:chapterId"
+          element={
+            <ProtectedRoute>
+              <ChapterDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/posts"
+          element={
+            <ProtectedRoute>
+              <CommunityManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           }
         />

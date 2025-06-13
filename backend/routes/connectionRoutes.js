@@ -168,4 +168,18 @@ router.get('/status/:userId', protect, async (req, res) => {
         }
 });
 
+// Get connections for a specific user
+router.get('/user/:userId', protect, async (req, res) => {
+  try {
+    const user = await users.findById(req.params.userId).populate('connections', 'userName userEmail userImage industry');
+    if (!user) {
+      return res.status(404).json({ msg: 'User not found' });
+    }
+    res.json(user.connections);
+  } catch (err) {
+    console.error('Error fetching user connections:', err);
+    res.status(500).send('Server Error');
+  }
+});
+
 export default router;

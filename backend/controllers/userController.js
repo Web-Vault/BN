@@ -10,6 +10,8 @@ import dotenv from "dotenv";
 import Activity from "../models/activity.js";
 import { createActivityNotification } from "./notificationController.js";
 import Membership from "../models/membership.js";
+import Notification from "../models/notification.js";
+import MembershipHistory from "../models/membershipHistory.js";
 
 dotenv.config();
 
@@ -280,6 +282,21 @@ export const loginUser = async (req, res) => {
             expiresIn: "7d",
         });
 
+        // Check if user is admin
+        if (user.isAdmin === true) {
+            return res.status(200).json({ 
+                message: "Admin login successful",
+                redirectTo: "/admin-panel",
+                user: {
+                    id: user._id,
+                    name: user.userName,
+                    email: user.userEmail,
+                    isAdmin: true,
+                    token // Add token for admin users
+                }
+            });
+        }
+
         // Return user data with onboarding status
         res.json({
             user: {
@@ -357,7 +374,7 @@ export const onboarding = async (req, res) => {
                                 // Find referrer
                                 const referrer = await users.findOne({ referralCode });
                                 if (!referrer) {
-                                        console.log("❌ Invalid referral code:", referralCode);
+                                        // console.log("❌ Invalid referral code:", referralCode);
                                 } else {
                                         // Create new referral
                                         const referral = new Referral({
@@ -367,7 +384,7 @@ export const onboarding = async (req, res) => {
                                                 status: 'pending'
                                         });
                                         await referral.save();
-                                        console.log("✅ Referral created successfully");
+                                        // console.log("✅ Referral created successfully");
 
                                         // Create activity for the referred user
                                         const referralActivity = await new Activity({
@@ -383,12 +400,12 @@ export const onboarding = async (req, res) => {
                                                 task: "Complete your first investment to earn rewards for your referrer"
                                             }
                                         }).save();
-                                        console.log("✅ Activity created successfully");
+                                        // console.log("✅ Activity created successfully");
 
                                         try {
                                                 // Create notification for the referred user
                                                 const notification = await createActivityNotification(referralActivity, req.user._id, "referral_received");
-                                                console.log("✅ Notification created successfully:", notification);
+                                                // console.log("✅ Notification created successfully:", notification);
                                         } catch (notificationError) {
                                                 console.error("❌ Error creating notification:", notificationError);
                                                 // Don't throw the error, just log it so the onboarding can continue
@@ -435,7 +452,11 @@ export const getAllUser = async (req, res) => {
 
                 const loggedInUserId = req.user._id;
 
-                const allUsers = await users.find({ _id: { $ne: loggedInUserId } }).select('-password');
+                // Find all users except the logged-in user and admin users
+                const allUsers = await users.find({ 
+                    _id: { $ne: loggedInUserId },
+                    isAdmin: { $ne: true }  // Exclude admin users
+                }).select('-password');
 
                 res.status(200).json(allUsers);
         } catch (error) {
@@ -817,6 +838,54 @@ export const searchUsers = async (req, res) => {
         res.status(500).json({ 
             success: false,
             message: "Failed to search users",
+            error: error.message 
+        });
+    }
+};
+
+// Delete user
+export const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { password } = req.body;
+
+        // Verify admin password
+        const admin = await users.findById(req.user._id);
+        if (!admin) {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        const isMatch = await bcrypt.compare(password, admin.userPassword);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Invalid password" });
+        }
+
+        // Find and delete the user
+        const user = await users.findById(id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Delete user's business if exists
+        await Business.findOneAndDelete({ CreatorName: id });
+
+        // Delete user's activities
+        await Activity.deleteMany({ user: id });
+
+        // Delete user's notifications
+        await Notification.deleteMany({ user: id });
+
+        // Delete user's membership history
+        await MembershipHistory.deleteMany({ user: id });
+
+        // Delete the user
+        await users.findByIdAndDelete(id);
+
+        res.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        res.status(500).json({ 
+            message: "Failed to delete user", 
             error: error.message 
         });
     }

@@ -125,7 +125,7 @@ export const addChapterPost = async (req, res) => {
 export const acceptJoinRequest = async (req, res) => {
         try {
                 const { chapterId, userId } = req.params;
-                console.log("Accepting join request for:", { chapterId, userId });
+                // console.log("Accepting join request for:", { chapterId, userId });
 
                 const chapter = await Chapter.findById(chapterId);
                 if (!chapter) return res.status(404).json({ message: "Chapter not found" });
@@ -150,7 +150,7 @@ export const acceptJoinRequest = async (req, res) => {
                 }
                 
                 await chapter.save();
-                console.log("Chapter updated successfully");
+                // console.log("Chapter updated successfully");
 
                 // Update user's groupJoined with both Joined and JoinedGroupId
                 const updatedUser = await users.findByIdAndUpdate(
@@ -169,10 +169,10 @@ export const acceptJoinRequest = async (req, res) => {
                     return res.status(500).json({ message: "Failed to update user data" });
                 }
 
-                console.log("User updated successfully:", {
-                    userId: updatedUser._id,
-                    groupJoined: updatedUser.groupJoined
-                });
+                // console.log("User updated successfully:", {
+                //     userId: updatedUser._id,
+                //     groupJoined: updatedUser.groupJoined
+                // });
 
                 res.status(200).json({ 
                     message: "User added to members",

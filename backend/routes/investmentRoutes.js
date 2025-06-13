@@ -54,6 +54,38 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
+// Get all investments (Admin only)
+router.get("/admin/all", protect, async (req, res) => {
+  try {
+    const user = await users.findById(req.user.id);
+    
+    // Check if user is admin
+    // if (!user.isAdmin) {
+    //   return res.status(403).json({ 
+    //     msg: "Access denied. Only administrators can view all investments." 
+    //   });
+    // }
+
+    // Fetch all investments with populated fields
+    const investments = await Investment.find()
+      .populate({
+        path: "seeker",
+        select: "userName userEmail industry"
+      })
+      .populate({
+        path: "investors.user",
+        select: "userName userEmail"
+      })
+      .sort({ createdAt: -1 });
+
+    // console.log('Admin fetched investments:', investments.length);
+    res.json(investments);
+  } catch (err) {
+    console.error("Error fetching all investments:", err);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
 // Get all active investments (Investors only)
 router.get("/", protect, async (req, res) => {
   try {
@@ -544,6 +576,108 @@ router.put("/withdrawals/:id/reject", protect, async (req, res) => {
     res.json({ msg: "Withdrawal request rejected", withdrawal });
   } catch (err) {
     console.error("Error rejecting withdrawal:", err);
+    res.status(500).json({ msg: "Server error" });
+  }
+});
+
+// Get investments for a specific user
+router.get("/my-investments/:userId", protect, async (req, res) => {
+  try {
+    console.log('Fetching investments for user:', req.params.userId);
+
+    // Find investments where the user is an investor
+    const investments = await Investment.find({
+      "investors.user": req.params.userId
+    }).populate({
+      path: "seeker",
+      select: "userName userEmail"
+    });
+
+    console.log('Found investments:', investments.length);
+
+    // Calculate returns for each investment
+    const investmentsWithReturns = investments.map((investment) => {
+      const investmentObj = investment.toObject();
+      const userInvestment = investment.investors.find(
+        (inv) => inv.user.toString() === req.params.userId
+      );
+
+      if (!userInvestment) {
+        return null;
+      }
+
+      // Calculate returns based on investment type
+      if (investment.type === "equity") {
+        const equityPercentage = parseFloat(investment.returns);
+        const investorShare = (userInvestment.amount / investment.amount) * equityPercentage;
+        investmentObj.returns = (userInvestment.amount * investorShare) / 100;
+      } else if (investment.type === "loan") {
+        const interestRate = parseFloat(investment.returns);
+        investmentObj.returns = userInvestment.amount * (1 + interestRate / 100);
+      } else {
+        investmentObj.returns = 0; // For donations
+      }
+
+      return investmentObj;
+    }).filter(Boolean);
+
+    console.log('Processed investments:', investmentsWithReturns.length);
+    res.json(investmentsWithReturns);
+  } catch (err) {
+    console.error("Error fetching user investments:", err);
+    res.status(500).json({ msg: "Server Error" });
+  }
+});
+
+// Get funding requests for a specific user
+router.get("/my-requests/:userId", protect, async (req, res) => {
+  try {
+    console.log('Fetching requests for user:', req.params.userId);
+
+    const targetUser = await User.findById(req.params.userId);
+    if (!targetUser) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    // Find all funding requests created by this user
+    const requests = await Investment.find({ 
+      seeker: req.params.userId 
+    }).populate({
+      path: 'seeker',
+      select: 'userName userEmail membership',
+      populate: {
+        path: 'membership',
+        select: 'tier'
+      }
+    }).populate({
+      path: 'investors.user',
+      select: 'userName userEmail'
+    }).sort({ createdAt: -1 });
+
+    console.log('Found requests:', requests.length);
+
+    // Calculate expected returns for each request
+    const requestsWithReturns = requests.map(request => {
+      const requestObj = request.toObject();
+      requestObj.totalInvested = request.currentFunding;
+      
+      if (request.type === "equity") {
+        const equityPercentage = parseFloat(request.returns);
+        requestObj.expectedReturns = (request.currentFunding * equityPercentage) / 100;
+      } else if (request.type === "loan") {
+        const interestRate = parseFloat(request.returns);
+        requestObj.expectedReturns = request.currentFunding * (1 + interestRate / 100);
+      } else {
+        requestObj.expectedReturns = 0; // For donations
+      }
+
+      return requestObj;
+    });
+
+    console.log('Processed requests:', requestsWithReturns.length);
+    res.json(requestsWithReturns);
+  } catch (err) {
+    console.error("Error fetching user funding requests:", err);
     res.status(500).json({ msg: "Server error" });
   }
 });

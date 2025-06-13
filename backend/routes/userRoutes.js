@@ -15,7 +15,8 @@ import {
         resendOTP,
         verifyMobileOTP,
         resendMobileOTP,
-        searchUsers
+        searchUsers,
+        deleteUser
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -38,5 +39,6 @@ router.put("/profile", protect, updateProfile);
 router.put("/business", protect, updateBusinessInfo);
 router.post("/verify-mobile", protect, verifyMobileOTP);
 router.post("/resend-mobile-otp", protect, resendMobileOTP);
+router.delete("/:id", protect, deleteUser);
 
 export default router;
