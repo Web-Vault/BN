@@ -468,18 +468,15 @@ export const getAllUser = async (req, res) => {
 export const getProfile = async (req, res) => {
         try {
                 if (!req.user || !req.user._id) {
-                        // console.log("❌ User not found in request!");
                         return res.status(401).json({ message: "Not authorized, token failed" });
                 }
 
                 const user = await users.findById(req.user._id).populate({path: 'connections', select: 'userName userEmail _id'});
 
                 if (!user) {
-                        // console.log("❌ No user found in database!");
                         return res.status(404).json({ message: "User not found" });
                 }
 
-                // console.log("✅ Found User:", user);
                 const business = await Business.findOne({ CreatorName: req.user._id });
 
                 const chapter = await Chapter.findOne({
@@ -504,7 +501,8 @@ export const getProfile = async (req, res) => {
                                 isEmailVerified: user.isAccountVerified,
                                 birthday: user.birthday,
                                 membership: user.membership,
-                                address: user.address
+                                address: user.address,
+                                isAdmin: user.isAdmin
                         },
                         business: business || null,
                         hasJoinedChapter: chapter || null,

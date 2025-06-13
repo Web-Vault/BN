@@ -64,8 +64,11 @@ const App = () => {
         const userId = localStorage.getItem("userId");
         const onboardingCompleted = localStorage.getItem("onBoardingCompleted");
 
+        console.log("Checking user status...", { token, userId, onboardingCompleted });
+
         // If no token or userId, go directly to landing page
         if (!token || !userId) {
+          console.log("No token or userId found, redirecting to landing page");
           setInitialRoute("/");
           setIsLoading(false);
           return;
@@ -73,6 +76,7 @@ const App = () => {
 
         // First check if user is admin
         try {
+          console.log("Checking if user is admin...");
           const userResponse = await axios.get(
             `${config.API_BASE_URL}/api/users/profile`,
             {
@@ -80,11 +84,15 @@ const App = () => {
             }
           );
 
+          console.log("User profile response:", userResponse.data);
+
           if (userResponse.data.user.isAdmin) {
-            // If user is admin, redirect to admin panel
+            console.log("User is admin, redirecting to admin panel");
             setInitialRoute("/admin");
             setIsLoading(false);
             return;
+          } else {
+            console.log("User is not admin, continuing with normal flow");
           }
         } catch (error) {
           console.error("Error checking user status:", error);
@@ -93,6 +101,7 @@ const App = () => {
 
         // If not admin, check membership status
         try {
+          console.log("Checking membership status...");
           const membershipResponse = await axios.get(
             `${config.API_BASE_URL}/api/membership/verify`,
             {
@@ -100,15 +109,19 @@ const App = () => {
             }
           );
 
+          console.log("Membership response:", membershipResponse.data);
+
           if (membershipResponse.data.hasActiveMembership) {
             // User has active membership, check onboarding
             if (onboardingCompleted === "true") {
+              console.log("Onboarding completed, redirecting to profile");
               setInitialRoute("/profile");
             } else {
+              console.log("Onboarding not completed, redirecting to onboarding");
               setInitialRoute("/onboarding");
             }
           } else {
-            // No active membership or expired, redirect to landing page
+            console.log("No active membership, redirecting to landing page");
             toast.error(membershipResponse.data.message || 'Membership expired or not found');
             // Clear any existing membership data
             localStorage.removeItem('membershipId');
@@ -117,7 +130,6 @@ const App = () => {
           }
         } catch (error) {
           console.error("Error checking membership:", error);
-          // If there's an error checking membership, redirect to landing page
           toast.error("Error checking membership status");
           setInitialRoute("/");
         }
