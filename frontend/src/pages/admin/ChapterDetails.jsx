@@ -357,9 +357,6 @@ const ChapterDetails = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-700">Attendance</p>
-                      <p className="text-sm text-gray-600">
-                        {meeting.attendeeCount || 0} members
-                      </p>
                       {meeting.attendance && (
                         <div className="mt-1 space-y-1">
                           <p className="text-xs text-gray-500">

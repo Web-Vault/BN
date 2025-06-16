@@ -36,9 +36,8 @@ const AdminLayout = ({ children }) => {
     {
       section: 'Community',
       items: [
-        { path: '/admin/posts', label: 'Community Posts', icon: '📝' },
+        { path: '/admin/posts', label: 'Community Place', icon: '📢' },
         { path: '/admin/memberships', label: 'Memberships', icon: '🎖️' },
-        { path: '/admin/announcements', label: 'Announcements', icon: '📢' },
       ]
     },
     {

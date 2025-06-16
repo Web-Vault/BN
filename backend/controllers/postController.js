@@ -58,12 +58,27 @@ export const getPosts = async (req, res) => {
         model: 'users'
       })
       .populate({
+        path: 'likes',
+        select: 'userName userImage',
+        model: 'users'
+      })
+      .populate({
         path: 'comments',
-        populate: {
-          path: 'author',
-          select: 'userName userImage',
-          model: 'users'
-        }
+        populate: [
+          {
+            path: 'author',
+            select: 'userName userImage',
+            model: 'users'
+          },
+          {
+            path: 'replies',
+            populate: {
+              path: 'author',
+              select: 'userName userImage',
+              model: 'users'
+            }
+          }
+        ]
       });
 
     // Ensure we're sending an array
@@ -92,8 +107,12 @@ export const getPostById = async (req, res) => {
         model: 'users'
       })
       .populate({
+        path: 'likes',
+        select: 'userName userImage',
+        model: 'users'
+      })
+      .populate({
         path: 'comments',
-        model: 'Comment',
         populate: [
           {
             path: 'author',
@@ -102,7 +121,6 @@ export const getPostById = async (req, res) => {
           },
           {
             path: 'replies',
-            model: 'Comment',
             populate: {
               path: 'author',
               select: 'userName userImage',
@@ -182,8 +200,8 @@ export const deletePost = async (req, res) => {
       });
     }
 
-    // Check if user is the author
-    if (post.author.toString() !== req.user._id.toString()) {
+    // Check if user is admin or the author
+    if (!req.user.isAdmin && post.author.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this post'

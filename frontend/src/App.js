@@ -40,6 +40,7 @@ import ChapterManagement from "./pages/admin/ChapterManagement";
 import CommunityManagement from "./pages/admin/CommunityManagement";
 import UserDetails from './pages/admin/UserDetails';
 import ChapterDetails from './pages/admin/ChapterDetails';
+import MembershipManagement from './pages/admin/MembershipManagement';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -388,6 +389,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <CommunityManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/memberships"
+          element={
+            <ProtectedRoute>
+              <MembershipManagement />
             </ProtectedRoute>
           }
         />

@@ -18,6 +18,7 @@ import eventRoutes from "./routes/eventRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import membershipRoutes from './routes/membershipRoutes.js';
 import membershipHistoryRoutes from './routes/membershipHistoryRoutes.js';
+import membershipTierRoutes from './routes/membershipTierRoutes.js';
 
 dotenv.config();
 
@@ -49,6 +50,7 @@ app.use("/api", eventRoutes);
 app.use("/api/reports", reportRoutes);
 app.use('/api/membership', membershipRoutes);
 app.use('/api/membership-history', membershipHistoryRoutes);
+app.use('/api/membership-tiers', membershipTierRoutes);
 
 mongoose
         .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
