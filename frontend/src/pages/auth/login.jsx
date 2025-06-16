@@ -168,13 +168,32 @@ const Login = () => {
             <h2 className="text-2xl font-bold text-red-600 mb-4">Account Banned</h2>
             <div className="space-y-4">
               <p className="text-gray-700">
-                <span className="font-semibold">Reason:</span> {banDetails.reason}
+                <span className="font-semibold">Reason:</span> {banDetails?.reason || 'No reason provided'}
               </p>
               <p className="text-gray-700">
-                <span className="font-semibold">Ban Start Date:</span> {formatDate(banDetails.startDate)}
+                <span className="font-semibold">Banned by:</span> {banDetails?.adminId?.userName || 'Admin'}
               </p>
               <p className="text-gray-700">
-                <span className="font-semibold">Ban End Date:</span> {formatDate(banDetails.endDate)}
+                <span className="font-semibold">Ban Start Date:</span> {banDetails?.startDate ? new Date(banDetails.startDate).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                  timeZone: 'UTC'
+                }) : 'N/A'}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-semibold">Ban End Date:</span> {banDetails?.endDate ? new Date(banDetails.endDate).toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true,
+                  timeZone: 'UTC'
+                }) : 'Indefinite'}
               </p>
               <p className="text-gray-600 text-sm mt-4">
                 If you believe this is a mistake, please contact our support team at support@businessnetwork.com

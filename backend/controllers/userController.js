@@ -265,8 +265,10 @@ export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Find user by email
-        const user = await users.findOne({ userEmail: email });
+        // Find user by email and populate ban details
+        const user = await users.findOne({ userEmail: email })
+            .populate('banStatus.currentBan.adminId', 'userName');
+
         if (!user) {
             return res.status(401).json({ message: "Invalid email or password" });
         }
@@ -275,12 +277,7 @@ export const login = async (req, res) => {
         if (user.banStatus && user.banStatus.isBanned) {
             return res.status(403).json({
                 message: "Account is banned",
-                banDetails: {
-                    reason: user.banStatus.reason,
-                    startDate: user.banStatus.startDate,
-                    endDate: user.banStatus.endDate,
-                    adminId: user.banStatus.adminId
-                }
+                banDetails: user.banStatus.currentBan
             });
         }
 
