@@ -106,19 +106,6 @@ const LandingPage = () => {
         'Analytics dashboard'
       ]
     },
-    {
-      name: 'Enterprise',
-      price: 'Custom',
-      features: [
-        'All Professional features',
-        'Custom chapter creation',
-        'Dedicated account manager',
-        'API access',
-        'Custom integration support',
-        'Team management tools',
-        'Advanced analytics'
-      ]
-    }
   ];
 
   const stats = [

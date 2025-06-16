@@ -348,24 +348,24 @@ export const getMeetingAttendance = async (req, res) => {
     const markedButNoShowCount = attendance.filter(a => a.markedAttendance && !a.joinTime).length;
     const absentCount = totalMembers - (presentCount + lateCount + leftEarlyCount + markedButNoShowCount);
 
-    // Add statistics to the response
-    const stats = {
-      totalMembers,
-      present: presentCount,
-      late: lateCount,
-      leftEarly: leftEarlyCount,
-      markedButNoShow: markedButNoShowCount,
-      absent: absentCount,
-      attendanceRate: ((presentCount + lateCount) / totalMembers * 100).toFixed(1)
-    };
+    // Update meeting's attendeeCount
+    meeting.attendeeCount = presentCount + lateCount + leftEarlyCount;
+    await meeting.save();
 
     res.json({
+      totalMembers,
       attendance,
-      stats
+      statistics: {
+        present: presentCount,
+        late: lateCount,
+        leftEarly: leftEarlyCount,
+        markedButNoShow: markedButNoShowCount,
+        absent: absentCount
+      }
     });
   } catch (error) {
-    console.error("Error fetching meeting attendance:", error);
-    res.status(500).json({ message: "Error fetching meeting attendance" });
+    console.error("Error getting meeting attendance:", error);
+    res.status(500).json({ message: "Error getting meeting attendance" });
   }
 };
 

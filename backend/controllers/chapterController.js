@@ -3,6 +3,10 @@ import users from "../models/users.js";
 import { areTechnologiesSimilar } from "../utils/techNormalizer.js";
 import Notification from "../models/notification.js";
 import jwt from "jsonwebtoken";
+import User from "../models/users.js";
+import Activity from "../models/activity.js";
+import bcrypt from "bcryptjs";
+import MeetingAttendance from "../models/meetingAttendance.js";
 
 export const getAllChapters = async (req, res) => {
         try {
@@ -17,21 +21,21 @@ export const getAllChapters = async (req, res) => {
                 res.status(500).json({ message: "Server Error", error: error.message });
         }
 };
-
+ 
 export const getChapterById = async (req, res) => {
         try {
-                // console.log("🔍 Fetching chapter:", req.params.id);
-
                 const chapter = await Chapter.findById(req.params.id)
                         .populate("chapterCreator")
                         .populate("members")
                         .populate("joinRequests")
                         .populate({
                                 path: "meetings",
-                                populate: {
+                                populate: [
+                                    {
                                         path: "createdBy",
                                         select: "userName userEmail userImage"
-                                }
+                                    }
+                                ]
                         })
                         .populate({
                                 path: "events",
@@ -45,14 +49,75 @@ export const getChapterById = async (req, res) => {
                                         select: "userName userImage userEmail"
                                     }
                                 ]
+                        })
+                        .populate({
+                                path: "activities",
+                                populate: {
+                                        path: "user",
+                                        select: "userName userImage"
+                                }
                         });
 
                 if (!chapter) {
-                        // console.log("❌ Chapter not found in DB");
                         return res.status(404).json({ message: "Chapter not found" });
                 }
 
-                res.status(200).json(chapter);
+                // Get attendance data for each meeting
+                const meetingsWithAttendance = await Promise.all(
+                    chapter.meetings.map(async (meeting) => {
+                        const attendance = await MeetingAttendance.find({ meeting: meeting._id })
+                            .populate({
+                                path: "user",
+                                select: "userName userEmail userImage"
+                            });
+                        return {
+                            ...meeting.toObject(),
+                            attendance
+                        };
+                    })
+                );
+
+                // Calculate statistics
+                const memberCount = chapter.members?.length || 0;
+                const activeMemberCount = chapter.members?.filter(member => member.isActive)?.length || 0;
+                const meetingCount = chapter.meetings?.length || 0;
+                const eventCount = chapter.events?.length || 0;
+                const postCount = chapter.activities?.length || 0;
+
+                // Calculate average attendance for meetings
+                let totalAttendance = 0;
+                let meetingsWithAttendanceCount = 0;
+                
+                if (meetingsWithAttendance && meetingsWithAttendance.length > 0) {
+                    for (const meeting of meetingsWithAttendance) {
+                        const presentCount = meeting.attendance.filter(a => 
+                            ['present', 'late', 'left_early'].includes(a.status)
+                        ).length;
+                        
+                        if (presentCount > 0) {
+                            totalAttendance += presentCount;
+                            meetingsWithAttendanceCount++;
+                        }
+                    }
+                }
+                
+                const averageAttendance = meetingsWithAttendanceCount > 0 
+                    ? Math.round(totalAttendance / meetingsWithAttendanceCount) 
+                    : 0;
+
+                // Add statistics to the response
+                const chapterWithStats = {
+                    ...chapter.toObject(),
+                    meetings: meetingsWithAttendance,
+                    memberCount,
+                    activeMemberCount,
+                    meetingCount,
+                    eventCount,
+                    postCount,
+                    averageAttendance
+                };
+
+                res.status(200).json(chapterWithStats);
         } catch (error) {
                 console.error("❌ Server error:", error);
                 res.status(500).json({ message: "Server Error" });
@@ -222,10 +287,28 @@ export const removeMemberFromChapter = async (req, res) => {
                         return res.status(404).json({ message: "Chapter not found" });
                 }
 
-                // Remove user from members array
-                chapter.members = chapter.members.filter(
-                        (memberId) => memberId.toString() !== userId
+                // Check if the member exists in the chapter
+                const memberIndex = chapter.members.findIndex(
+                        member => member._id.toString() === userId
                 );
+
+                if (memberIndex === -1) {
+                        return res.status(404).json({ message: "Member not found in chapter" });
+                }
+
+                // Check if trying to remove chapter creator
+                if (chapter.chapterCreator._id.toString() === userId) {
+                        return res.status(400).json({ message: "Cannot remove chapter creator" });
+                }
+
+                // Remove member from members array
+                chapter.members.splice(memberIndex, 1);
+
+                // Also remove from joinRequests if present
+                chapter.joinRequests = chapter.joinRequests.filter(
+                        request => request._id.toString() !== userId
+                );
+
                 await chapter.save();
 
                 // Update user's groupJoined to false and clear JoinedGroupId
@@ -236,10 +319,19 @@ export const removeMemberFromChapter = async (req, res) => {
                     }
                 });
 
-                res.status(200).json({ message: "Member removed from chapter" });
+                // Create notification for removed member
+                const notification = new Notification({
+                        recipient: userId,
+                        type: "chapter_removal",
+                        message: `You have been removed from the chapter "${chapter.name}"`,
+                        chapter: chapterId
+                });
+                await notification.save();
+
+                res.status(200).json({ message: "Member removed successfully" });
         } catch (error) {
-                console.error("❌ Error removing member:", error);
-                res.status(500).json({ message: "Server Error", error: error.message });
+                console.error("❌ Server error:", error);
+                res.status(500).json({ message: "Server Error" });
         }
 };
 
@@ -295,7 +387,7 @@ export const createChapter = async (req, res) => {
             chapterLocation,
             chapterWebsite,
             chapterEmail,
-            confirmSimilarTech // New field to confirm if user wants to proceed with similar tech
+            confirmSimilarTech
         } = req.body;
         const userId = req.user._id;
 
@@ -353,9 +445,8 @@ export const createChapter = async (req, res) => {
 export const deleteChapter = async (req, res) => {
     try {
         const chapterId = req.params.id;
-        const userId = req.user._id; // Get userId from the auth middleware
+        const userId = req.user._id;
 
-        // Find the chapter
         const chapter = await Chapter.findById(chapterId);
         if (!chapter) {
             return res.status(404).json({ message: "Chapter not found" });
@@ -380,7 +471,7 @@ export const deleteChapter = async (req, res) => {
         const notifications = memberIds.map(memberId => ({
             user: memberId,
             sender: userId,
-            type: "one_to_one", // Using a valid notification type
+            type: "one_to_one",
             title: "Chapter Deleted",
             message: `The chapter "${chapter.chapterName}" has been deleted. You have been automatically removed from the chapter.`,
             metadata: {
@@ -404,4 +495,83 @@ export const deleteChapter = async (req, res) => {
         console.error("Error deleting chapter:", error);
         res.status(500).json({ message: "Error deleting chapter" });
     }
+};
+
+export const updateChapter = async (req, res) => {
+    try {
+        const { chapterName, chapterDesc, chapterTech, chapterRegion, chapterCity, chapterCountry } = req.body;
+        const chapterId = req.params.id;
+
+        const chapter = await Chapter.findById(chapterId);
+        if (!chapter) {
+            return res.status(404).json({ message: "Chapter not found" });
+        }
+
+        // Check if user is chapter creator or admin
+        if (chapter.chapterCreator.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+            return res.status(403).json({ message: "Not authorized to update this chapter" });
+        }
+
+        // If changing name, check if new name exists
+        if (chapterName && chapterName !== chapter.chapterName) {
+            const existingChapter = await Chapter.findOne({ chapterName });
+            if (existingChapter) {
+                return res.status(400).json({ message: "Chapter name already exists" });
+            }
+        }
+
+        const updatedChapter = await Chapter.findByIdAndUpdate(
+            chapterId,
+            {
+                chapterName,
+                chapterDesc,
+                chapterTech,
+                chapterRegion,
+                chapterCity,
+                chapterCountry
+            },
+            { new: true }
+        );
+
+        // Log activity
+        await Activity.create({
+            user: req.user._id,
+            activityType: "account",
+            action: "Chapter Updated",
+            metadata: {
+                chapterId: updatedChapter._id,
+                chapterName: updatedChapter.chapterName
+            }
+        });
+
+        res.json({
+            message: "Chapter updated successfully",
+            chapter: updatedChapter
+        });
+    } catch (error) {
+        console.error("Error in updateChapter:", error);
+        res.status(500).json({ message: "Error updating chapter" });
+    }
+};
+
+export const deleteChapterPost = async (req, res) => {
+        try {
+                const { id, postId } = req.params;
+                const chapter = await Chapter.findById(id);
+
+                if (!chapter) {
+                        return res.status(404).json({ message: "Chapter not found" });
+                }
+
+                // Find and remove the post from activities array
+                chapter.activities = chapter.activities.filter(
+                        activity => activity._id.toString() !== postId
+                );
+
+                await chapter.save();
+                res.status(200).json({ message: "Post deleted successfully" });
+        } catch (error) {
+                console.error("❌ Server error:", error);
+                res.status(500).json({ message: "Server Error" });
+        }
 };

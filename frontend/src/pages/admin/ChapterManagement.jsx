@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from './AdminLayout';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import config from '../../config/config.js';
 
 const ChapterManagement = () => {
   const navigate = useNavigate();
@@ -9,24 +12,31 @@ const ChapterManagement = () => {
   const [chapterToDelete, setChapterToDelete] = useState(null);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
+  const [chapters, setChapters] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Demo data - replace with actual API call
-  const chapters = [
-    {
-      id: 1,
-      name: 'React Enthusiasts',
-      location: 'Gujarat',
-      members: 3,
-      status: 'Active',
-      foundedDate: '2025-05-20',
-      description: 'A group for tech enthusiasts to collaborate on ideas.',
+  useEffect(() => {
+    fetchChapters();
+  }, []);
+
+  const fetchChapters = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${config.API_BASE_URL}/api/chapters`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setChapters(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching chapters:', error);
+      toast.error('Failed to fetch chapters');
+      setLoading(false);
     }
-    // Add more demo chapters as needed
-  ];
+  };
 
   const filteredChapters = chapters.filter(chapter =>
-    chapter.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    chapter.location.toLowerCase().includes(searchTerm.toLowerCase())
+    chapter.chapterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    chapter.chapterRegion.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleViewChapter = (chapterId) => {
@@ -47,19 +57,31 @@ const ChapterManagement = () => {
     }
 
     try {
-      // Here you would make an API call to delete the chapter
-      console.log('Deleting chapter:', chapterToDelete.id);
-      console.log('Admin password:', deletePassword);
+      await axios.delete(`${config.API_BASE_URL}/api/chapters/${chapterToDelete._id}`, {
+        data: { password: deletePassword }
+      });
       
-      // Close modal and reset state
+      toast.success('Chapter deleted successfully');
       setShowDeleteModal(false);
       setChapterToDelete(null);
       setDeletePassword('');
       setDeleteError('');
+      fetchChapters(); // Refresh the list
     } catch (error) {
-      setDeleteError('Failed to delete chapter. Please try again.');
+      console.error('Error deleting chapter:', error);
+      setDeleteError(error.response?.data?.message || 'Failed to delete chapter. Please try again.');
     }
   };
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -89,7 +111,10 @@ const ChapterManagement = () => {
                 />
               </svg>
             </div>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <button 
+              onClick={() => navigate('/admin/chapters/create')}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
               Add Chapter
             </button>
           </div>
@@ -122,30 +147,32 @@ const ChapterManagement = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredChapters.map((chapter) => (
-                <tr key={chapter.id}>
+                <tr key={chapter._id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{chapter.name}</div>
-                    <div className="text-sm text-gray-500">{chapter.description}</div>
+                    <div className="text-sm font-medium text-gray-900">{chapter.chapterName}</div>
+                    <div className="text-sm text-gray-500">{chapter.chapterDesc}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{chapter.location}</div>
+                    <div className="text-sm text-gray-500">
+                      {chapter.chapterCity ? `${chapter.chapterCity}, ${chapter.chapterRegion}` : chapter.chapterRegion}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{chapter.members}</div>
+                    <div className="text-sm text-gray-500">{chapter.members?.length || 0}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      chapter.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {chapter.status}
+                    <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                      Active
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{chapter.foundedDate}</div>
+                    <div className="text-sm text-gray-500">
+                      {new Date(chapter.createdAt).toLocaleDateString()}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
-                      onClick={() => handleViewChapter(chapter.id)}
+                      onClick={() => handleViewChapter(chapter._id)}
                       className="text-blue-600 hover:text-blue-900 mr-4"
                     >
                       View
@@ -169,7 +196,7 @@ const ChapterManagement = () => {
             <div className="bg-white rounded-lg p-6 max-w-md w-full">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Delete Chapter</h3>
               <p className="text-sm text-gray-500 mb-4">
-                Are you sure you want to delete {chapterToDelete.name}? This action cannot be undone.
+                Are you sure you want to delete {chapterToDelete.chapterName}? This action cannot be undone.
               </p>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">

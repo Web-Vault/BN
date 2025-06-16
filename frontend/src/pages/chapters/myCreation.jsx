@@ -1484,21 +1484,20 @@ const GroupDashboard = () => {
               <div className="grid grid-cols-1 gap-6">
                 {chapter?.activities?.map((activity, index) => (
                   <div
-                    key={activity.id}
+                    key={activity._id}
                     className="bg-white/30 backdrop-blur-lg rounded-xl border border-white/20 p-3 transition-shadow"
                   >
                     <div className="">
                       <div className="flex flex-start gap-4">
                         <img
-                          src={activity.user?.profileImage || "fallback.png"}
+                          src={activity.user?.userImage || "fallback.png"}
                           className="w-10 h-10 lg:w-20 lg:h-20 rounded-xl border-2 border-white/50 object-cover"
-                          alt={activity.user?.userName}
+                          alt={activity.user?.userName || 'User'}
                         />
                         <div className="flex-1">
                           <div className="gap-3 mb-2">
                             <h3 className="font-semibold text-gray-800">
-                              {activity.user}
-                              {activity.user?.userName}
+                              {activity.user?.userName || 'Unknown User'}
                             </h3>
                             <span className="text-[11px] lg:text-sm text-gray-500">
                               <FiClock className="inline mr-1" />{" "}
