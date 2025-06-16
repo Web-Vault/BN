@@ -261,59 +261,60 @@ export const verifyOTP = async (req, res) => {
 };
 
 // Update login to check for account verification
-export const loginUser = async (req, res) => {
+export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Find user
+        // Find user by email
         const user = await users.findOne({ userEmail: email });
         if (!user) {
-            return res.status(400).json({ message: "Invalid credentials" });
+            return res.status(401).json({ message: "Invalid email or password" });
         }
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.userPassword);
-        if (!isMatch) {
-            return res.status(400).json({ message: "Invalid credentials" });
-        }
-
-        // Generate token
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-            expiresIn: "7d",
-        });
-
-        // Check if user is admin
-        if (user.isAdmin === true) {
-            return res.status(200).json({ 
-                message: "Admin login successful",
-                redirectTo: "/admin-panel",
-                user: {
-                    id: user._id,
-                    name: user.userName,
-                    email: user.userEmail,
-                    isAdmin: true,
-                    token // Add token for admin users
+        // Check if user is banned
+        if (user.banStatus && user.banStatus.isBanned) {
+            return res.status(403).json({
+                message: "Account is banned",
+                banDetails: {
+                    reason: user.banStatus.reason,
+                    startDate: user.banStatus.startDate,
+                    endDate: user.banStatus.endDate,
+                    adminId: user.banStatus.adminId
                 }
             });
         }
 
-        // Return user data with onboarding status
+        // Verify password
+        const isMatch = await bcrypt.compare(password, user.userPassword);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        // Generate JWT token
+        const token = jwt.sign(
+            { id: user._id, isAdmin: user.isAdmin },
+            process.env.JWT_SECRET,
+            { expiresIn: "30d" }
+        );
+
+        // Return user data without password
+        const userData = {
+            id: user._id,
+            userName: user.userName,
+            userEmail: user.userEmail,
+            isAdmin: user.isAdmin,
+            token,
+            onboardingStatus: user.onboardingStatus
+        };
+
         res.json({
-            user: {
-                    id: user._id,
-                    name: user.userName,
-                    email: user.userEmail,
-                    token,
-                    onboardingStatus: user.onboardingStatus || {
-                        isCompleted: false,
-                        completedSteps: [],
-                        lastUpdated: new Date()
-                    }
-            }
+            message: "Login successful",
+            user: userData,
+            redirectTo: user.isAdmin ? '/admin-panel' : '/profile'
         });
     } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ message: "Server Error" });
+        console.error("Error in login:", error);
+        res.status(500).json({ message: "Error logging in" });
     }
 };
 
@@ -512,6 +513,25 @@ export const getProfile = async (req, res) => {
                 console.error("❌ Profile Fetch Error:", error);
                 res.status(500).json({ message: "Error fetching profile data", error: error.message });
         }
+};
+
+export const getUserById = async (req, res) => {
+  try {
+    const user = await users.findById(req.params.userId)
+      .select('-userPassword')
+      .populate('banStatus.currentBan.adminId', 'userName')
+      .populate('banStatus.banHistory.adminId', 'userName')
+      .populate('banStatus.banHistory.unbannedBy', 'userName');
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({ user });
+  } catch (error) {
+    console.error("Error in getUserById:", error);
+    res.status(500).json({ message: "Error fetching user", error: error.message });
+  }
 };
 
 export const getUserProfile = async (req, res) => {
@@ -849,10 +869,6 @@ export const deleteUser = async (req, res) => {
 
         // Verify admin password
         const admin = await users.findById(req.user._id);
-        if (!admin) {
-            return res.status(404).json({ message: "Admin not found" });
-        }
-
         const isMatch = await bcrypt.compare(password, admin.userPassword);
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid password" });
@@ -888,3 +904,471 @@ export const deleteUser = async (req, res) => {
         });
     }
 };
+
+// @desc    Warn a user
+// @route   POST /api/users/:userId/warn
+// @access  Private/Admin
+export const warnUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { reason, password } = req.body;
+
+        // Verify admin password
+        const admin = await users.findById(req.user._id);
+        const isMatch = await bcrypt.compare(password, admin.userPassword);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Invalid password" });
+        }
+
+        const user = await users.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Initialize warnings if they don't exist
+        if (!user.warnings) {
+            user.warnings = {
+                count: 0,
+                history: []
+            };
+        }
+
+        // Add warning to history
+        const warning = {
+            reason,
+            date: new Date(),
+            adminId: req.user._id
+        };
+
+        // Update warnings using $set and $push operators
+        await users.findByIdAndUpdate(userId, {
+            $set: { 'warnings.count': (user.warnings.count || 0) + 1 },
+            $push: { 'warnings.history': warning }
+        });
+
+        // Get updated user data
+        const updatedUser = await users.findById(userId);
+
+        // Try to send email, but don't fail the whole operation if email fails
+        try {
+            // Create reusable transporter
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASSWORD
+                },
+                tls: {
+                    rejectUnauthorized: false // Only use this in development
+                }
+            });
+
+            // Verify transporter configuration
+            await transporter.verify();
+
+            const mailOptions = {
+                from: `"Business Network" <${process.env.EMAIL_USER}>`,
+                to: user.userEmail,
+                subject: "Warning from Business Network",
+                html: `
+                    <h1>Warning Notice</h1>
+                    <p>Dear ${user.userName},</p>
+                    <p>You have received a warning for the following reason:</p>
+                    <p><strong>${reason}</strong></p>
+                    <p>This is warning ${(user.warnings.count || 0) + 1} of 3. After 3 warnings, your account may be banned.</p>
+                    <p>Please review our community guidelines and ensure compliance.</p>
+                    <p>Best regards,<br>Business Network Team</p>
+                `
+            };
+
+            const info = await transporter.sendMail(mailOptions);
+            console.log('Warning email sent:', info.messageId);
+
+            res.json({
+                success: true,
+                message: "Warning sent successfully",
+                warnings: updatedUser.warnings,
+                emailSent: true
+            });
+        } catch (emailError) {
+            console.error("Error sending warning email:", emailError);
+            
+            // Still return success but indicate email wasn't sent
+            res.json({
+                success: true,
+                message: "Warning recorded but email could not be sent",
+                warnings: updatedUser.warnings,
+                emailSent: false,
+                emailError: emailError.message
+            });
+        }
+    } catch (error) {
+        console.error("Error in warnUser:", error);
+        res.status(500).json({ 
+            message: "Error sending warning",
+            error: error.message 
+        });
+    }
+};
+
+// @desc    Ban a user
+// @route   POST /api/users/:userId/ban
+// @access  Private/Admin
+export const banUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { reason, duration, password } = req.body;
+
+        // Verify admin password
+        const admin = await users.findById(req.user._id);
+        const isMatch = await bcrypt.compare(password, admin.userPassword);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Invalid password" });
+        }
+
+        const user = await users.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Calculate ban end date
+        const startDate = new Date();
+        const endDate = duration ? new Date(startDate.getTime() + (duration * 24 * 60 * 60 * 1000)) : null;
+
+        // Create new ban record
+        const newBan = {
+            reason,
+            startDate,
+            endDate,
+            adminId: req.user._id
+        };
+
+        // Update user ban status
+        const updatedUser = await users.findByIdAndUpdate(
+            userId,
+            {
+                $set: {
+                    'banStatus.isBanned': true,
+                    'banStatus.currentBan': newBan
+                },
+                $push: {
+                    'banStatus.banHistory': newBan
+                },
+                $inc: {
+                    'banStatus.banCount': 1
+                }
+            },
+            { new: true }
+        );
+
+        // Log ban activity
+        await Activity.create({
+            user: userId,
+            activityType: "account",
+            action: "User Banned",
+            metadata: {
+                reason,
+                duration: duration ? `${duration} days` : 'permanent',
+                startDate,
+                endDate,
+                bannedBy: req.user._id,
+                adminName: admin.userName,
+                banCount: updatedUser.banStatus.banCount
+            }
+        });
+
+        // Try to send email, but don't fail the whole operation if email fails
+        try {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASSWORD
+                },
+                tls: {
+                    rejectUnauthorized: false // Only use this in development
+                }
+            });
+
+            // Verify transporter configuration
+            await transporter.verify();
+
+            const mailOptions = {
+                from: `"Business Network" <${process.env.EMAIL_USER}>`,
+                to: user.userEmail,
+                subject: "Account Banned - Business Network",
+                html: `
+                    <h1>Account Banned</h1>
+                    <p>Dear ${user.userName},</p>
+                    <p>Your account has been banned for the following reason:</p>
+                    <p><strong>${reason}</strong></p>
+                    ${endDate ? 
+                        `<p>Your ban will be in effect until: ${endDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}</p>` :
+                        '<p>This is a permanent ban.</p>'
+                    }
+                    <p>If you believe this is a mistake, please contact our support team.</p>
+                    <p>Best regards,<br>Business Network Team</p>
+                `
+            };
+
+            const info = await transporter.sendMail(mailOptions);
+            console.log('Ban email sent:', info.messageId);
+
+            res.json({
+                success: true,
+                message: "User banned successfully",
+                user: updatedUser,
+                emailSent: true,
+                banDetails: {
+                    reason,
+                    startDate,
+                    endDate,
+                    duration: duration ? `${duration} days` : 'permanent'
+                }
+            });
+        } catch (emailError) {
+            console.error("Error sending ban email:", emailError);
+            
+            // Still return success but indicate email wasn't sent
+            res.json({
+                success: true,
+                message: "User banned but email could not be sent",
+                user: updatedUser,
+                emailSent: false,
+                emailError: emailError.message,
+                banDetails: {
+                    reason,
+                    startDate,
+                    endDate,
+                    duration: duration ? `${duration} days` : 'permanent'
+                }
+            });
+        }
+    } catch (error) {
+        console.error("Error in banUser:", error);
+        res.status(500).json({ 
+            message: "Error banning user",
+            error: error.message 
+        });
+    }
+};
+
+// @desc    Unban a user
+// @route   POST /api/users/:userId/unban
+// @access  Private/Admin
+export const unbanUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { password, reason } = req.body;
+
+        // Verify admin password
+        const admin = await users.findById(req.user._id);
+        const isMatch = await bcrypt.compare(password, admin.userPassword);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Invalid password" });
+        }
+
+        const user = await users.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Store current ban details
+        const currentBan = user.banStatus.currentBan;
+
+        // Update the last ban history entry with unban details
+        const unbanDetails = {
+            unbannedAt: new Date(),
+            unbannedBy: req.user._id,
+            unbannedReason: reason || "Admin decision"
+        };
+
+        // Update user ban status
+        const updatedUser = await users.findByIdAndUpdate(
+            userId,
+            {
+                $set: {
+                    'banStatus.isBanned': false,
+                    'banStatus.currentBan': null,
+                    [`banStatus.banHistory.${user.banStatus.banHistory.length - 1}`]: {
+                        ...currentBan,
+                        ...unbanDetails
+                    }
+                }
+            },
+            { new: true }
+        );
+
+        // Log unban activity
+        await Activity.create({
+            user: userId,
+            activityType: "account",
+            action: "User Unbanned",
+            metadata: {
+                previousBanReason: currentBan.reason,
+                banStartDate: currentBan.startDate,
+                banEndDate: currentBan.endDate,
+                unbannedBy: req.user._id,
+                adminName: admin.userName,
+                unbannedAt: unbanDetails.unbannedAt,
+                unbannedReason: unbanDetails.unbannedReason,
+                banCount: user.banStatus.banCount
+            }
+        });
+
+        // Try to send email, but don't fail the whole operation if email fails
+        try {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASSWORD
+                },
+                tls: {
+                    rejectUnauthorized: false // Only use this in development
+                }
+            });
+
+            // Verify transporter configuration
+            await transporter.verify();
+
+            const mailOptions = {
+                from: `"Business Network" <${process.env.EMAIL_USER}>`,
+                to: user.userEmail,
+                subject: "Account Unbanned - Business Network",
+                html: `
+                    <h1>Account Unbanned</h1>
+                    <p>Dear ${user.userName},</p>
+                    <p>Your account has been unbanned. You can now log in and access your account.</p>
+                    <p>Best regards,<br>Business Network Team</p>
+                `
+            };
+
+            const info = await transporter.sendMail(mailOptions);
+            console.log('Unban email sent:', info.messageId);
+
+            res.json({
+                success: true,
+                message: "User unbanned successfully",
+                user: updatedUser,
+                emailSent: true
+            });
+        } catch (emailError) {
+            console.error("Error sending unban email:", emailError);
+            
+            // Still return success but indicate email wasn't sent
+            res.json({
+                success: true,
+                message: "User unbanned but email could not be sent",
+                user: updatedUser,
+                emailSent: false,
+                emailError: emailError.message
+            });
+        }
+    } catch (error) {
+        console.error("Error in unbanUser:", error);
+        res.status(500).json({ 
+            message: "Error unbanning user",
+            error: error.message 
+        });
+    }
+};
+
+// Add this new function to handle automatic unbans
+export const checkAndHandleExpiredBans = async () => {
+  try {
+    const now = new Date();
+    
+    // Find all users with expired bans
+    const usersWithExpiredBans = await users.find({
+      'banStatus.isBanned': true,
+      'banStatus.currentBan.endDate': { $lt: now }
+    });
+
+    console.log(`Found ${usersWithExpiredBans.length} users with expired bans`);
+
+    for (const user of usersWithExpiredBans) {
+      const currentBan = user.banStatus.currentBan;
+      
+      // Create unban details
+      const unbanDetails = {
+        unbannedAt: now,
+        unbannedBy: null, // System unban
+        unbannedReason: "Ban duration expired"
+      };
+
+      // Update user ban status
+      await users.findByIdAndUpdate(user._id, {
+        $set: {
+          'banStatus.isBanned': false,
+          'banStatus.currentBan': null,
+          [`banStatus.banHistory.${user.banStatus.banHistory.length - 1}`]: {
+            ...currentBan,
+            ...unbanDetails
+          }
+        }
+      });
+
+      // Log the automatic unban activity
+      await Activity.create({
+        user: user._id,
+        activityType: "account",
+        action: "User Unbanned",
+        metadata: {
+          previousBanReason: currentBan.reason,
+          banStartDate: currentBan.startDate,
+          banEndDate: currentBan.endDate,
+          unbannedAt: now,
+          unbannedReason: "Ban duration expired",
+          banCount: user.banStatus.banCount,
+          isAutomatic: true
+        }
+      });
+
+      // Send email notification
+      try {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD
+          },
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+
+        const mailOptions = {
+          from: `"Business Network" <${process.env.EMAIL_USER}>`,
+          to: user.userEmail,
+          subject: "Account Unbanned - Business Network",
+          html: `
+            <h1>Account Unbanned</h1>
+            <p>Dear ${user.userName},</p>
+            <p>Your account has been automatically unbanned as your ban duration has expired.</p>
+            <p>You can now log in and access your account.</p>
+            <p>Best regards,<br>Business Network Team</p>
+          `
+        };
+
+        await transporter.sendMail(mailOptions);
+      } catch (emailError) {
+        console.error("Error sending unban email:", emailError);
+      }
+
+      console.log(`Automatically unbanned user ${user._id}`);
+    }
+  } catch (error) {
+    console.error("Error in checkAndHandleExpiredBans:", error);
+  }
+};
+
+// Add this to your existing code to run the check periodically
+// You can adjust the interval as needed (currently set to 5 minutes)
+setInterval(checkAndHandleExpiredBans, 5 * 60 * 1000);

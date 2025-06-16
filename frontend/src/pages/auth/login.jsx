@@ -7,6 +7,8 @@ const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showBanModal, setShowBanModal] = useState(false);
+  const [banDetails, setBanDetails] = useState(null);
 
   // const gotoOnboarding = () => {
   //   localStorage.removeItem("onboardingCompleted");
@@ -44,13 +46,30 @@ const Login = () => {
         } else {
           navigate("/onboarding");
         }
+      } else if (response.status === 403 && data.message === "Account is banned") {
+        // Handle banned user
+        setBanDetails(data.banDetails);
+        setShowBanModal(true);
       } else {
         console.error("❌ Login failed:", data.message);
         alert(data.message);
       }
     } catch (error) {
       console.error("❌ Error logging in:", error);
+      alert("An error occurred while logging in");
     }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "indefinitely";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   return (
@@ -141,6 +160,35 @@ const Login = () => {
           Login with Facebook
         </button> */}
       </div>
+
+      {/* Ban Modal */}
+      {showBanModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Account Banned</h2>
+            <div className="space-y-4">
+              <p className="text-gray-700">
+                <span className="font-semibold">Reason:</span> {banDetails.reason}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-semibold">Ban Start Date:</span> {formatDate(banDetails.startDate)}
+              </p>
+              <p className="text-gray-700">
+                <span className="font-semibold">Ban End Date:</span> {formatDate(banDetails.endDate)}
+              </p>
+              <p className="text-gray-600 text-sm mt-4">
+                If you believe this is a mistake, please contact our support team at support@businessnetwork.com
+              </p>
+            </div>
+            <button
+              onClick={() => setShowBanModal(false)}
+              className="mt-6 w-full bg-gray-200 text-gray-800 p-3 rounded-md font-semibold hover:bg-gray-300 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

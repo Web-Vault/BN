@@ -44,6 +44,10 @@ const UserDetails = () => {
   const [systemActivities, setSystemActivities] = useState([]);
   const [userActivities, setUserActivities] = useState([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
+  const [warningDuration, setWarningDuration] = useState(7); // Default 7 days
+  const [banDuration, setBanDuration] = useState(30); // Default 30 days
+  const [showUnbanModal, setShowUnbanModal] = useState(false);
+  const [activities, setActivities] = useState([]);
 
   const warningReasons = [
     "Inappropriate Content",
@@ -446,45 +450,26 @@ const UserDetails = () => {
   }, [user?._id]);
 
   // Add useEffect for fetching user's activities
-  useEffect(() => {
-    const fetchUserActivities = async () => {
-      if (!userId) return;
-      
-      try {
-        setActivitiesLoading(true);
-        const token = localStorage.getItem("token");
-        
-        // Fetch all activities for the user in a single request
-        const response = await axios.get(
-          `${config.API_BASE_URL}/api/activity/user/${userId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        if (response.data.success) {
-          setSystemActivities(response.data.data.systemActivities || []);
-          setUserActivities(response.data.data.userActivities || []);
-        } else {
-          console.error("Error in response:", response.data.message);
-          setSystemActivities([]);
-          setUserActivities([]);
+  const fetchUserActivities = async () => {
+    try {
+      const response = await axios.get(
+        `${config.API_BASE_URL}/api/activities/user/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
-        setActivitiesLoading(false);
-      } catch (err) {
-        console.error("Error fetching user activities:", err);
-        setSystemActivities([]);
-        setUserActivities([]);
-        setActivitiesLoading(false);
-      }
-    };
-
-    fetchUserActivities();
-  }, [userId]);
+      );
+      setActivities(response.data);
+    } catch (err) {
+      console.error("Error fetching user activities:", err);
+    }
+  };
 
   // Initial data fetch
   useEffect(() => {
     fetchUserData();
+    fetchUserActivities();
   }, [userId]);
 
   // Fetch additional data when tab changes
@@ -528,11 +513,10 @@ const UserDetails = () => {
     }
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `${config.API_BASE_URL}/api/users/${userId}/warn`,
         {
-          reason:
-            warningReason === "Other" ? customWarningReason : warningReason,
+          reason: warningReason === "Other" ? customWarningReason : warningReason,
           password: adminPassword,
         },
         {
@@ -542,14 +526,15 @@ const UserDetails = () => {
         }
       );
 
-      setShowWarningModal(false);
-      setWarningReason("");
-      setCustomWarningReason("");
-      setAdminPassword("");
-      setAuthError("");
-
-      // Refresh user data
-      fetchUserData();
+      if (response.data.success) {
+        toast.success("Warning sent successfully");
+        setShowWarningModal(false);
+        setWarningReason("");
+        setCustomWarningReason("");
+        setAdminPassword("");
+        setAuthError("");
+        fetchUserData(); // Refresh user data
+      }
     } catch (error) {
       setAuthError(
         error.response?.data?.message ||
@@ -558,18 +543,12 @@ const UserDetails = () => {
     }
   };
 
-  const handleBanSubmit = async () => {
-    if (!adminPassword) {
-      setAuthError("Please enter your password to confirm");
-      return;
-    }
-
+  const handleBanUser = async (reason, duration, password) => {
     try {
-      await axios.post(
+      setLoading(true);
+      const response = await axios.post(
         `${config.API_BASE_URL}/api/users/${userId}/ban`,
-        {
-          password: adminPassword,
-        },
+        { reason, duration, password },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -577,16 +556,42 @@ const UserDetails = () => {
         }
       );
 
-      setShowBanModal(false);
-      setAdminPassword("");
-      setAuthError("");
-
-      // Refresh user data
-      fetchUserData();
+      if (response.data.success) {
+        toast.success("User banned successfully");
+        setShowBanModal(false);
+        fetchUserData(); // Refresh user data
+      }
     } catch (error) {
-      setAuthError(
-        error.response?.data?.message || "Failed to ban user. Please try again."
+      console.error("Error banning user:", error);
+      toast.error(error.response?.data?.message || "Failed to ban user");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUnbanUser = async (password) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `${config.API_BASE_URL}/api/users/${userId}/unban`,
+        { password },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
+
+      if (response.data.success) {
+        toast.success("User unbanned successfully");
+        setShowUnbanModal(false);
+        fetchUserData(); // Refresh user data
+      }
+    } catch (error) {
+      console.error("Error unbanning user:", error);
+      toast.error(error.response?.data?.message || "Failed to unban user");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1694,6 +1699,65 @@ const UserDetails = () => {
     }
   };
 
+  const UnbanModal = ({ isOpen, onClose, onUnban, userName }) => {
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      if (!password) {
+        setError("Please enter your admin password");
+        return;
+      }
+      onUnban(password);
+      setPassword("");
+      setError("");
+    };
+
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+          <h2 className="text-2xl font-bold text-green-600 mb-4">Unban User</h2>
+          <p className="text-gray-600 mb-4">
+            Are you sure you want to unban {userName}? They will be able to access their account immediately.
+          </p>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">
+                Admin Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-2 border rounded-md"
+                placeholder="Enter your admin password"
+              />
+            </div>
+            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+            <div className="flex justify-end gap-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                Unban User
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <AdminLayout>
@@ -1720,18 +1784,36 @@ const UserDetails = () => {
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">User Details</h1>
           <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setShowWarningModal(true)}
-              className="px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-            >
-              Send Warning
-            </button>
-            <button
-              onClick={() => setShowBanModal(true)}
-              className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              Ban User
-            </button>
+            {user?.user?.warnings?.count >= 3 ? (
+              <button
+                onClick={() => setShowBanModal(true)}
+                className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Ban User (Max Warnings Reached)
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowWarningModal(true)}
+                className="px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+              >
+                Send Warning ({user?.user?.warnings?.count || 0}/3)
+              </button>
+            )}
+            {user?.user?.banStatus?.isBanned ? (
+              <button
+                onClick={() => setShowUnbanModal(true)}
+                className="px-4 py-2 text-sm font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                Unban User
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowBanModal(true)}
+                className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Ban User
+              </button>
+            )}
             <button
               onClick={() => navigate("/admin/users")}
               className="text-blue-600 hover:text-blue-900"
@@ -1853,32 +1935,84 @@ const UserDetails = () => {
                 Ban User
               </h3>
               <p className="text-sm text-gray-500 mb-4">
-                Are you sure you want to ban {user.userName}? This action will:
+                Are you sure you want to ban {user?.user?.userName}? This action will:
               </p>
               <ul className="list-disc list-inside text-sm text-gray-500 mb-4">
                 <li>Immediately revoke their access to the platform</li>
                 <li>Send them a notification email</li>
                 <li>Require admin approval to lift the ban</li>
               </ul>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Enter your password to confirm
-                </label>
-                <input
-                  type="password"
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter your password"
-                />
-                {authError && (
-                  <p className="mt-2 text-sm text-red-600">{authError}</p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Ban Reason
+                  </label>
+                  <select
+                    value={warningReason}
+                    onChange={(e) => setWarningReason(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select a reason</option>
+                    {warningReasons.map((reason) => (
+                      <option key={reason} value={reason}>
+                        {reason}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {warningReason === "Other" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Custom Reason
+                    </label>
+                    <textarea
+                      value={customWarningReason}
+                      onChange={(e) => setCustomWarningReason(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows="3"
+                      placeholder="Enter custom ban reason"
+                    />
+                  </div>
                 )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ban Duration (days)
+                  </label>
+                  <input
+                    type="number"
+                    value={banDuration}
+                    onChange={(e) => setBanDuration(parseInt(e.target.value))}
+                    min="1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Enter your password to confirm
+                  </label>
+                  <input
+                    type="password"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter your password"
+                  />
+                  {authError && (
+                    <p className="mt-2 text-sm text-red-600">{authError}</p>
+                  )}
+                </div>
               </div>
-              <div className="flex justify-end space-x-4">
+
+              <div className="mt-6 flex justify-end space-x-4">
                 <button
                   onClick={() => {
                     setShowBanModal(false);
+                    setWarningReason("");
+                    setCustomWarningReason("");
                     setAdminPassword("");
                     setAuthError("");
                   }}
@@ -1887,7 +2021,7 @@ const UserDetails = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={handleBanSubmit}
+                  onClick={() => handleBanUser(warningReason, banDuration ? banDuration : null, adminPassword)}
                   className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                   Ban User
@@ -1896,6 +2030,102 @@ const UserDetails = () => {
             </div>
           </div>
         )}
+
+        {/* Unban Modal */}
+        {showUnbanModal && (
+          <UnbanModal
+            isOpen={showUnbanModal}
+            onClose={() => setShowUnbanModal(false)}
+            onUnban={handleUnbanUser}
+            userName={user?.user?.userName}
+          />
+        )}
+
+        {/* Ban/Unban Activities Section */}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Account Status History</h2>
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            {loading ? (
+              <div className="p-4 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {user?.user?.banStatus?.banHistory?.length > 0 ? (
+                  user.user.banStatus.banHistory.map((ban, index) => (
+                    <div key={index} className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Ban #{index + 1}
+                          </span>
+                          <p className="mt-1 text-sm text-gray-600">
+                            Reason: {ban.reason}
+                            {ban.endDate && (
+                              <span className="ml-2">
+                                (Duration: {Math.ceil((new Date(ban.endDate) - new Date(ban.startDate)) / (1000 * 60 * 60 * 24))} days)
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Banned by: {ban.adminId?.userName || 'Admin'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Banned on: {new Date(ban.startDate).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                          {ban.unbannedAt && (
+                            <>
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mt-2">
+                                {ban.unbannedBy ? 'Unbanned by Admin' : 'Automatically Unbanned'}
+                              </span>
+                              {ban.unbannedBy && (
+                                <p className="text-sm text-gray-500">
+                                  Unbanned by: {ban.unbannedBy?.userName || 'Admin'}
+                                </p>
+                              )}
+                              <p className="text-sm text-gray-500">
+                                Unbanned on: {new Date(ban.unbannedAt).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: true
+                                })}
+                              </p>
+                              {ban.unbannedReason && (
+                                <p className="text-sm text-gray-500">
+                                  Unban reason: {ban.unbannedReason}
+                                </p>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {ban.endDate && !ban.unbannedAt && (
+                            <span className="text-yellow-600">
+                              Expires: {new Date(ban.endDate).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-gray-500">
+                    No ban history found
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </AdminLayout>
   );

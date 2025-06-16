@@ -21,6 +21,19 @@ export const protect = async (req, res, next) => {
                                 return res.status(401).json({ message: "User not found, authorization denied" });
                         }
 
+                        // Check if user is banned
+                        if (req.user.banStatus && req.user.banStatus.isBanned) {
+                                return res.status(403).json({
+                                        message: "Account is banned",
+                                        banDetails: {
+                                                reason: req.user.banStatus.reason,
+                                                startDate: req.user.banStatus.startDate,
+                                                endDate: req.user.banStatus.endDate,
+                                                adminId: req.user.banStatus.adminId
+                                        }
+                                });
+                        }
+
                         // console.log("✅ User Authenticated:", req.user);
                         next();
                 } catch (error) {
@@ -29,6 +42,6 @@ export const protect = async (req, res, next) => {
                 }
         } else {
                 // console.log("❌ No Token Found in Request Headers!");
-                return res.status(401).json({ message: "anauthrized access. Please login first!" });
+                return res.status(401).json({ message: "Unauthorized access. Please login first!" });
         }
 };

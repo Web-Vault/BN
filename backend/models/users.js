@@ -19,6 +19,47 @@ const userSchema = mongoose.Schema(
                 bio: { type: String },
                 referralCode: { type: String },
 
+                // Warning and ban related fields
+                warnings: {
+                    count: { type: Number, default: 0 },
+                    history: [{
+                        reason: { type: String, required: true },
+                        date: { type: Date, default: Date.now },
+                        adminId: { type: mongoose.Schema.Types.ObjectId, ref: "users" }
+                    }]
+                },
+                banStatus: {
+                    isBanned: { type: Boolean, default: false },
+                    currentBan: {
+                        reason: String,
+                        startDate: Date,
+                        endDate: Date,
+                        adminId: {
+                            type: mongoose.Schema.Types.ObjectId,
+                            ref: 'users'
+                        }
+                    },
+                    banHistory: [{
+                        reason: String,
+                        startDate: Date,
+                        endDate: Date,
+                        adminId: {
+                            type: mongoose.Schema.Types.ObjectId,
+                            ref: 'users'
+                        },
+                        unbannedAt: Date,
+                        unbannedBy: {
+                            type: mongoose.Schema.Types.ObjectId,
+                            ref: 'users'
+                        },
+                        unbannedReason: String
+                    }],
+                    banCount: {
+                        type: Number,
+                        default: 0
+                    }
+                },
+
                 // New onboarding fields
                 address: {
                     city: { type: String },
