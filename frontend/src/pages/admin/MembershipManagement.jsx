@@ -33,13 +33,34 @@ const MembershipManagement = () => {
     }
   }, [selectedTier]);
 
-  // Add scroll snapping behavior
+  // Add scroll snapping and auto-selection behavior
   useEffect(() => {
     if (!sliderRef.current) return;
 
     const slider = sliderRef.current;
     let isScrolling = false;
     let scrollTimeout;
+
+    // Set up Intersection Observer for auto-selection
+    const options = {
+      root: slider,
+      threshold: 0.7, // Card needs to be 70% visible to be considered centered
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const tierId = entry.target.getAttribute('data-tier');
+          if (tierId) {
+            setSelectedTier(tierId);
+          }
+        }
+      });
+    }, options);
+
+    // Observe all tier cards
+    const cards = slider.querySelectorAll('.tier-card');
+    cards.forEach((card) => observer.observe(card));
 
     const handleScroll = () => {
       if (!isScrolling) {
@@ -74,8 +95,9 @@ const MembershipManagement = () => {
     return () => {
       slider.removeEventListener('scroll', handleScroll);
       clearTimeout(scrollTimeout);
+      cards.forEach((card) => observer.unobserve(card));
     };
-  }, []);
+  }, [membershipTiers]); // Add membershipTiers as dependency to re-observe when tiers change
 
   const fetchMembershipTiers = async () => {
     try {
