@@ -241,25 +241,28 @@ const ChapterDetails = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Chapter Members</h3>
             <div className="space-y-4">
               {chapter.members?.map((member) => (
-                <div key={member._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">{member.userName}</p>
-                    <p className="text-sm text-gray-500">
-                      Role: {member._id === chapter.chapterCreator._id ? 'Chapter Admin' : 'Chapter Member'}
-                    </p>
-                    <p className="text-sm text-gray-500">Joined: {new Date(member.joinedAt).toLocaleDateString()}</p>
+                <div key={member._id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-4">
+                  <div className="w-full sm:w-auto min-w-0">
+                    <p className="font-medium truncate">{member.userName}</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
+                      <p className="text-sm text-gray-500">
+                        Role: {member._id === chapter.chapterCreator._id ? 'Chapter Admin' : 'Chapter Member'}
+                      </p>
+                      {/* <span className="hidden sm:inline text-gray-300">•</span>
+                      <p className="text-sm text-gray-500">Joined: {new Date(member.joinedAt).toLocaleDateString()}</p> */}
+                    </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <button 
                       onClick={() => navigate(`/admin/users/${member.userId}`)}
-                      className="text-blue-600 hover:text-blue-900 px-3 py-1 rounded-md hover:bg-blue-50"
+                      className="w-full sm:w-auto text-blue-600 hover:text-blue-900 px-3 py-1.5 rounded-md hover:bg-blue-50 text-sm font-medium flex items-center justify-center"
                     >
                       View Profile
                     </button>
                     {member._id !== chapter.chapterCreator._id && (
                       <button 
                         onClick={() => handleRemoveMember(member._id)}
-                        className="text-red-600 hover:text-red-900 px-3 py-1 rounded-md hover:bg-red-50"
+                        className="w-full sm:w-auto text-red-600 hover:text-red-900 px-3 py-1.5 rounded-md hover:bg-red-50 text-sm font-medium flex items-center justify-center"
                       >
                         Remove
                       </button>
@@ -309,12 +312,12 @@ const ChapterDetails = () => {
             <div className="space-y-4">
               {chapter.meetings?.map((meeting) => (
                 <div key={meeting._id} className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900">{meeting.title}</h4>
-                      <p className="text-sm text-gray-600">Created by: {meeting.createdBy?.userName}</p>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4 mb-3">
+                    <div className="w-full sm:w-auto min-w-0">
+                      <h4 className="text-lg font-semibold text-gray-900 truncate">{meeting.title}</h4>
+                      <p className="text-sm text-gray-600 truncate">Created by: {meeting.createdBy?.userName}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${
                       meeting.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
                       meeting.status === 'ongoing' ? 'bg-green-100 text-green-800' :
                       'bg-gray-100 text-gray-800'
@@ -323,68 +326,53 @@ const ChapterDetails = () => {
                     </span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4 mb-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Date & Time</p>
-                      <p className="text-sm text-gray-600">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-gray-500">Date:</span>
+                      <span className="text-gray-700">
                         {new Date(meeting.date).toLocaleString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
+                          month: 'short',
                           day: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit'
                         })}
-                      </p>
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Location</p>
-                      <p className="text-sm text-gray-600">{meeting.location || 'Online'}</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-gray-500">Location:</span>
+                      <span className="text-gray-700 truncate max-w-[150px]">{meeting.location || 'Online'}</span>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Link</p>
-                      <p className="text-sm text-gray-600">
-                        {meeting.meetingLink ? (
-                          <a 
-                            href={meeting.meetingLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 hover:underline"
-                          >
-                            {meeting.meetingLink}
-                          </a>
-                        ) : 'No link available'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Attendance</p>
-                      {meeting.attendance && (
-                        <div className="mt-1 space-y-1">
-                          <p className="text-xs text-gray-500">
-                            Present: {meeting.attendance.filter(a => a.status === 'present').length}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Late: {meeting.attendance.filter(a => a.status === 'late').length}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Left Early: {meeting.attendance.filter(a => a.status === 'left_early').length}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Absent: {meeting.attendance.filter(a => a.status === 'absent').length}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                    {meeting.meetingLink && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-500">Link:</span>
+                        <a 
+                          href={meeting.meetingLink} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline truncate max-w-[200px]"
+                        >
+                          {meeting.meetingLink}
+                        </a>
+                      </div>
+                    )}
+                    {meeting.attendance && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-500">Attendance:</span>
+                        <span className="text-gray-700">
+                          {meeting.attendance.filter(a => a.status === 'present').length} present
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {meeting.description && (
-                    <div className="mb-3">
-                      <p className="text-sm font-medium text-gray-700">Description</p>
-                      <p className="text-sm text-gray-600">{meeting.description}</p>
+                    <div className="mt-3">
+                      <p className="text-sm text-gray-600 line-clamp-2">{meeting.description}</p>
                     </div>
                   )}
 
                   {meeting.attendance && meeting.attendance.length > 0 && (
-                    <div className="mb-3">
+                    <div className="mt-3">
                       <p className="text-sm font-medium text-gray-700 mb-2">Attendance Details</p>
                       <div className="space-y-2">
                         {meeting.attendance.map((record) => (
@@ -397,10 +385,10 @@ const ChapterDetails = () => {
                                   className="w-6 h-6 rounded-full object-cover"
                                 />
                               )}
-                              <span>{record.user?.userName || 'Unknown User'}</span>
+                              <span className="truncate max-w-[150px]">{record.user?.userName || 'Unknown User'}</span>
                             </div>
                             <div className="flex items-center gap-4">
-                              <span className={`px-2 py-1 rounded-full text-xs ${
+                              <span className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${
                                 record.status === 'present' ? 'bg-green-100 text-green-800' :
                                 record.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
                                 record.status === 'left_early' ? 'bg-orange-100 text-orange-800' :
@@ -408,14 +396,9 @@ const ChapterDetails = () => {
                               }`}>
                                 {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
                               </span>
-                              <span className="text-xs text-gray-500">
-                                Joined: {new Date(record.joinTime).toLocaleTimeString()}
+                              <span className="text-xs text-gray-500 whitespace-nowrap">
+                                {new Date(record.joinTime).toLocaleTimeString()}
                               </span>
-                              {record.leaveTime && (
-                                <span className="text-xs text-gray-500">
-                                  Left: {new Date(record.leaveTime).toLocaleTimeString()}
-                                </span>
-                              )}
                             </div>
                           </div>
                         ))}
@@ -432,77 +415,73 @@ const ChapterDetails = () => {
         return (
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Chapter Events</h3>
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
               {chapter.events?.map((event) => (
                 <div key={event._id} className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h4 className="text-lg font-semibold text-gray-900">{event.title}</h4>
-                      <p className="text-sm text-gray-600">Created by: {event.creator?.userName}</p>
+                      <h4 className="text-lg font-semibold text-gray-900 truncate">{event.title}</h4>
+                      <p className="text-sm text-gray-600 truncate">Created by: {event.creator?.userName}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${
                       new Date(event.date) > new Date() ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
                     }`}>
                       {new Date(event.date) > new Date() ? 'Upcoming' : 'Past'}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Date & Time</p>
-                      <p className="text-sm text-gray-600">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Date:</span>
+                      <span className="text-sm text-gray-600">
                         {new Date(event.date).toLocaleString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
+                          month: 'short',
                           day: 'numeric',
                           hour: '2-digit',
                           minute: '2-digit'
                         })}
-                      </p>
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Location</p>
-                      <p className="text-sm text-gray-600">{event.location || 'Online'}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Location:</span>
+                      <span className="text-sm text-gray-600 truncate">{event.location || 'Online'}</span>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Capacity</p>
-                      <p className="text-sm text-gray-600">
-                        {event.bookings?.length || 0} / {event.totalSeats} spots filled
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {event.totalSeats - (event.bookings?.length || 0)} spots available
-                      </p>
-                      <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                        <div 
-                          className="bg-blue-600 h-1.5 rounded-full" 
-                          style={{ 
-                            width: `${((event.bookings?.length || 0) / event.totalSeats) * 100}%` 
-                          }}
-                        ></div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Capacity:</span>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-600">
+                            {event.bookings?.length || 0}/{event.totalSeats}
+                          </span>
+                          <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                            <div 
+                              className="bg-blue-600 h-1.5 rounded-full" 
+                              style={{ 
+                                width: `${((event.bookings?.length || 0) / event.totalSeats) * 100}%` 
+                              }}
+                            ></div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Price</p>
-                      <p className="text-sm text-gray-600">
-                        {event.entryFee ? `$${event.entryFee}` : 'Free'}
-                      </p>
-                      {event.entryFee && (
-                        <>
-                          <p className="text-xs text-gray-500">
-                            Total Revenue: ${(event.entryFee * (event.bookings?.length || 0)).toFixed(2)}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Potential Revenue: ${(event.entryFee * event.totalSeats).toFixed(2)}
-                          </p>
-                        </>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Price:</span>
+                      <div className="flex flex-col">
+                        <span className="text-sm text-gray-600">
+                          {event.entryFee ? `$${event.entryFee}` : 'Free'}
+                        </span>
+                        {event.entryFee && (
+                          <span className="text-xs text-gray-500">
+                            Revenue: ${(event.entryFee * (event.bookings?.length || 0)).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   {event.description && (
                     <div className="mb-3">
-                      <p className="text-sm font-medium text-gray-700">Description</p>
-                      <p className="text-sm text-gray-600">{event.description}</p>
+                      <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
                     </div>
                   )}
 
@@ -516,12 +495,12 @@ const ChapterDetails = () => {
                               <img 
                                 src={booking.user.userImage} 
                                 alt={booking.user.userName} 
-                                className="w-6 h-6 rounded-full object-cover"
+                                className="w-6 h-6 rounded-full object-cover flex-shrink-0"
                               />
                             )}
-                            <span>{booking.user?.userName}</span>
+                            <span className="truncate">{booking.user?.userName}</span>
                             <span className="text-gray-400">•</span>
-                            <span>{booking.user?.userEmail}</span>
+                            <span className="truncate">{booking.user?.userEmail}</span>
                           </div>
                         ))}
                       </div>
@@ -618,26 +597,40 @@ const ChapterDetails = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">Chapter Details</h1>
-          <div className="flex items-center space-x-4">
+        <div className="space-y-4">
+          {/* Header Row */}
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-800">Chapter Details</h1>
+            <button
+              onClick={() => navigate('/admin/chapters')}
+              className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>Back to Chapters</span>
+            </button>
+          </div>
+
+          {/* Action Buttons Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-2xl ml-auto">
             <button
               onClick={() => setShowWarningModal(true)}
-              className="px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+              className="w-full px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 flex items-center justify-center gap-2"
             >
-              Send Warning
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>Send Warning</span>
             </button>
             <button
               onClick={() => setShowBanModal(true)}
-              className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              className="w-full px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 flex items-center justify-center gap-2"
             >
-              Ban Chapter
-            </button>
-            <button
-              onClick={() => navigate('/admin/chapters')}
-              className="text-blue-600 hover:text-blue-900"
-            >
-              ← Back to Chapters
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>Ban Chapter</span>
             </button>
           </div>
         </div>

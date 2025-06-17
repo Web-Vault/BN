@@ -49,7 +49,7 @@ const CreateChapter = () => {
           return;
         }
 
-        console.log("Fetching user data for ID:", userID);
+        // console.log("Fetching user data for ID:", userID);
 
         const response = await axios.get(
           `${config.API_BASE_URL}/api/users/${userID}`,
@@ -58,7 +58,7 @@ const CreateChapter = () => {
           }
         );
 
-        console.log("User data received:", response.data);
+        // console.log("User data received:", response.data);
 
         let userData = null;
 
@@ -72,7 +72,7 @@ const CreateChapter = () => {
 
         if (userData && (userData.userName || userData.name)) {
           setCurrentUser(userData);
-          console.log("Current user state set:", userData);
+          // console.log("Current user state set:", userData);
         } else {
           console.error(
             "API response did not contain valid user data:",

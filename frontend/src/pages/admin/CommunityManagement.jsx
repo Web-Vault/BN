@@ -248,101 +248,118 @@ const CommunityManagement = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">Community Management</h1>
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Community Management</h1>
+          <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              placeholder="Search posts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && fetchPosts()}
+              className="w-full sm:w-64 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button 
+              onClick={() => setShowAnnouncementModal(true)}
+              className="w-full sm:w-auto bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Create Announcement
+            </button>
+          </div>
         </div>
 
         {/* Community Posts Section */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="p-4 border-b border-gray-200">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-medium text-gray-900">Community Posts</h2>
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  placeholder="Search posts..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && fetchPosts()}
-                  className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button 
-                  onClick={() => setShowAnnouncementModal(true)}
-                  className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
-                >
-                  Create Announcement
-                </button>
-              </div>
-            </div>
+            <h2 className="text-lg font-medium text-gray-900">Community Posts</h2>
           </div>
           {loading ? (
             <div className="p-4 text-center">Loading...</div>
           ) : (
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Content
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Author
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Engagement
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {posts.map((post) => (
-                  <tr key={post._id}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          post.isAnnouncement ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {post.isAnnouncement ? 'Announcement' : post.type}
-                        </span>
-                        {post.images && post.images.length > 0 && (
-                          <FaImage className="text-gray-400" title="Contains images" />
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{post.content}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{post.author.userName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">
-                        {post.likes.length} likes • {post.comments.length} comments
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button 
-                        onClick={() => setSelectedPost(post)}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
-                      >
-                        View
-                      </button>
-                      <button 
-                        onClick={() => handleDeletePost(post._id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Type
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Content
+                    </th>
+                    <th className="hidden sm:table-cell px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Author
+                    </th>
+                    <th className="hidden md:table-cell px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Engagement
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {posts.map((post) => (
+                    <tr key={post._id} className="hover:bg-gray-50">
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            post.isAnnouncement ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {post.isAnnouncement ? 'Announcement' : post.type}
+                          </span>
+                          {post.images && post.images.length > 0 && (
+                            <FaImage className="text-gray-400" title="Contains images" />
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-4">
+                        <div className="text-sm text-gray-900 truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px]" title={post.content}>
+                          {post.content}
+                        </div>
+                      </td>
+                      <td className="hidden sm:table-cell px-4 sm:px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500 truncate max-w-[150px]" title={post.author.userName}>
+                          {post.author.userName}
+                        </div>
+                      </td>
+                      <td className="hidden md:table-cell px-4 sm:px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          {post.likes.length} likes • {post.comments.length} comments
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => setSelectedPost(post)}
+                            className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <span className="hidden sm:inline">View</span>
+                          </button>
+                          <button 
+                            onClick={() => handleDeletePost(post._id)}
+                            className="text-red-600 hover:text-red-900 flex items-center gap-1"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span className="hidden sm:inline">Delete</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
@@ -350,7 +367,7 @@ const CommunityManagement = () => {
         {selectedPost && (
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-auto my-8">
-              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 rounded-t-lg">
+              <div className="sticky top-0 bg-white px-4 sm:px-6 py-4 border-b border-gray-200 rounded-t-lg">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-medium text-gray-900">Post Details</h3>
                   <button
@@ -364,7 +381,7 @@ const CommunityManagement = () => {
                   </button>
                 </div>
               </div>
-              <div className="px-6 py-4 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+              <div className="px-4 sm:px-6 py-4 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Type</h4>
                   <div className="flex items-center space-x-2 mt-1">
@@ -503,17 +520,17 @@ const CommunityManagement = () => {
                   </div>
                 )}
               </div>
-              <div className="sticky bottom-0 bg-white px-6 py-4 border-t border-gray-200 rounded-b-lg">
-                <div className="flex justify-end space-x-3">
+              <div className="sticky bottom-0 bg-white px-4 sm:px-6 py-4 border-t border-gray-200 rounded-b-lg">
+                <div className="flex flex-col sm:flex-row justify-end gap-3">
                   <button
                     onClick={() => setSelectedPost(null)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Close
                   </button>
                   <button 
                     onClick={() => handleDeletePost(selectedPost._id)}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
                     Delete Post
                   </button>
@@ -597,7 +614,7 @@ const CommunityManagement = () => {
         {showAnnouncementModal && (
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-auto">
-              <div className="px-6 py-4 border-b border-gray-200">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-medium text-gray-900">Create Announcement</h3>
                   <button
@@ -616,7 +633,7 @@ const CommunityManagement = () => {
                   </button>
                 </div>
               </div>
-              <form onSubmit={handleCreateAnnouncement} className="px-6 py-4">
+              <form onSubmit={handleCreateAnnouncement} className="px-4 sm:px-6 py-4">
                 <div className="space-y-4">
                   <div>
                     <label htmlFor="content" className="block text-sm font-medium text-gray-700">
@@ -711,7 +728,7 @@ const CommunityManagement = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 flex justify-end space-x-3">
+                <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -720,13 +737,13 @@ const CommunityManagement = () => {
                       setImageUrls(['']);
                       setPreviewImages([]);
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     Create Announcement
                   </button>
@@ -740,7 +757,7 @@ const CommunityManagement = () => {
         {showDeleteModal && (
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-auto">
-              <div className="px-6 py-4 border-b border-gray-200">
+              <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-medium text-gray-900">Confirm Delete</h3>
                   <button
@@ -757,24 +774,24 @@ const CommunityManagement = () => {
                   </button>
                 </div>
               </div>
-              <div className="px-6 py-4">
+              <div className="px-4 sm:px-6 py-4">
                 <p className="text-sm text-gray-500">
                   Are you sure you want to delete this post? This action cannot be undone.
                 </p>
               </div>
-              <div className="px-6 py-4 bg-gray-50 rounded-b-lg flex justify-end space-x-3">
+              <div className="px-4 sm:px-6 py-4 bg-gray-50 rounded-b-lg flex flex-col sm:flex-row justify-end gap-3">
                 <button
                   onClick={() => {
                     setShowDeleteModal(false);
                     setPostToDelete(null);
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={confirmDelete}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  className="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                   Delete
                 </button>

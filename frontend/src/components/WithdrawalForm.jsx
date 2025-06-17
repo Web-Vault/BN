@@ -39,16 +39,16 @@ const WithdrawalForm = ({ investment, onClose, onWithdraw }) => {
         // and stored in investment.returns
         const available = Math.max(0, investment.returns - totalWithdrawn);
         
-        console.log("Withdrawal calculation details:", {
-          investmentId: investment._id,
-          returns: investment.returns,
-          totalWithdrawn,
-          available,
-          investmentType: investment.type,
-          investmentAmount: investment.amount,
-          userInvestment: investment.investors.find(inv => inv.user === localStorage.getItem("userId")),
-          withdrawals: investmentWithdrawals // Log the filtered withdrawals
-        });
+        // console.log("Withdrawal calculation details:", {
+        //   investmentId: investment._id,
+        //   returns: investment.returns,
+        //   totalWithdrawn,
+        //   available,
+        //   investmentType: investment.type,
+        //   investmentAmount: investment.amount,
+        //   userInvestment: investment.investors.find(inv => inv.user === localStorage.getItem("userId")),
+        //   withdrawals: investmentWithdrawals // Log the filtered withdrawals
+        // });
 
         setAvailableAmount(available);
         setFormData(prev => ({

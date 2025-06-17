@@ -244,11 +244,11 @@ const CommunityPage = () => {
       const token = localStorage.getItem("token");
 
       // Log the data being sent
-      console.log("Sending post data:", {
-        content: newPost,
-        images: newPostImages,
-        type: newPostType,
-      });
+      // console.log("Sending post data:", {
+      //   content: newPost,
+      //   images: newPostImages,
+      //   type: newPostType,
+      // });
 
       const response = await axios.post(
         `${config.API_BASE_URL}/api/posts`,
@@ -265,7 +265,7 @@ const CommunityPage = () => {
         }
       );
 
-      console.log("Post response:", response.data); // Log the response
+      // console.log("Post response:", response.data); // Log the response
 
       // Add the new post to both posts and filteredPosts arrays
       const newPostData = response.data.data;

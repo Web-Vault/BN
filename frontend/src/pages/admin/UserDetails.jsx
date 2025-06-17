@@ -82,7 +82,7 @@ const UserDetails = () => {
             },
           }
         );
-        console.log("Admin check response:", response.data);
+        // console.log("Admin check response:", response.data);
         setIsAdmin(response.data.user?.isAdmin === true);
       } catch (err) {
         console.error("Error checking admin status:", err);
@@ -104,7 +104,7 @@ const UserDetails = () => {
           },
         }
       );
-      console.log("Fetched user data:", response.data);
+      // console.log("Fetched user data:", response.data);
       setUser(response.data);
       fetchUserChapters(response.data.user.groupJoined.JoinedGroupId);
       setError(null);
@@ -121,7 +121,7 @@ const UserDetails = () => {
       setChapters(null);
       return;
     }
-    console.log("Fetching chapter details for ID:", chapterId);
+    // console.log("Fetching chapter details for ID:", chapterId);
     try {
       const response = await axios.get(
         `${config.API_BASE_URL}/api/chapters/${chapterId}`,
@@ -131,7 +131,7 @@ const UserDetails = () => {
           },
         }
       );
-      console.log("Fetched chapter details:", response.data);
+      // console.log("Fetched chapter details:", response.data);
       setChapters(response.data);
     } catch (err) {
       console.error("Error fetching chapter details:", err);
@@ -165,7 +165,7 @@ const UserDetails = () => {
           },
         }
       );
-      console.log("Fetched connections:", response.data);
+      // console.log("Fetched connections:", response.data);
       setUser((prev) => ({ ...prev, connections: response.data }));
     } catch (err) {
       console.error("Error fetching connections:", err);
@@ -175,28 +175,28 @@ const UserDetails = () => {
   // Fetch user's investments
   const fetchInvestments = async () => {
     if (!user?.user?._id) {
-      console.log("No user ID available, skipping investment fetch");
+      // console.log("No user ID available, skipping investment fetch");
       return;
     }
 
-    console.log("Starting investment fetch for user:", user.user);
+    // console.log("Starting investment fetch for user:", user.user);
     setLoadingInvestments(true);
     setInvestmentError(null);
 
     try {
       const token = localStorage.getItem("token");
-      console.log("Auth token:", token ? "Present" : "Missing");
+      // console.log("Auth token:", token ? "Present" : "Missing");
 
       // Fetch all investments using admin route
-      console.log("Fetching all investments via admin route...");
+      // console.log("Fetching all investments via admin route...");
       const investmentsRes = await axios.get(
         `${config.API_BASE_URL}/api/investments/admin/all`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("All investments response:", investmentsRes.data);
-      console.log("Total investments received:", investmentsRes.data.length);
+      // console.log("All investments response:", investmentsRes.data);
+      // console.log("Total investments received:", investmentsRes.data.length);
 
       // Separate investments into two categories
       const userInvestments = [];
@@ -229,8 +229,8 @@ const UserDetails = () => {
         }
       });
 
-      console.log("User investments:", userInvestments);
-      console.log("User funding requests:", userRequests);
+      // console.log("User investments:", userInvestments);
+      // console.log("User funding requests:", userRequests);
 
       setInvestments(userInvestments);
       setFundingRequests(userRequests);
@@ -247,19 +247,19 @@ const UserDetails = () => {
       );
     } finally {
       setLoadingInvestments(false);
-      console.log("Investment fetch completed. Current states:", {
-        investments: investments.length,
-        fundingRequests: fundingRequests.length,
-        loading: loadingInvestments,
-        error: investmentError,
-      });
+      // console.log("Investment fetch completed. Current states:", {
+      //   investments: investments.length,
+      //   fundingRequests: fundingRequests.length,
+      //   loading: loadingInvestments,
+      //   error: investmentError,
+      // });
     }
   };
 
   useEffect(() => {
-    console.log("useEffect triggered. User:", user);
+    // console.log("useEffect triggered. User:", user);
     if (user?.user?._id) {
-      console.log("User ID available, calling fetchInvestments");
+      // console.log("User ID available, calling fetchInvestments");
       fetchInvestments();
     }
   }, [user?.user?._id]);
@@ -276,7 +276,7 @@ const UserDetails = () => {
           },
         }
       );
-      console.log("Fetched referrals data:", response.data);
+      // console.log("Fetched referrals data:", response.data);
       setReferrals(response.data.referrals);
       setReferralStats(response.data.stats);
       setReferralError(null);
@@ -452,17 +452,24 @@ const UserDetails = () => {
   // Add useEffect for fetching user's activities
   const fetchUserActivities = async () => {
     try {
+      setActivitiesLoading(true);
       const response = await axios.get(
-        `${config.API_BASE_URL}/api/activities/user/${userId}`,
+        `${config.API_BASE_URL}/api/activity/user/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
-      setActivities(response.data);
+      console.log("userActivities: ", response.data);
+      if (response.data.success) {
+        setSystemActivities(response.data.data.systemActivities || []);
+        setUserActivities(response.data.data.userActivities || []);
+      }
     } catch (err) {
       console.error("Error fetching user activities:", err);
+    } finally {
+      setActivitiesLoading(false);
     }
   };
 
@@ -477,9 +484,6 @@ const UserDetails = () => {
     if (!user) return;
 
     switch (activeTab) {
-      //       case 'business':
-      //         fetchBusinessData();
-      //         break;
       case "connections":
         fetchConnections();
         break;
@@ -617,15 +621,15 @@ const UserDetails = () => {
       parseFloat(investment.currentFunding) >= parseFloat(investment.amount);
     const isPastDeadline = now > deadline;
 
-    console.log("Status calculation for investment:", {
-      id: investment._id,
-      title: investment.title,
-      currentFunding: investment.currentFunding,
-      amount: investment.amount,
-      isFullyFunded,
-      deadline: investment.deadline,
-      isPastDeadline,
-    });
+    // console.log("Status calculation for investment:", {
+    //   id: investment._id,
+    //   title: investment.title,
+    //   currentFunding: investment.currentFunding,
+    //   amount: investment.amount,
+    //   isFullyFunded,
+    //   deadline: investment.deadline,
+    //   isPastDeadline,
+    // });
 
     if (isFullyFunded) {
       return "funded";
@@ -638,7 +642,7 @@ const UserDetails = () => {
 
   const renderTabContent = () => {
     if (!user) return null;
-    console.log("Current user data in render:", user);
+    // console.log("Current user data in render:", user);
 
     switch (activeTab) {
       case "profile":
@@ -851,40 +855,40 @@ const UserDetails = () => {
 
       case "connections":
         return (
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               Connections
             </h3>
             {user.connections && user.connections.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {user.connections.map((connection) => (
                   <div
                     key={connection._id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg gap-3 sm:gap-4"
                   >
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                       {connection.userImage ? (
                         <img
                           src={connection.userImage}
                           alt={connection.userName}
-                          className="w-10 h-10 rounded-full object-cover"
+                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
                           <span className="text-gray-500 text-sm">
                             {connection.userName?.charAt(0) || "?"}
                           </span>
                         </div>
                       )}
-                      <div>
-                        <p className="font-medium">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">
                           {connection.userName || "Unknown User"}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 truncate">
                           {connection.userEmail || "No email provided"}
                         </p>
                         {connection.industry && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-gray-500 truncate">
                             {connection.industry}
                           </p>
                         )}
@@ -892,9 +896,13 @@ const UserDetails = () => {
                     </div>
                     <button
                       onClick={() => navigate(`/admin/users/${connection._id}`)}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors flex items-center justify-center gap-2"
                     >
-                      View Profile
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      <span>View Profile</span>
                     </button>
                   </div>
                 ))}
@@ -907,24 +915,24 @@ const UserDetails = () => {
 
       case "chapters":
         return (
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               Chapter Membership
             </h3>
             {user.user.groupJoined?.Joined ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="min-w-0">
                       <h4 className="font-medium text-gray-900">
                         Current Chapter
                       </h4>
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-gray-500 mt-1 truncate">
                         {chapters?.chapterName || "Loading chapter details..."}
                       </p>
-                      <div className="mt-2 flex items-center space-x-2">
+                      <div className="mt-2 flex items-center gap-2">
                         <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          className={`px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
                             chapters?.chapterCreator?._id === user.user._id
                               ? "bg-purple-100 text-purple-800"
                               : "bg-blue-100 text-blue-800"
@@ -940,46 +948,50 @@ const UserDetails = () => {
                       onClick={() =>
                         navigate(`/admin/chapters/${chapters?._id}`)
                       }
-                      className="text-blue-600 hover:text-blue-900"
+                      className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors flex items-center justify-center gap-2"
                     >
-                      View Chapter
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      <span>View Chapter</span>
                     </button>
                   </div>
                   {chapters && (
-                    <div className="mt-4 grid grid-cols-2 gap-4">
-                      <div>
+                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="bg-white p-3 rounded-lg border border-gray-100">
                         <label className="block text-sm font-medium text-gray-500">
                           Description
                         </label>
-                        <p className="mt-1">
+                        <p className="mt-1 text-sm text-gray-900 line-clamp-2">
                           {chapters.chapterDesc || "Not specified"}
                         </p>
                       </div>
-                      <div>
+                      <div className="bg-white p-3 rounded-lg border border-gray-100">
                         <label className="block text-sm font-medium text-gray-500">
                           Technology
                         </label>
-                        <p className="mt-1">
+                        <p className="mt-1 text-sm text-gray-900 line-clamp-2">
                           {chapters.chapterTech || "Not specified"}
                         </p>
                       </div>
-                      <div>
+                      <div className="bg-white p-3 rounded-lg border border-gray-100">
                         <label className="block text-sm font-medium text-gray-500">
                           Region
                         </label>
-                        <p className="mt-1">
+                        <p className="mt-1 text-sm text-gray-900 line-clamp-2">
                           {chapters.chapterRegion || "Not specified"}
                         </p>
                       </div>
-                      <div>
+                      <div className="bg-white p-3 rounded-lg border border-gray-100">
                         <label className="block text-sm font-medium text-gray-500">
                           City
                         </label>
-                        <p className="mt-1">
+                        <p className="mt-1 text-sm text-gray-900 line-clamp-2">
                           {chapters.chapterCity || "Not specified"}
                         </p>
                       </div>
-                      <div>
+                      <div className="bg-white p-3 rounded-lg border border-gray-100">
                         <label className="block text-sm font-medium text-gray-500">
                           Country
                         </label>
@@ -1008,12 +1020,12 @@ const UserDetails = () => {
         );
 
       case "investments":
-        console.log("Rendering investments tab. Current states:", {
-          investments: investments.length,
-          fundingRequests: fundingRequests.length,
-          loading: loadingInvestments,
-          error: investmentError,
-        });
+        // console.log("Rendering investments tab. Current states:", {
+        //   investments: investments.length,
+        //   fundingRequests: fundingRequests.length,
+        //   loading: loadingInvestments,
+        //   error: investmentError,
+        // });
         return (
           <div className="space-y-6">
             {loadingInvestments ? (
@@ -1037,7 +1049,7 @@ const UserDetails = () => {
                     </h3>
                     <div className="grid gap-4">
                       {fundingRequests.map((request) => {
-                        console.log("Rendering funding request:", request);
+                        // console.log("Rendering funding request:", request);
                         const status = calculateStatus(request);
                         const fundingProgress = (
                           (parseFloat(request.currentFunding) /
@@ -1115,7 +1127,7 @@ const UserDetails = () => {
                     </h3>
                     <div className="grid gap-4">
                       {investments.map((investment) => {
-                        console.log("Rendering investment:", investment);
+                        // console.log("Rendering investment:", investment);
                         const userInvestment = investment.investors?.find(
                           (inv) =>
                             inv.user === user.user._id ||
@@ -1395,27 +1407,27 @@ const UserDetails = () => {
         const netAmount = totalEarnings + totalReturns - totalSpending;
 
         // Log transaction details for debugging
-        console.log("Transaction Details:", {
-          userId,
-          totalTransactions: transactions.length,
-          earnings: {
-            count: transactions.filter(
-              (t) => t.type === "investment" && t.amount.startsWith("+")
-            ).length,
-            amount: totalEarnings,
-          },
-          spending: {
-            count: transactions.filter(
-              (t) => t.type === "investment" && t.amount.startsWith("-")
-            ).length,
-            amount: totalSpending,
-          },
-          returns: {
-            count: transactions.filter((t) => t.type === "interest").length,
-            amount: totalReturns,
-          },
-          netAmount,
-        });
+        // console.log("Transaction Details:", {
+        //   userId,
+        //   totalTransactions: transactions.length,
+        //   earnings: {
+        //     count: transactions.filter(
+        //       (t) => t.type === "investment" && t.amount.startsWith("+")
+        //     ).length,
+        //     amount: totalEarnings,
+        //   },
+        //   spending: {
+        //     count: transactions.filter(
+        //       (t) => t.type === "investment" && t.amount.startsWith("-")
+        //     ).length,
+        //     amount: totalSpending,
+        //   },
+        //   returns: {
+        //     count: transactions.filter((t) => t.type === "interest").length,
+        //     amount: totalReturns,
+        //   },
+        //   netAmount,
+        // });
 
         return (
           <div className="space-y-6">
@@ -1781,45 +1793,65 @@ const UserDetails = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">User Details</h1>
-          <div className="flex items-center space-x-4">
+        <div className="space-y-4">
+          {/* Header Row */}
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-800">User Details</h1>
+            <button
+              onClick={() => navigate("/admin/users")}
+              className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span>Back to Users</span>
+            </button>
+          </div>
+
+          {/* Action Buttons Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-2xl ml-auto">
             {user?.user?.warnings?.count >= 3 ? (
               <button
                 onClick={() => setShowBanModal(true)}
-                className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="w-full px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 flex items-center justify-center gap-2"
               >
-                Ban User (Max Warnings Reached)
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Ban User (Max Warnings)</span>
               </button>
             ) : (
               <button
                 onClick={() => setShowWarningModal(true)}
-                className="px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                className="w-full px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 rounded-md hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 flex items-center justify-center gap-2"
               >
-                Send Warning ({user?.user?.warnings?.count || 0}/3)
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Send Warning ({user?.user?.warnings?.count || 0}/3)</span>
               </button>
             )}
             {user?.user?.banStatus?.isBanned ? (
               <button
                 onClick={() => setShowUnbanModal(true)}
-                className="px-4 py-2 text-sm font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                className="w-full px-4 py-2 text-sm font-medium text-green-700 bg-green-100 rounded-md hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 flex items-center justify-center gap-2"
               >
-                Unban User
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Unban User</span>
               </button>
             ) : (
               <button
                 onClick={() => setShowBanModal(true)}
-                className="px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="w-full px-4 py-2 text-sm font-medium text-red-700 bg-red-100 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 flex items-center justify-center gap-2"
               >
-                Ban User
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Ban User</span>
               </button>
             )}
-            <button
-              onClick={() => navigate("/admin/users")}
-              className="text-blue-600 hover:text-blue-900"
-            >
-              ← Back to Users
-            </button>
           </div>
         </div>
 

@@ -40,7 +40,7 @@ const GroupDashboard = () => {
   });
 
   const { chapterId } = useParams();
-  console.log("id", chapterId);
+  // console.log("id", chapterId);
 
   const [chapter, setChapter] = useState(null);
   const [error, setError] = useState("");
@@ -113,7 +113,7 @@ const GroupDashboard = () => {
         }
       );
 
-      console.log("✅ Chapter fetched:", response.data);
+      // console.log("✅ Chapter fetched:", response.data);
       setChapter(response.data);
       setChapterMembers(response.data.members || []);
 
@@ -133,7 +133,7 @@ const GroupDashboard = () => {
 
   const navigate = useNavigate();
 
-  console.log("error: ", error);
+  // console.log("error: ", error);
 
   // const goToOthersProfile = () => {
   //   navigate(`/userProfile/${userId}`);
@@ -151,7 +151,7 @@ const GroupDashboard = () => {
         }
       );
 
-      console.log("✅ Request accepted:", response.data);
+      // console.log("✅ Request accepted:", response.data);
 
       // Refresh data
       const updatedChapter = await axios.get(
@@ -179,7 +179,7 @@ const GroupDashboard = () => {
         }
       );
 
-      console.log("❌ Request rejected:", response.data);
+      // console.log("❌ Request rejected:", response.data);
 
       // Refresh data
       const updatedChapter = await axios.get(
@@ -212,7 +212,7 @@ const GroupDashboard = () => {
         }
       );
 
-      console.log("✅ Member removed:", response.data);
+      // console.log("✅ Member removed:", response.data);
 
       // Refresh data
       const updatedChapter = await axios.get(
@@ -245,7 +245,7 @@ const GroupDashboard = () => {
         }
       );
 
-      console.log("✅ Post added:", response.data);
+      // console.log("✅ Post added:", response.data);
 
       // Clear the form
       setPostContent("");
@@ -271,7 +271,7 @@ const GroupDashboard = () => {
   const handleCreateMeeting = async () => {
     try {
       const token = localStorage.getItem("token");
-      console.log("Creating meeting with data:", meetingData); // Debug log
+      // console.log("Creating meeting with data:", meetingData); // Debug log
       const response = await axios.post(
         `${config.API_BASE_URL}/api/chapters/${chapterId}/meetings`,
         meetingData,
@@ -282,7 +282,7 @@ const GroupDashboard = () => {
         }
       );
 
-      console.log("✅ Meeting created:", response.data); // Debug log
+      // console.log("✅ Meeting created:", response.data); // Debug log
 
       // Clear form and close modal
       setMeetingData({
@@ -304,7 +304,7 @@ const GroupDashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("Updated chapter data:", updatedChapter.data); // Debug log
+      // console.log("Updated chapter data:", updatedChapter.data); // Debug log
       setChapter(updatedChapter.data);
     } catch (error) {
       console.error("❌ Error creating meeting:", error);
@@ -412,7 +412,7 @@ const GroupDashboard = () => {
   // Update the fetchMeetingAttendance function
   const fetchMeetingAttendance = async (meetingId) => {
     try {
-      console.log("Fetching attendance for meeting:", meetingId);
+      // console.log("Fetching attendance for meeting:", meetingId);
       setLoadingAttendance((prev) => ({ ...prev, [meetingId]: true }));
       const token = localStorage.getItem("token");
 
@@ -423,7 +423,7 @@ const GroupDashboard = () => {
         }
       );
 
-      console.log("Raw attendance response:", response.data);
+      // console.log("Raw attendance response:", response.data);
 
       // Validate the response data
       if (!response.data || !response.data.attendance) {
@@ -433,17 +433,17 @@ const GroupDashboard = () => {
 
       // The backend returns { attendance: [...], stats: {...} }
       const attendanceRecords = response.data.attendance;
-      console.log("Processed attendance data:", attendanceRecords);
+      // console.log("Processed attendance data:", attendanceRecords);
 
       setMeetingAttendance((prev) => {
         const newState = { ...prev, [meetingId]: attendanceRecords };
-        console.log("New attendance state:", newState);
+        // console.log("New attendance state:", newState);
         return newState;
       });
 
       setLoadedAttendanceMeetings((prev) => {
         const newSet = new Set([...prev, meetingId]);
-        console.log("New loaded meetings set:", Array.from(newSet));
+        // console.log("New loaded meetings set:", Array.from(newSet));
         return newSet;
       });
     } catch (error) {
@@ -481,7 +481,7 @@ const GroupDashboard = () => {
   const handleCreateEvent = async () => {
     try {
       const token = localStorage.getItem("token");
-      console.log("Creating event with data:", eventData); // Debug log
+      // console.log("Creating event with data:", eventData); // Debug log
       const response = await axios.post(
         `${config.API_BASE_URL}/api/chapters/${chapterId}/events`,
         eventData,
@@ -492,7 +492,7 @@ const GroupDashboard = () => {
         }
       );
 
-      console.log("✅ Event created:", response.data); // Debug log
+      // console.log("✅ Event created:", response.data); // Debug log
 
       // Clear form and close modal
       setEventData({
@@ -517,7 +517,7 @@ const GroupDashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("Updated chapter data:", updatedChapter.data); // Debug log
+      // console.log("Updated chapter data:", updatedChapter.data); // Debug log
       setChapter(updatedChapter.data);
     } catch (error) {
       console.error("❌ Error creating event:", error);
@@ -541,7 +541,7 @@ const GroupDashboard = () => {
         }
       );
 
-      console.log("✅ Event updated:", response.data);
+      // console.log("✅ Event updated:", response.data);
 
       // Clear form and close modal
       setEventData({
@@ -633,7 +633,7 @@ const GroupDashboard = () => {
         }
       );
 
-      console.log("✅ Event booked:", response.data);
+      // console.log("✅ Event booked:", response.data);
 
       // Close confirmation modal
       setShowBookingConfirmation(false);
@@ -685,7 +685,7 @@ const GroupDashboard = () => {
         }
       );
 
-      console.log("✅ Chapter deleted:", response.data);
+      // console.log("✅ Chapter deleted:", response.data);
       
       // Show success message
       alert("Chapter deleted successfully!");
@@ -1048,7 +1048,7 @@ const GroupDashboard = () => {
               <div className="grid grid-cols-1 gap-6">
                 {chapter?.meetings?.length > 0 ? (
                   chapter.meetings.map((meeting) => {
-                    console.log("Rendering meeting:", meeting); // Debug log
+                    // console.log("Rendering meeting:", meeting); // Debug log
                     const statusInfo = getStatusInfo(meeting.status);
                     const canJoinMeeting =
                       meeting.meetingType === "online" &&
@@ -1174,14 +1174,14 @@ const GroupDashboard = () => {
                                   !loadingAttendance[meeting._id] && (
                                     <button
                                       onClick={() => {
-                                        console.log(
-                                          "View Attendance clicked for meeting:",
-                                          meeting._id
-                                        );
-                                        console.log(
-                                          "Current loaded meetings:",
-                                          Array.from(loadedAttendanceMeetings)
-                                        );
+                                        // console.log(
+                                        //   "View Attendance clicked for meeting:",
+                                        //   meeting._id
+                                        // );
+                                        // console.log(
+                                        //   "Current loaded meetings:",
+                                        //   Array.from(loadedAttendanceMeetings)
+                                        // );
                                         fetchMeetingAttendance(meeting._id);
                                       }}
                                       className="px-4 py-2 bg-purple-100/50 hover:bg-purple-200/50 text-purple-600 rounded-lg transition-colors flex items-center gap-2"
@@ -1241,19 +1241,19 @@ const GroupDashboard = () => {
                                         {(() => {
                                           const attendance =
                                             meetingAttendance[meeting._id];
-                                          console.log(
-                                            "Current attendance data:",
-                                            attendance
-                                          );
-                                          console.log(
-                                            "Chapter members:",
-                                            chapterMembers
-                                          );
+                                          // console.log(
+                                          //   "Current attendance data:",
+                                          //   attendance
+                                          // );
+                                          // console.log(
+                                          //   "Chapter members:",
+                                          //   chapterMembers
+                                          // );
 
                                           if (!Array.isArray(attendance)) {
-                                            console.log(
-                                              "Attendance is not an array"
-                                            );
+                                            // console.log(
+                                            //   "Attendance is not an array"
+                                            // );
                                             return "0%";
                                           }
 
@@ -1268,11 +1268,11 @@ const GroupDashboard = () => {
                                               chapterMembers.length) *
                                               100
                                           );
-                                          console.log(
-                                            "Present count:",
-                                            presentCount
-                                          );
-                                          console.log("Attendance rate:", rate);
+                                          // console.log(
+                                          //   "Present count:",
+                                          //   presentCount
+                                          // );
+                                          // console.log("Attendance rate:", rate);
                                           return `${rate}%`;
                                         })()}
                                       </div>

@@ -53,9 +53,9 @@ const GroupsPage = () => {
         setFilteredChapters(chaptersRes.data);
         setUsers(userRes.data.user);
 
-        console.log("Fetched User Data:", userRes.data.user);
-        console.log("User Address:", userRes.data.user?.address);
-        console.log("User State:", userRes.data.user?.address?.state);
+        // console.log("Fetched User Data:", userRes.data.user);
+        // console.log("User Address:", userRes.data.user?.address);
+        // console.log("User State:", userRes.data.user?.address?.state);
 
         // Check if user is a creator or member of any chapter
         const isCreator = chaptersRes.data.some(
@@ -137,7 +137,7 @@ const GroupsPage = () => {
           },
         }
       );
-      console.log("✅ Join Request Sent:", response.data);
+      // console.log("✅ Join Request Sent:", response.data);
       toast.success("Join request sent successfully!");
     } catch (err) {
       console.error("❌ Error joining group:", err.response?.data || err.message);

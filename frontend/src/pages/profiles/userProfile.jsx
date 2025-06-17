@@ -125,7 +125,7 @@ const UserProfile = () => {
             }
           );
           setFundingRequests(fundingRes.data);
-          console.log("fundingRequests: ", fundingRes.data);
+          // console.log("fundingRequests: ", fundingRes.data);
         }
 
         // Fetch investments for all users
@@ -224,10 +224,10 @@ const UserProfile = () => {
   const handleWithdrawSubmit = async (formData) => {
     try {
       const token = localStorage.getItem("token");
-      console.log(
-        "Submitting withdrawal for investment:",
-        selectedInvestment._id
-      );
+      // console.log(
+      //   "Submitting withdrawal for investment:",
+      //   selectedInvestment._id
+      // );
 
       const response = await axios.post(
         `${config.API_BASE_URL}/api/investments/${selectedInvestment._id}/withdraw`,
@@ -283,7 +283,7 @@ const UserProfile = () => {
         headersConfig
       );
       setRequests(res.data);
-      console.log("requests: ", res.data);
+      // console.log("requests: ", res.data);
     };
     fetchRequests();
   }, []);
@@ -323,7 +323,7 @@ const UserProfile = () => {
         },
       }
     );
-    console.log("response", response.data);
+    // console.log("response", response.data);
     setRequests(requests.filter((req) => req._id !== id));
   };
 
@@ -333,7 +333,7 @@ const UserProfile = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        console.log("🔑 Token found:", token);
+        // console.log("🔑 Token found:", token);
 
         if (!token) throw new Error("User not authenticated");
 
@@ -371,8 +371,8 @@ const UserProfile = () => {
           }
         );
 
-        console.log("✅ API Response:", response.data);
-        console.log("chapter API response: ", chapterData.data);
+        // console.log("✅ API Response:", response.data);
+        // console.log("chapter API response: ", chapterData.data);
 
         // Set user and business data
         if (response.data) {
@@ -386,14 +386,14 @@ const UserProfile = () => {
         // Handle chapter data safely
 
         if (response.data.hasJoinedChapter !== null) {
-          console.log(
-            "has joined chapter in if",
-            response.data.hasJoinedChapter
-          );
-          console.log(
-            "chapter id in has joined chapter : ",
-            response.data.hasJoinedChapter._id
-          );
+          // console.log(
+          //   "has joined chapter in if",
+          //   response.data.hasJoinedChapter
+          // );
+          // console.log(
+          //   "chapter id in has joined chapter : ",
+          //   response.data.hasJoinedChapter._id
+          // );
           setChapter(response.data.hasJoinedChapter._id);
         }
 

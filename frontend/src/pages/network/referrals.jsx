@@ -64,7 +64,7 @@ const ReferralsPage = () => {
         return;
       }
 
-      console.log("🔹 Sending request with token:", token);
+      // console.log("🔹 Sending request with token:", token);
       const { data } = await axios.get(
         `${config.API_BASE_URL}/api/referrals/my-referrals`,
         {
@@ -74,7 +74,7 @@ const ReferralsPage = () => {
           },
         }
       );
-      console.log("✅ Received data:", data);
+      // console.log("✅ Received data:", data);
       setReferrals(data);
       setLoading(false);
     } catch (error) {

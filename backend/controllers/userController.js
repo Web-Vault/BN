@@ -1288,7 +1288,7 @@ export const checkAndHandleExpiredBans = async () => {
       'banStatus.currentBan.endDate': { $lt: now }
     });
 
-    console.log(`Found ${usersWithExpiredBans.length} users with expired bans`);
+    // console.log(`Found ${usersWithExpiredBans.length} users with expired bans`);
 
     for (const user of usersWithExpiredBans) {
       const currentBan = user.banStatus.currentBan;

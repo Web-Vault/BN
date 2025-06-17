@@ -27,12 +27,12 @@ const createAdminUser = async () => {
     try {
         // Connect to MongoDB
         await connectDB();
-        console.log("Connected to MongoDB");
+        // console.log("Connected to MongoDB");
 
         // Check if admin user already exists
         const existingAdmin = await users.findOne({ isAdmin: true });
         if (existingAdmin) {
-            console.log("Admin user already exists");
+            // console.log("Admin user already exists");
             process.exit(0);
         }
 
@@ -94,7 +94,7 @@ const createAdminUser = async () => {
             }
         });
 
-        console.log("Admin user created successfully:", adminUser);
+        // console.log("Admin user created successfully:", adminUser);
         process.exit(0);
     } catch (error) {
         console.error("Error creating admin user:", error);

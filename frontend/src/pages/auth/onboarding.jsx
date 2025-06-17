@@ -38,7 +38,7 @@ const Onboarding = () => {
   const prevStep = () => setStep(step - 1);
 
   // const handleSubmit = () => {
-    console.log("Final Data Submitted:", formData);
+    // console.log("Final Data Submitted:", formData);
   //   localStorage.setItem("onboardingCompleted", "true");
   //   navigate("/profile");
   // };
@@ -81,7 +81,7 @@ const Onboarding = () => {
       const data = await response.json();
 
       if (response.ok) {
-        console.log("✅ Onboarding successful:", data);
+        // console.log("✅ Onboarding successful:", data);
         // localStorage.setItem("onBoardingCompleted", "true");
 
         await logActivity({

@@ -28,8 +28,8 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        console.log("✅ Login successful:", data);
-        console.log("data.user: ", data.user);
+        // console.log("✅ Login successful:", data);
+        // console.log("data.user: ", data.user);
 
         // Store token & user ID in localStorage
         localStorage.setItem("token", data.user.token);

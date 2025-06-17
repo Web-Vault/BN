@@ -24,13 +24,13 @@ export const getAllTiers = async (req, res) => {
 export const getUsersByTier = async (req, res) => {
   try {
     const { tierId } = req.params;
-    console.log('Getting users for tier:', tierId);
+    // console.log('Getting users for tier:', tierId);
 
     // Skip tier verification if tierId is 'all'
     if (tierId !== 'all') {
       // Verify the tier exists
       const tier = await MembershipTier.findOne({ tier: { $regex: new RegExp(`^${tierId}$`, 'i') } });
-      console.log('Found tier:', tier);
+      // console.log('Found tier:', tier);
       
       if (!tier) {
         return res.status(404).json({
@@ -44,13 +44,13 @@ export const getUsersByTier = async (req, res) => {
     const currentMemberships = await Membership.find()
       .populate('user', 'userName email userImage')
       .lean();
-    console.log('Found current memberships:', currentMemberships.length);
+    // console.log('Found current memberships:', currentMemberships.length);
 
     // Get all membership history
     const membershipHistory = await MembershipHistory.find()
       .populate('user', 'userName email userImage')
       .lean();
-    console.log('Found membership history:', membershipHistory.length);
+    // console.log('Found membership history:', membershipHistory.length);
 
     // Combine current membership and history data
     const userData = new Map();
@@ -107,13 +107,13 @@ export const getUsersByTier = async (req, res) => {
 
     // Convert Map to array and filter by tier if needed
     let users = Array.from(userData.values());
-    console.log('Total users before filtering:', users.length);
+    // console.log('Total users before filtering:', users.length);
 
     if (tierId !== 'all') {
       users = users.filter(user => 
         user.currentMembership.tier.toLowerCase() === tierId.toLowerCase()
       );
-      console.log('Users after tier filtering:', users.length);
+      // console.log('Users after tier filtering:', users.length);
     }
 
     res.json({
@@ -174,6 +174,58 @@ export const getMembershipHistoryByTier = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching membership history',
+      error: error.message
+    });
+  }
+};
+
+// Update membership tier
+export const updateTier = async (req, res) => {
+  try {
+    const { tierId } = req.params;
+    const { features } = req.body;
+
+    // Validate features array
+    if (!Array.isArray(features)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Features must be an array'
+      });
+    }
+
+    // Validate each feature
+    for (const feature of features) {
+      if (!feature.name || typeof feature.included !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          message: 'Each feature must have a name and included status'
+        });
+      }
+    }
+
+    // Find and update the tier
+    const updatedTier = await MembershipTier.findByIdAndUpdate(
+      tierId,
+      { features },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedTier) {
+      return res.status(404).json({
+        success: false,
+        message: 'Membership tier not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: updatedTier
+    });
+  } catch (error) {
+    console.error('Error updating membership tier:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating membership tier',
       error: error.message
     });
   }

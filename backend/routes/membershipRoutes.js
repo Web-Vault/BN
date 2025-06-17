@@ -7,7 +7,8 @@ import {
   verifyMembershipById,
   getMembershipHistory,
   cancelMembership,
-  downgradeMembership
+  downgradeMembership,
+  adminCancelMembership
 } from '../controllers/membershipController.js';
 import Membership from '../models/membership.js';
 
@@ -30,6 +31,9 @@ router.get('/details', protect, getMembershipDetails);
 
 // Cancel membership
 router.post('/cancel', protect, cancelMembership);
+
+// Admin cancel user membership
+router.post('/admin/cancel/:userId', protect, adminCancelMembership);
 
 // Downgrade membership
 router.post('/downgrade', protect, downgradeMembership);

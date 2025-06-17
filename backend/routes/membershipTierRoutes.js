@@ -1,6 +1,6 @@
 import express from 'express';
-import { getAllTiers, getUsersByTier, getMembershipHistoryByTier } from '../controllers/membershipTierController.js';
-import { protect } from '../middleware/authMiddleware.js';
+import { getAllTiers, getUsersByTier, getMembershipHistoryByTier, updateTier } from '../controllers/membershipTierController.js';
+import { protect, } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -12,5 +12,8 @@ router.get('/:tierId/users', protect, getUsersByTier);
 
 // Get membership history by tier (protected)
 router.get('/:tierId/history', protect, getMembershipHistoryByTier);
+
+// Update membership tier (admin only)
+router.put('/:tierId', protect, protect, updateTier);
 
 export default router; 

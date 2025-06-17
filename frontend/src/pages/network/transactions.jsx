@@ -188,7 +188,7 @@ const TransactionsPage = () => {
         }
 
         setTransactions(processedTransactions);
-        console.log("Transactions: ", processedTransactions);
+        // console.log("Transactions: ", processedTransactions);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching transactions:", err);

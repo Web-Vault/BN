@@ -53,7 +53,7 @@ const GeneralProfile = () => {
         );
 
         setUser(response.data);
-        console.log("user: ", response.data);
+        // console.log("user: ", response.data);
       } catch (err) {
         console.error("❌ Error loading profile:", err);
         setError("Failed to load user profile.");

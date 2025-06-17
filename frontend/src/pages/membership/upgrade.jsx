@@ -47,7 +47,7 @@ const UpgradePage = () => {
         );
 
         const membership = response.data.membership;
-        console.log("Current membership:", membership);
+        // console.log("Current membership:", membership);
         setCurrentMembership(membership);
 
         // Only handle Basic to Professional upgrade
@@ -55,7 +55,7 @@ const UpgradePage = () => {
           setNextTier("Professional");
           // Calculate upgrade amount for Basic to Professional
           const fullUpgradeAmount = Math.round(MEMBERSHIP_PRICES.Professional - MEMBERSHIP_PRICES.Basic);
-          console.log("Full upgrade amount:", fullUpgradeAmount);
+          // console.log("Full upgrade amount:", fullUpgradeAmount);
           setUpgradeAmount(fullUpgradeAmount);
         }
 

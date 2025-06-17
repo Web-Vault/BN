@@ -23,7 +23,7 @@ const SupportPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle form submission
-    console.log(formData);
+    // console.log(formData);
     setFormData({ name: "", email: "", subject: "", message: "" });
   };
 

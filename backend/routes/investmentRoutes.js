@@ -583,7 +583,7 @@ router.put("/withdrawals/:id/reject", protect, async (req, res) => {
 // Get investments for a specific user
 router.get("/my-investments/:userId", protect, async (req, res) => {
   try {
-    console.log('Fetching investments for user:', req.params.userId);
+    // console.log('Fetching investments for user:', req.params.userId);
 
     // Find investments where the user is an investor
     const investments = await Investment.find({
@@ -593,7 +593,7 @@ router.get("/my-investments/:userId", protect, async (req, res) => {
       select: "userName userEmail"
     });
 
-    console.log('Found investments:', investments.length);
+    // console.log('Found investments:', investments.length);
 
     // Calculate returns for each investment
     const investmentsWithReturns = investments.map((investment) => {
@@ -621,7 +621,7 @@ router.get("/my-investments/:userId", protect, async (req, res) => {
       return investmentObj;
     }).filter(Boolean);
 
-    console.log('Processed investments:', investmentsWithReturns.length);
+    // console.log('Processed investments:', investmentsWithReturns.length);
     res.json(investmentsWithReturns);
   } catch (err) {
     console.error("Error fetching user investments:", err);
@@ -632,7 +632,7 @@ router.get("/my-investments/:userId", protect, async (req, res) => {
 // Get funding requests for a specific user
 router.get("/my-requests/:userId", protect, async (req, res) => {
   try {
-    console.log('Fetching requests for user:', req.params.userId);
+    // console.log('Fetching requests for user:', req.params.userId);
 
     const targetUser = await User.findById(req.params.userId);
     if (!targetUser) {
@@ -654,7 +654,7 @@ router.get("/my-requests/:userId", protect, async (req, res) => {
       select: 'userName userEmail'
     }).sort({ createdAt: -1 });
 
-    console.log('Found requests:', requests.length);
+    // console.log('Found requests:', requests.length);
 
     // Calculate expected returns for each request
     const requestsWithReturns = requests.map(request => {
@@ -674,7 +674,7 @@ router.get("/my-requests/:userId", protect, async (req, res) => {
       return requestObj;
     });
 
-    console.log('Processed requests:', requestsWithReturns.length);
+    // console.log('Processed requests:', requestsWithReturns.length);
     res.json(requestsWithReturns);
   } catch (err) {
     console.error("Error fetching user funding requests:", err);

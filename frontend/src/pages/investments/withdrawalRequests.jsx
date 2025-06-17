@@ -24,14 +24,14 @@ const WithdrawalRequests = () => {
   const fetchFundingRequests = async () => {
     try {
       const token = localStorage.getItem("token");
-      console.log("🔍 Fetching funding requests...");
+      // console.log("🔍 Fetching funding requests...");
       const response = await axios.get(
         `${config.API_BASE_URL}/api/investments/my-requests`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("✅ Funding requests received:", response.data);
+      // console.log("✅ Funding requests received:", response.data);
       setFundingRequests(response.data);
       setLoading(false);
     } catch (err) {
@@ -44,14 +44,14 @@ const WithdrawalRequests = () => {
   const fetchWithdrawalRequests = async () => {
     try {
       const token = localStorage.getItem("token");
-      console.log("🔍 Fetching withdrawal requests");
+      // console.log("🔍 Fetching withdrawal requests");
       const response = await axios.get(
         `${config.API_BASE_URL}/api/investments/withdrawals`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("✅ Withdrawal requests received:", response.data);
+      // console.log("✅ Withdrawal requests received:", response.data);
       setWithdrawalRequests(response.data);
       if (selectedRequest) {
         const filtered = response.data.filter(
@@ -66,7 +66,7 @@ const WithdrawalRequests = () => {
   };
 
   const handleRequestSelect = (request) => {
-    console.log("🔍 Selected funding request:", request);
+    // console.log("🔍 Selected funding request:", request);
     setSelectedRequest(request);
     const filtered = withdrawalRequests.filter(
       (withdrawal) => withdrawal.investment && withdrawal.investment._id === request._id

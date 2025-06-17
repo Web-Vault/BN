@@ -1,10 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const AdminLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsSidebarOpen(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
+  }, [location]);
 
   const menuItems = [
     {
@@ -59,18 +79,42 @@ const AdminLayout = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
     navigate('/login');
-// alert('logout');
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100">
+      {/* Mobile Sidebar Backdrop */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 text-white transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} overflow-y-auto`}>
-        <div className="p-4">
-          <h2 className="text-2xl font-bold mb-8">Admin Panel</h2>
-          <nav className="space-y-6">
+      <aside 
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-gray-800 text-white transition-transform duration-300 transform ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 flex flex-col h-screen`}
+      >
+        {/* Sidebar Header */}
+        <div className="p-4 border-b border-gray-700">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Admin Panel</h2>
+            <button 
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden text-gray-400 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {/* Sidebar Navigation */}
+        <div className="flex-1 overflow-hidden">
+          <nav className="h-full overflow-y-auto px-4 py-4 custom-scrollbar">
             {menuItems.map((section) => (
-              <div key={section.section}>
+              <div key={section.section} className="mb-6">
                 <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                   {section.section}
                 </h3>
@@ -94,19 +138,21 @@ const AdminLayout = ({ children }) => {
             ))}
           </nav>
         </div>
-        <div className="sticky bottom-0 w-full p-4 border-t border-gray-700 bg-gray-800">
+
+        {/* Sidebar Footer */}
+        <div className="p-4 border-t border-gray-700 bg-gray-800">
           <button
             onClick={handleLogout}
             className="w-full py-2 px-4 text-center text-gray-400 hover:text-white transition-colors duration-200 flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 rounded-lg"
           >
             <span>⏻</span>
-                    <span>Logout</span>
+            <span>Logout</span>
           </button>
         </div>
-      </div>
+      </aside>
 
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Top Bar */}
         <div className="bg-white shadow-sm p-4 flex justify-between items-center">
           <button
@@ -121,10 +167,32 @@ const AdminLayout = ({ children }) => {
         </div>
 
         {/* Page Content */}
-        <div className="p-6">
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           {children}
         </div>
-      </div>
+      </main>
+
+      {/* Custom Scrollbar Styles */}
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.1);
+        }
+      `}</style>
     </div>
   );
 };

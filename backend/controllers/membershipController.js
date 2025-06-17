@@ -745,4 +745,170 @@ export const downgradeMembership = async (req, res) => {
       error: error.message 
     });
   }
+};
+
+// Admin cancel user membership
+export const adminCancelMembership = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { reason, adminPassword } = req.body;
+
+    if (!reason) {
+      return res.status(400).json({ 
+        message: 'Cancellation reason is required' 
+      });
+    }
+
+    if (!adminPassword) {
+      return res.status(400).json({ 
+        message: 'Admin password is required for verification' 
+      });
+    }
+
+    // Verify admin password
+    const admin = await User.findById(req.user._id);
+    const isPasswordValid = await admin.comparePassword(adminPassword);
+    if (!isPasswordValid) {
+      return res.status(401).json({ 
+        message: 'Invalid admin password' 
+      });
+    }
+
+    // Get user's current membership
+    const user = await User.findById(userId);
+    if (!user || !user.membership || !user.membership.membershipId) {
+      return res.status(404).json({ 
+        message: 'No active membership found for this user' 
+      });
+    }
+
+    // Check if membership is already cancelled
+    if (user.membership.status === 'cancelled') {
+      return res.status(400).json({ 
+        message: 'Membership is already cancelled' 
+      });
+    }
+
+    const membershipId = user.membership.membershipId;
+    const cancellationDate = new Date();
+
+    // Update membership status in Membership collection
+    const updatedMembership = await Membership.findOneAndUpdate(
+      { user: userId, membershipId },
+      { 
+        status: 'cancelled',
+        cancellationReason: reason,
+        cancelledBy: req.user._id,
+        cancellationDate
+      },
+      { new: true }
+    );
+
+    if (!updatedMembership) {
+      throw new Error('Failed to update membership status');
+    }
+
+    // Update membership status in MembershipHistory
+    const updatedHistory = await MembershipHistory.findOneAndUpdate(
+      { user: userId, membershipId },
+      { 
+        status: 'cancelled',
+        cancellationReason: reason,
+        cancelledBy: req.user._id,
+        cancellationDate,
+        notes: `Cancelled by admin: ${reason}`
+      },
+      { new: true }
+    );
+
+    if (!updatedHistory) {
+      throw new Error('Failed to update membership history');
+    }
+
+    // Update user's membership status
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        'membership.status': 'cancelled',
+        'membership.cancellationReason': reason,
+        'membership.cancelledBy': req.user._id,
+        'membership.cancellationDate': cancellationDate
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      throw new Error('Failed to update user membership status');
+    }
+
+    // Create activity record for membership cancellation
+    const activity = new Activity({
+      user: userId,
+      activityType: 'account',
+      action: 'membership_cancelled_by_admin',
+      metadata: {
+        membershipId,
+        tier: user.membership.tier,
+        cancellationDate,
+        reason,
+        cancelledBy: req.user._id
+      }
+    });
+    await activity.save();
+
+    // Create notification for membership cancellation
+    const notification = new Notification({
+      user: userId,
+      sender: req.user._id,
+      type: 'membership_cancelled_by_admin',
+      message: `Your membership has been cancelled by an administrator. Reason: ${reason}. This action is non-reversible.`,
+      metadata: {
+        membershipId,
+        tier: user.membership.tier,
+        cancellationDate,
+        reason,
+        cancelledBy: req.user._id
+      },
+      priority: 'high',
+      link: '/membership'
+    });
+    await notification.save();
+
+    // Send email notification
+    try {
+      await sendEmail({
+        to: user.userEmail,
+        subject: 'Membership Cancellation Notice',
+        template: 'membership-cancelled',
+        context: {
+          userName: user.userName,
+          tier: user.membership.tier,
+          reason: reason,
+          cancellationDate: cancellationDate.toLocaleDateString(),
+          supportEmail: process.env.SUPPORT_EMAIL
+        }
+      });
+    } catch (emailError) {
+      console.error('Error sending cancellation email:', emailError);
+      // Continue with the response even if email fails
+    }
+
+    res.status(200).json({
+      message: 'Membership cancelled successfully',
+      membership: {
+        membershipId,
+        tier: user.membership.tier,
+        status: 'cancelled',
+        cancellationDate,
+        reason
+      }
+    });
+
+  } catch (error) {
+    console.error('Error cancelling membership:', error);
+    res.status(500).json({ 
+      message: 'Error cancelling membership',
+      error: error.message 
+    });
+  }
 }; 

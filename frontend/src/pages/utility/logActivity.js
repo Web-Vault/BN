@@ -24,7 +24,7 @@ const logActivity = async ({ activityType, action, metadata = {}, tokenOverride 
                         }
                 );
 
-                console.log(`✅ Activity logged: [${activityType}] ${action}`);
+                // console.log(`✅ Activity logged: [${activityType}] ${action}`);
         } catch (error) {
                 console.error("❌ Error logging activity:", error.response?.data || error.message);
         }
