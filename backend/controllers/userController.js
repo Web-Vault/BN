@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Referral from "../models/Referral.js";
 import nodemailer from "nodemailer";
-import twilio from "twilio";
+import { twilioClient, validateTwilioConfig } from '../config/config.js';
 import dotenv from "dotenv";
 import Activity from "../models/activity.js";
 import { createActivityNotification } from "./notificationController.js";
@@ -14,11 +14,6 @@ import Notification from "../models/notification.js";
 import MembershipHistory from "../models/membershipHistory.js";
 
 dotenv.config();
-
-const twilioClient = twilio(
-    process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_AUTH_TOKEN
-);
 
 console.log('Email Config:', {
     user: process.env.EMAIL_USER,
@@ -114,9 +109,8 @@ const formatPhoneNumber = (phoneNumber) => {
 
 const sendSMS = async (to, message) => {
     try {
-        if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
-            throw new Error('Twilio configuration is missing. Please check your .env file.');
-        }
+        // Validate Twilio configuration
+        validateTwilioConfig();
 
         const formattedNumber = formatPhoneNumber(to);
         console.log('Sending SMS to formatted number:', formattedNumber);
@@ -770,14 +764,23 @@ export const resendMobileOTP = async (req, res) => {
         // Save with validation
         await user.save({ validateBeforeSave: true });
 
-        // Send OTP via SMS
-        const message = `Your BN Platform verification code is: ${otp}. This code will expire in 10 minutes. We don't recommend to share your OPT(s) to anyone.`;
-        await sendSMS(user.mobileNumber, message);
+        try {
+            // Send OTP via SMS
+            const message = `Your BN Platform verification code is: ${otp}. This code will expire in 10 minutes. We don't recommend to share your OPT(s) to anyone.`;
+            await sendSMS(user.mobileNumber, message);
 
-        // Update cooldown timestamp
-        otpCooldowns.set(user._id.toString(), Date.now());
+            // Update cooldown timestamp
+            otpCooldowns.set(user._id.toString(), Date.now());
 
-        res.json({ message: "OTP sent successfully" });
+            res.json({ message: "OTP sent successfully" });
+        } catch (smsError) {
+            // If SMS sending fails, revert the OTP changes
+            user.mobileOTP = undefined;
+            user.mobileOTPExpiry = undefined;
+            await user.save();
+            
+            throw smsError;
+        }
     } catch (error) {
         console.error("Error sending mobile OTP:", error);
         res.status(500).json({ 

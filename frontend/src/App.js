@@ -217,6 +217,20 @@ const App = () => {
             </ProtectedRoute>
           </MaintenanceRoute>
         } />
+        <Route path="/verify-otp" element={
+          <MaintenanceRoute>
+            <ProtectedRoute>
+              <VerifyOTP />
+            </ProtectedRoute>
+          </MaintenanceRoute>
+        } />
+        <Route path="/verify-mobile" element={
+          <MaintenanceRoute>
+            <ProtectedRoute>
+              <VerifyMobile />
+            </ProtectedRoute>
+          </MaintenanceRoute>
+        } />
         <Route path="/activity" element={
           <MaintenanceRoute>
             <ProtectedRoute>
@@ -326,6 +340,41 @@ const App = () => {
           <MaintenanceRoute>
             <ProtectedRoute>
               <UpgradePage />
+            </ProtectedRoute>
+          </MaintenanceRoute>
+        } />
+        <Route path="/about" element={
+          <MaintenanceRoute>
+            <ProtectedRoute>
+              <AboutPlatformPage />
+            </ProtectedRoute>
+          </MaintenanceRoute>
+        } />
+        <Route path="/commonIssues" element={
+          <MaintenanceRoute>
+            <ProtectedRoute>
+              <HelpCenterPage />
+            </ProtectedRoute>
+          </MaintenanceRoute>
+        } />
+        <Route path="/support" element={
+          <MaintenanceRoute>
+            <ProtectedRoute>
+              <SupportPage />
+            </ProtectedRoute>
+          </MaintenanceRoute>
+        } />
+        <Route path="/terms-and-conditions" element={
+          <MaintenanceRoute>
+            <ProtectedRoute>
+              <TermsAndConditionsPage />
+            </ProtectedRoute>
+          </MaintenanceRoute>
+        } />
+        <Route path="/privacy-policy" element={
+          <MaintenanceRoute>
+            <ProtectedRoute>
+              <PrivacyPolicyPage />
             </ProtectedRoute>
           </MaintenanceRoute>
         } />
