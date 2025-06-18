@@ -35,12 +35,15 @@ import UpgradePage from "./pages/membership/upgrade.jsx";
 import Dashboard from "./pages/admin/Dashboard";
 import Users from "./pages/admin/Users";
 import Settings from "./pages/admin/Settings";
+import WebsiteSettings from "./pages/admin/WebsiteSettings";
 import UserManagement from "./pages/admin/UserManagement";
 import ChapterManagement from "./pages/admin/ChapterManagement";
 import CommunityManagement from "./pages/admin/CommunityManagement";
 import UserDetails from './pages/admin/UserDetails';
 import ChapterDetails from './pages/admin/ChapterDetails';
 import MembershipManagement from './pages/admin/MembershipManagement';
+import MaintenancePage from "./pages/utility/MaintenancePage";
+import { MaintenanceRoute } from "./middleware/maintenanceMiddleware";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -179,179 +182,160 @@ const App = () => {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={
-          initialRoute === "/" ? (
-            <LandingPage />
-          ) : (
-            <Navigate to={initialRoute} replace />
-          )
+          <MaintenanceRoute>
+            {initialRoute === "/" ? (
+              <LandingPage />
+            ) : (
+              <Navigate to={initialRoute} replace />
+            )}
+          </MaintenanceRoute>
         } />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        {/* <Route path="/forgot-password" element={<ForgotPasswordPage />} /> */}
-        {/* <Route path="/reset-password/:token" element={<ResetPasswordPage />} /> */}
+        <Route path="/login" element={
+          <MaintenanceRoute>
+            <Login />
+          </MaintenanceRoute>
+        } />
+        <Route path="/register" element={
+          <MaintenanceRoute>
+            <Register />
+          </MaintenanceRoute>
+        } />
+        <Route path="/maintenance" element={<MaintenancePage />} />
 
         {/* Protected Routes */}
         <Route path="/onboarding" element={
-          <ProtectedRoute>
-            <Onboarding />
-          </ProtectedRoute>
+          <MaintenanceRoute>
+            <ProtectedRoute>
+              <Onboarding />
+            </ProtectedRoute>
+          </MaintenanceRoute>
         } />
         <Route path="/profile" element={
-          <ProtectedRoute>
-            <UserProfile />
-          </ProtectedRoute>
+          <MaintenanceRoute>
+            <ProtectedRoute>
+              <UserProfile />
+            </ProtectedRoute>
+          </MaintenanceRoute>
         } />
-        <Route
-          path="/activity"
-          element={
+        <Route path="/activity" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <ActivityPage />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/people"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/people" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <ConnectPage />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/chapter"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/chapter" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <GroupsPage />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/chapter/create"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/chapter/create" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <CreateChapter />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/chapterDashboard/:chapterId"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/chapterDashboard/:chapterId" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <GroupDashboard />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/userProfile/:id"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/userProfile/:id" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <GeneralProfile />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/referrals"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/referrals" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <ReferralsPage />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/myTransactions"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/myTransactions" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <TransactionsPage />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/create-investment"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/create-investment" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <CreateInvestment />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/add-business-info"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/add-business-info" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <AddBusinessInfo />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/edit-profile"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/edit-profile" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <EditProfile />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/withdrawal-requests"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/withdrawal-requests" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <WithdrawalRequests />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/community"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/community" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <CommunityPage />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/post/:postId"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/post/:postId" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <SinglePost />
             </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/reports/platform"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/reports/platform" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <PlatformReport />
             </ProtectedRoute>
-          }
-        />
-
-        {/* Public utility routes */}
-        <Route path="/about" element={<AboutPlatformPage />} />
-        <Route path="/support" element={<SupportPage />} />
-        <Route path="/commonIssues" element={<HelpCenterPage />} />
-        <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-
-        {/* Verification routes */}
-        <Route path="/verify-otp" element={<VerifyOTP />} />
-        <Route path="/verify-mobile" element={<VerifyMobile />} />
-
-        {/* New route for membership upgrade */}
-        <Route
-          path="/membership/upgrade"
-          element={
+          </MaintenanceRoute>
+        } />
+        <Route path="/membership/upgrade" element={
+          <MaintenanceRoute>
             <ProtectedRoute>
               <UpgradePage />
             </ProtectedRoute>
-          }
-        />
+          </MaintenanceRoute>
+        } />
 
-        {/* Admin Routes */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+        {/* Admin Routes - These don't need MaintenanceRoute wrapper */}
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
         <Route
           path="/admin/users"
           element={
@@ -405,6 +389,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/website-settings"
+          element={
+            <ProtectedRoute>
+              <WebsiteSettings />
             </ProtectedRoute>
           }
         />

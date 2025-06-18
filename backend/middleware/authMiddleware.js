@@ -45,3 +45,39 @@ export const protect = async (req, res, next) => {
                 return res.status(401).json({ message: "Unauthorized access. Please login first!" });
         }
 };
+
+// Admin middleware - verify admin status
+export const admin = async (req, res, next) => {
+        try {
+                if (!req.user) {
+                        return res.status(401).json({ message: 'Not authorized, user not found' });
+                }
+
+                if (!req.user.isAdmin) {
+                        return res.status(403).json({ message: 'Not authorized as an admin' });
+                }
+
+                next();
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Error checking admin status' });
+        }
+};
+
+// Optional: Super Admin middleware for highest level access
+export const superAdmin = async (req, res, next) => {
+        try {
+                if (!req.user) {
+                        return res.status(401).json({ message: 'Not authorized, user not found' });
+                }
+
+                if (!req.user.isSuperAdmin || !req.user.isAdmin) {
+                        return res.status(403).json({ message: 'Not authorized as a super admin' });
+                }
+
+                next();
+        } catch (error) {
+                console.error(error);
+                res.status(500).json({ message: 'Error checking super admin status' });
+        }
+};

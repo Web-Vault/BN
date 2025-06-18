@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from 'bcryptjs';
 
 const userSchema = mongoose.Schema(
         {
@@ -7,6 +8,7 @@ const userSchema = mongoose.Schema(
                 userEmail: { type: String, required: true, unique: true },
                 userPassword: { type: String, required: true },
                 isAdmin: { type: Boolean, default: false },
+                isSuperAdmin: { type: Boolean, default: false },
                 industry: { type: String },
                 isSeeker: { type: Boolean },
                 groupJoined: {
@@ -17,7 +19,7 @@ const userSchema = mongoose.Schema(
                 location: { type: String },
                 mobileNumber: { type: String },
                 bio: { type: String },
-                referralCode: { type: String },
+                referralCode: { type: String, required: false },
 
                 // Warning and ban related fields
                 warnings: {

@@ -10,7 +10,8 @@ const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     users: [],
     chapters: [],
-    posts: []
+    posts: [],
+    admins: []
   });
 
   useEffect(() => {
@@ -20,13 +21,18 @@ const Dashboard = () => {
         setError(null);
 
         // Fetch only the data we know exists
-        const [usersRes, chaptersRes] = await Promise.all([
+        const [usersRes, chaptersRes, adminsRes] = await Promise.all([
           axios.get(`${config.API_BASE_URL}/api/users/all`, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`
             }
           }),
           axios.get(`${config.API_BASE_URL}/api/chapters`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+          }),
+          axios.get(`${config.API_BASE_URL}/api/admin/all`, {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('token')}`
             }
@@ -41,7 +47,8 @@ const Dashboard = () => {
         setDashboardData({
           users: sortedUsers,
           chapters: chaptersRes.data || [],
-          posts: [] // We'll add this when we implement post fetching
+          posts: [], // We'll add this when we implement post fetching
+          admins: adminsRes.data || []
         });
 
         setLoading(false);
@@ -84,7 +91,7 @@ const Dashboard = () => {
         <h1 className="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Total Users"
             value={dashboardData.users.length}
@@ -94,6 +101,11 @@ const Dashboard = () => {
             title="Active Chapters"
             value={dashboardData.chapters.length}
             icon="🏢"
+          />
+          <StatCard
+            title="Total Admins"
+            value={dashboardData.admins.length}
+            icon="👑"
           />
         </div>
 

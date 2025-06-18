@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaGoogle } from "react-icons/fa"; // Import icons
 import { Link, useNavigate } from "react-router-dom";
 import config from "../../config/config.js";
@@ -9,11 +9,25 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showBanModal, setShowBanModal] = useState(false);
   const [banDetails, setBanDetails] = useState(null);
+  const [isMaintenance, setIsMaintenance] = useState(false);
 
   // const gotoOnboarding = () => {
   //   localStorage.removeItem("onboardingCompleted");
   //   navigate("/onboarding");
   // };
+
+  useEffect(() => {
+    const checkMaintenance = async () => {
+      try {
+        const response = await fetch(`${config.API_BASE_URL}/api/settings`);
+        const data = await response.json();
+        setIsMaintenance(data.maintenanceMode);
+      } catch (error) {
+        console.error("Error checking maintenance mode:", error);
+      }
+    };
+    checkMaintenance();
+  }, []);
 
   const handleLogin = async () => {
     try {
@@ -38,6 +52,12 @@ const Login = () => {
         if (data.redirectTo === '/admin-panel') {
             navigate('/admin');
             return;
+        }
+
+        // If site is in maintenance and user is not admin, redirect to maintenance page
+        if (isMaintenance) {
+          navigate('/maintenance');
+          return;
         }
 
         // Check onboarding status from user data

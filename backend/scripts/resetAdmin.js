@@ -5,7 +5,6 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import users from "../models/users.js";
 import connectDB from "../config/db.js";
-import Referral from "../models/Referral.js";
 
 // Get the directory name of the current module
 const __filename = fileURLToPath(import.meta.url);
@@ -14,58 +13,26 @@ const __dirname = dirname(__filename);
 // Load environment variables from the correct path
 dotenv.config({ path: join(__dirname, '..', '.env') });
 
-// Log the MongoDB URI (without sensitive parts) for debugging
-const mongoUri = process.env.MONGO_URI;
-if (!mongoUri) {
-    console.error('❌ MONGO_URI is not defined in .env file');
-    process.exit(1);
-}
-console.log('🔍 MongoDB URI found:', mongoUri.split('@')[1] || 'local connection');
-
-const generateUniqueReferralCode = async () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code;
-    do {
-        code = '';
-        for (let i = 0; i < 8; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        // Check if code already exists
-        const existingUser = await users.findOne({ referralCode: code });
-        if (!existingUser) {
-            return code;
-        }
-    } while (true);
-};
-
-const createAdminUser = async () => {
+const resetAdmin = async () => {
     try {
         // Connect to MongoDB
         await connectDB();
         console.log("✅ Connected to MongoDB");
 
-        // Check if a user with the same email already exists
-        const existingUser = await users.findOne({ userEmail: "admin2@bn.com" });
-        if (existingUser) {
-            console.log("❌ Error: Email admin2@bn.com is already in use");
-            process.exit(1);
-        }
+        // Delete existing admin users
+        const deleteResult = await users.deleteMany({ isAdmin: true });
+        console.log(`🗑️ Deleted ${deleteResult.deletedCount} existing admin user(s)`);
 
-        // Generate unique referral code
-        const referralCode = await generateUniqueReferralCode();
-
-        // Create admin user
+        // Create new admin user
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash("Admi2@499", salt);
+        const hashedPassword = await bcrypt.hash("Admin@499", salt);
 
         const adminUser = await users.create({
-            userName: "[ADMIN]",
-            userEmail: "admin2@bn.com",
+            userName: "Aryan [ADMIN]",
+            userEmail: "admin@bn.com",
             userPassword: hashedPassword,
             isAdmin: true,
             isAccountVerified: true,
-            referralCode: referralCode,
-            // Add complete onboarding data
             industry: "Technology",
             isSeeker: false,
             groupJoined: {
@@ -95,7 +62,7 @@ const createAdminUser = async () => {
                 lastUpdated: new Date()
             },
             membership: {
-                membershipId: "BN-ADMIN500",
+                membershipId: "BN-ADMIN499",
                 tier: "Enterprise",
                 status: "active",
                 purchaseDate: new Date(),
@@ -109,16 +76,28 @@ const createAdminUser = async () => {
             }
         });
 
-        console.log("✅ Admin user created successfully");
+        console.log("\n✅ New admin user created successfully!");
+        console.log("\nAdmin Credentials:");
         console.log("📧 Email:", adminUser.userEmail);
         console.log("🔑 Password: Admin@499");
-        console.log("⚠️ Please change the password after first login");
+        console.log("\n⚠️ Important: Please change the password after first login");
+
+        // Verify the admin was created
+        const verifyAdmin = await users.findOne({ isAdmin: true });
+        if (verifyAdmin) {
+            console.log("\n✅ Verification: Admin user exists in database");
+            console.log("Name:", verifyAdmin.userName);
+            console.log("Email:", verifyAdmin.userEmail);
+            console.log("Created At:", verifyAdmin.createdAt);
+        } else {
+            console.log("\n❌ Error: Admin user not found after creation");
+        }
 
         process.exit(0);
     } catch (error) {
-        console.error("❌ Error creating admin user:", error.message);
+        console.error("❌ Error:", error.message);
         process.exit(1);
     }
 };
 
-createAdminUser(); 
+resetAdmin(); 

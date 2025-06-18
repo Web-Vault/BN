@@ -71,6 +71,7 @@ const AdminLayout = ({ children }) => {
       section: 'Settings',
       items: [
         { path: '/admin/settings', label: 'Settings', icon: '⚙️' },
+        // { path: '/admin/website-settings', label: 'Website Settings', icon: '🌐' },
       ]
     }
   ];
