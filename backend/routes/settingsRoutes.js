@@ -15,6 +15,17 @@ router.get('/maintenance', async (req, res) => {
   }
 });
 
+// Public endpoint to check registration status
+router.get('/registration', async (req, res) => {
+  try {
+    const settings = await SettingsModel.getSettings();
+    res.json({ allowUserRegistration: settings.allowUserRegistration });
+  } catch (error) {
+    console.error('Error checking registration status:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get all settings
 router.get('/', protect, admin, async (req, res) => {
   try {

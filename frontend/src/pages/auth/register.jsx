@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaEnvelope, FaLock, FaUser } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import config from "../../config/config.js";
@@ -11,9 +11,30 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isRegistrationEnabled, setIsRegistrationEnabled] = useState(true);
+
+  useEffect(() => {
+    const checkRegistrationStatus = async () => {
+      try {
+        const response = await fetch(`${config.API_BASE_URL}/api/settings/registration`);
+        const data = await response.json();
+        setIsRegistrationEnabled(data.allowUserRegistration);
+      } catch (error) {
+        console.error("Error checking registration status:", error);
+        // If there's an error, default to allowing registration
+        setIsRegistrationEnabled(true);
+      }
+    };
+    checkRegistrationStatus();
+  }, []);
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission
+    e.preventDefault();
+    
+    if (!isRegistrationEnabled) {
+      setError("New user registration is currently disabled. Please try again later.");
+      return;
+    }
     
     // Validate passwords match
     if (password !== confirmPassword) {
@@ -68,6 +89,34 @@ const Register = () => {
       setLoading(false);
     }
   };
+
+  if (!isRegistrationEnabled) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700">
+        <div className="bg-white/10 backdrop-blur-xl p-12 rounded-2xl shadow-2xl w-[480px] border border-white/20">
+          <div className="flex flex-col items-center space-y-6">
+            <div className="p-4 bg-red-500/20 rounded-full">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-white text-center">
+              Registration Disabled
+            </h2>
+            <p className="text-white/80 text-center text-lg">
+              New user registration is currently disabled. Please try again later.
+            </p>
+            <Link
+              to="/login"
+              className="w-full bg-indigo-500 text-white py-4 rounded-xl text-center font-medium hover:bg-indigo-600 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Return to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">

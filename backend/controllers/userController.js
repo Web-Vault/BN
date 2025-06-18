@@ -12,6 +12,7 @@ import { createActivityNotification } from "./notificationController.js";
 import Membership from "../models/membership.js";
 import Notification from "../models/notification.js";
 import MembershipHistory from "../models/membershipHistory.js";
+import SettingsModel from '../models/settings.js';
 
 dotenv.config();
 
@@ -141,6 +142,14 @@ const canSendOTP = (userId) => {
 
 export const registerUser = async (req, res) => {
     try {
+        // Check if registration is enabled
+        const settings = await SettingsModel.getSettings();
+        if (!settings.allowUserRegistration) {
+            return res.status(403).json({ 
+                message: "New user registration is currently disabled." 
+            });
+        }
+
         const { userName, userEmail, userPassword } = req.body;
 
         if (!userName) {
