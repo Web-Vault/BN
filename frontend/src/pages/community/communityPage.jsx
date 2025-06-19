@@ -141,6 +141,7 @@ const CommunityPage = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showDowngradeConfirm, setShowDowngradeConfirm] = useState(false);
   const [showFinalWarning, setShowFinalWarning] = useState(false);
+  const [enableComments, setEnableComments] = useState(undefined);
 
   const navigate = useNavigate();
   const currentUserId = localStorage.getItem("userId");
@@ -607,6 +608,19 @@ const CommunityPage = () => {
 
     checkMembership();
   }, [token]);
+
+  useEffect(() => {
+    const fetchCommentSetting = async () => {
+      try {
+        const response = await fetch(`${config.API_BASE_URL}/api/settings/comments`);
+        const data = await response.json();
+        setEnableComments(typeof data.enableComments === 'boolean' ? data.enableComments : true);
+      } catch (error) {
+        setEnableComments(true);
+      }
+    };
+    fetchCommentSetting();
+  }, []);
 
   const handleTabClick = (tabName) => {
     // Define which tabs require Professional tier
@@ -1110,147 +1124,163 @@ const CommunityPage = () => {
                                   className="mt-4 space-y-4"
                                   onClick={(e) => e.stopPropagation()}
                                 >
-                                  {comments[post._id]?.map((comment) => (
-                                    <div
-                                      key={comment._id}
-                                      className="bg-white/20 rounded-lg p-4"
-                                    >
-                                      <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                          <div className="flex items-center gap-2">
-                                            <h4 className="font-medium">
-                                              {comment.author.userName}
-                                            </h4>
-                                            <button
-                                              onClick={() =>
-                                                toggleReplyInput(comment._id)
-                                              }
-                                              className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
-                                            >
-                                              <FiMessageSquare className="text-sm" />{" "}
-                                              Reply
-                                            </button>
-                                          </div>
-                                          <p className="text-gray-600 mt-1">
-                                            {comment.content}
-                                          </p>
+                                  {enableComments === false ? (
+                                    <div className="flex flex-col items-center justify-center bg-red-50 border border-red-200 rounded-xl p-8 my-6 shadow text-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                      </svg>
+                                      <div className="text-lg font-semibold text-red-700 mb-1">Comments Unavailable</div>
+                                      <div className="text-base text-red-600">Comments are not available to post or to watch.</div>
+                                    </div>
+                                  ) : (
+                                    <div className="mt-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+                                      {comments[post._id]?.map((comment) => (
+                                        <div
+                                          key={comment._id}
+                                          className="bg-white/20 rounded-lg p-4"
+                                        >
+                                          <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                              <div className="flex items-center gap-2">
+                                                <h4 className="font-medium">
+                                                  {comment.author.userName}
+                                                </h4>
+                                                <button
+                                                  onClick={() =>
+                                                    toggleReplyInput(comment._id)
+                                                  }
+                                                  className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                                                >
+                                                  <FiMessageSquare className="text-sm" />{" "}
+                                                  Reply
+                                                </button>
+                                              </div>
+                                              <p className="text-gray-600 mt-1">
+                                                {comment.content}
+                                              </p>
 
-                                          {/* Reply input field */}
-                                          {expandedReplies[comment._id] && (
-                                            <div className="mt-2 flex gap-2">
-                                              <input
-                                                type="text"
-                                                value={
-                                                  newReply[comment._id] || ""
-                                                }
-                                                onChange={(e) =>
-                                                  setNewReply({
-                                                    ...newReply,
-                                                    [comment._id]:
-                                                      e.target.value,
-                                                  })
-                                                }
-                                                placeholder="Write a reply..."
-                                                className="flex-1 p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm"
-                                              />
+                                              {/* Reply input field */}
+                                              {expandedReplies[comment._id] && (
+                                                <div className="mt-2 flex gap-2">
+                                                  <input
+                                                    type="text"
+                                                    value={
+                                                      newReply[comment._id] || ""
+                                                    }
+                                                    onChange={(e) =>
+                                                      setNewReply({
+                                                        ...newReply,
+                                                        [comment._id]:
+                                                          e.target.value,
+                                                      })
+                                                    }
+                                                    placeholder="Write a reply..."
+                                                    className="flex-1 p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent text-sm"
+                                                  />
+                                                  <button
+                                                    onClick={() =>
+                                                      handleReplySubmit(
+                                                        post._id,
+                                                        comment._id
+                                                      )
+                                                    }
+                                                    className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                                                  >
+                                                    <FiSend />
+                                                  </button>
+                                                </div>
+                                              )}
+
+                                              {/* Display replies */}
+                                              {comment.replies &&
+                                                comment.replies.length > 0 && (
+                                                  <div className="mt-3 ml-6 space-y-3">
+                                                    {comment.replies.map(
+                                                      (reply) => (
+                                                        <div
+                                                          key={reply._id}
+                                                          className="bg-white/10 rounded-lg p-3"
+                                                        >
+                                                          <div className="flex justify-between items-start">
+                                                            <div>
+                                                              <h5 className="font-medium text-sm">
+                                                                {
+                                                                  reply.author
+                                                                    .userName
+                                                                }
+                                                              </h5>
+                                                              <p className="text-gray-600 text-sm">
+                                                                {reply.content}
+                                                              </p>
+                                                            </div>
+                                                            {reply.author._id ===
+                                                              currentUserId && (
+                                                              <button
+                                                                onClick={() =>
+                                                                  handleDeleteComment(
+                                                                    post._id,
+                                                                    reply._id
+                                                                  )
+                                                                }
+                                                                className="text-red-500 hover:text-red-600"
+                                                              >
+                                                                <FiTrash2 />
+                                                              </button>
+                                                            )}
+                                                          </div>
+                                                        </div>
+                                                      )
+                                                    )}
+                                                  </div>
+                                                )}
+                                            </div>
+                                            {comment.author._id ===
+                                              currentUserId && (
                                               <button
                                                 onClick={() =>
-                                                  handleReplySubmit(
+                                                  handleDeleteComment(
                                                     post._id,
                                                     comment._id
                                                   )
                                                 }
-                                                className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                                                className="text-red-500 hover:text-red-600 ml-2"
                                               >
-                                                <FiSend />
+                                                <FiTrash2 />
                                               </button>
-                                            </div>
-                                          )}
-
-                                          {/* Display replies */}
-                                          {comment.replies &&
-                                            comment.replies.length > 0 && (
-                                              <div className="mt-3 ml-6 space-y-3">
-                                                {comment.replies.map(
-                                                  (reply) => (
-                                                    <div
-                                                      key={reply._id}
-                                                      className="bg-white/10 rounded-lg p-3"
-                                                    >
-                                                      <div className="flex justify-between items-start">
-                                                        <div>
-                                                          <h5 className="font-medium text-sm">
-                                                            {
-                                                              reply.author
-                                                                .userName
-                                                            }
-                                                          </h5>
-                                                          <p className="text-gray-600 text-sm">
-                                                            {reply.content}
-                                                          </p>
-                                                        </div>
-                                                        {reply.author._id ===
-                                                          currentUserId && (
-                                                          <button
-                                                            onClick={() =>
-                                                              handleDeleteComment(
-                                                                post._id,
-                                                                reply._id
-                                                              )
-                                                            }
-                                                            className="text-red-500 hover:text-red-600"
-                                                          >
-                                                            <FiTrash2 />
-                                                          </button>
-                                                        )}
-                                                      </div>
-                                                    </div>
-                                                  )
-                                                )}
-                                              </div>
                                             )}
+                                          </div>
                                         </div>
-                                        {comment.author._id ===
-                                          currentUserId && (
-                                          <button
-                                            onClick={() =>
-                                              handleDeleteComment(
-                                                post._id,
-                                                comment._id
-                                              )
-                                            }
-                                            className="text-red-500 hover:text-red-600 ml-2"
-                                          >
-                                            <FiTrash2 />
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
+                                      ))}
 
-                                  {/* New Comment Form */}
-                                  <div className="flex gap-2">
-                                    <input
-                                      type="text"
-                                      value={newComment[post._id] || ""}
-                                      onChange={(e) =>
-                                        setNewComment({
-                                          ...newComment,
-                                          [post._id]: e.target.value,
-                                        })
-                                      }
-                                      placeholder="Write a comment..."
-                                      className="flex-1 p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                                    />
-                                    <button
-                                      onClick={() =>
-                                        handleCommentSubmit(post._id)
-                                      }
-                                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                                    >
-                                      <FiSend />
-                                    </button>
-                                  </div>
+                                      {/* New Comment Form */}
+                                      <div className="flex gap-2">
+                                        <input
+                                          type="text"
+                                          value={newComment[post._id] || ""}
+                                          onChange={(e) =>
+                                            setNewComment({
+                                              ...newComment,
+                                              [post._id]: e.target.value,
+                                            })
+                                          }
+                                          placeholder={enableComments === false ? "Commenting is disabled by the administrator" : "Write a comment..."}
+                                          className="flex-1 p-2 rounded-lg bg-white/50 border border-white/20 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                                          disabled={enableComments === false}
+                                        />
+                                        <button
+                                          onClick={() => handleCommentSubmit(post._id)}
+                                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                          disabled={enableComments === false}
+                                          title={enableComments === false ? "Commenting is disabled by the administrator" : "Send"}
+                                        >
+                                          <FiSend />
+                                        </button>
+                                      </div>
+                                      {enableComments === false && (
+                                        <div className="text-xs text-red-500 mt-2">Commenting is disabled by the administrator.</div>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               )}
                             </div>

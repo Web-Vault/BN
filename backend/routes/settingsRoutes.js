@@ -26,6 +26,17 @@ router.get('/registration', async (req, res) => {
   }
 });
 
+// Public endpoint to check comment system status
+router.get('/comments', async (req, res) => {
+  try {
+    const settings = await SettingsModel.getSettings();
+    res.json({ enableComments: settings.enableComments });
+  } catch (error) {
+    console.error('Error checking comment system status:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get all settings
 router.get('/', protect, admin, async (req, res) => {
   try {
@@ -62,18 +73,14 @@ router.patch('/:setting', protect, admin, async (req, res) => {
   try {
     const { setting } = req.params;
     const { value } = req.body;
-
-    // Validate that the setting exists
     const settings = await SettingsModel.getSettings();
-    if (settings[setting] === undefined) {
+    if (!(setting in settings)) {
       return res.status(400).json({ message: 'Invalid setting' });
     }
-
-    // Update the specific setting
     settings[setting] = value;
     await settings.save();
-
-    res.json(settings);
+    console.log(`Setting '${setting}' updated to:`, value);
+    res.json({ success: true, [setting]: value });
   } catch (error) {
     console.error('Error updating setting:', error);
     res.status(500).json({ message: error.message });

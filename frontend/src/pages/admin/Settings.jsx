@@ -245,7 +245,6 @@ const Settings = () => {
   const confirmSettingChange = async () => {
     try {
       const { name, value } = currentSetting;
-      
       await axios.patch(`${config.API_BASE_URL}/api/settings/${name}`, 
         { value },
         {
@@ -254,12 +253,11 @@ const Settings = () => {
           }
         }
       );
-
-    setSettings(prev => ({
-      ...prev,
-        [name]: value
-      }));
-
+      // Fetch latest settings after update
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      const response = await axios.get(`${config.API_BASE_URL}/api/settings`, { headers });
+      setSettings(response.data);
       toast.success('Setting updated successfully');
     } catch (error) {
       console.error('Error updating setting:', error);
@@ -792,8 +790,9 @@ const Settings = () => {
                         </p>
                       </div>
                       <button
-                        onClick={() => handleToggle("showAnalytics")}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
+                        disabled
+                        // onClick={() => handleToggle("showAnalytics")}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full cursor-not-allowed opacity-50 ${
                           settings.showAnalytics ? "bg-blue-600" : "bg-gray-200"
                         }`}
                       >
