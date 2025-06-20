@@ -148,9 +148,9 @@ const Settings = () => {
       );
 
       setSettings((prev) => ({
-        ...prev,
+      ...prev,
         [setting]: value,
-      }));
+    }));
     } catch (err) {
       setSettingsError(
         err.response?.data?.message || "Failed to update setting"
@@ -662,7 +662,7 @@ const Settings = () => {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <div>
+            <div>
                         <h3 className="text-sm font-medium text-gray-900">
                           User Registration
                         </h3>
@@ -688,7 +688,7 @@ const Settings = () => {
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-sm font-medium text-gray-900">
                           Comments System
@@ -715,7 +715,7 @@ const Settings = () => {
                       </button>
                     </div>
 
-                    <div>
+                    {/* <div>
                       <label className="block text-sm font-medium text-gray-900">
                         Maximum Upload Size (MB)
                       </label>
@@ -731,7 +731,7 @@ const Settings = () => {
                         <option value="20">20 MB</option>
                         <option value="50">50 MB</option>
                       </select>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -880,8 +880,9 @@ const Settings = () => {
                         </p>
                       </div>
                       <button
-                        onClick={() => handleToggle("ipRestriction")}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
+                        disabled
+                        // onClick={() => handleToggle("showAnalytics")}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full cursor-not-allowed opacity-50 ${
                           settings.ipRestriction ? "bg-blue-600" : "bg-gray-200"
                         }`}
                       >

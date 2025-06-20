@@ -3,6 +3,8 @@ import { FaGoogle } from "react-icons/fa"; // Import icons
 import { Link, useNavigate } from "react-router-dom";
 import config from "../../config/config.js";
 
+const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes in ms
+
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -10,6 +12,11 @@ const Login = () => {
   const [showBanModal, setShowBanModal] = useState(false);
   const [banDetails, setBanDetails] = useState(null);
   const [isMaintenance, setIsMaintenance] = useState(false);
+  const [allowedAttempts, setAllowedAttempts] = useState(5);
+  const [remainingAttempts, setRemainingAttempts] = useState(5);
+  const [lockoutUntil, setLockoutUntil] = useState(null);
+  const [lockoutTimer, setLockoutTimer] = useState(0);
+  const [loginError, setLoginError] = useState("");
 
   // const gotoOnboarding = () => {
   //   localStorage.removeItem("onboardingCompleted");
@@ -19,8 +26,9 @@ const Login = () => {
   useEffect(() => {
     const checkMaintenance = async () => {
       try {
-        const response = await fetch(`${config.API_BASE_URL}/api/settings`);
+        const response = await fetch(`${config.API_BASE_URL}/api/settings/maintenance`);
         const data = await response.json();
+        // console.log("checkMaintenacne: ", data);
         setIsMaintenance(data.maintenanceMode);
       } catch (error) {
         console.error("Error checking maintenance mode:", error);
@@ -28,8 +36,62 @@ const Login = () => {
     };
     checkMaintenance();
   }, []);
+  
+  useEffect(() => {
+    const fetchLoginAttempts = async () => {
+      try {
+        const response = await fetch(`${config.API_BASE_URL}/api/settings/login-attempts`);
+        const data = await response.json();
+        // console.log("fetchAttempts: ", data);
+        const attempts = parseInt(data.loginAttempts || "5", 10);
+        setAllowedAttempts(attempts);
+        setRemainingAttempts(attempts);
+      } catch (error) {
+        console.error("Error fetching login attempts setting:", error);
+      }
+    };
+    fetchLoginAttempts();
+  }, []);
+
+  useEffect(() => {
+    if (!email) return;
+    const key = `login_attempts_${email}`;
+    const lockKey = `login_lockout_${email}`;
+    const attempts = parseInt(localStorage.getItem(key) || "0", 10);
+    setRemainingAttempts(allowedAttempts - attempts);
+    const lockout = parseInt(localStorage.getItem(lockKey) || "0", 10);
+    if (lockout && lockout > Date.now()) {
+      setLockoutUntil(lockout);
+      setLockoutTimer(Math.ceil((lockout - Date.now()) / 1000));
+    } else {
+      setLockoutUntil(null);
+      setLockoutTimer(0);
+    }
+  }, [email, allowedAttempts]);
+
+  useEffect(() => {
+    if (!lockoutUntil) return;
+    const interval = setInterval(() => {
+      const now = Date.now();
+      if (lockoutUntil > now) {
+        setLockoutTimer(Math.ceil((lockoutUntil - now) / 1000));
+      } else {
+        setLockoutUntil(null);
+        setLockoutTimer(0);
+        if (email) {
+          localStorage.removeItem(`login_attempts_${email}`);
+          localStorage.removeItem(`login_lockout_${email}`);
+          setRemainingAttempts(allowedAttempts);
+        }
+        clearInterval(interval);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutUntil, email, allowedAttempts]);
 
   const handleLogin = async () => {
+    setLoginError("");
+    if (lockoutUntil && lockoutUntil > Date.now()) return;
     try {
       const response = await fetch(`${config.API_BASE_URL}/api/users/login`, {
         method: "POST",
@@ -42,6 +104,9 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
+        localStorage.removeItem(`login_attempts_${email}`);
+        localStorage.removeItem(`login_lockout_${email}`);
+        setRemainingAttempts(allowedAttempts);
         // console.log("✅ Login successful:", data);
         // console.log("data.user: ", data.user);
 
@@ -71,12 +136,25 @@ const Login = () => {
         setBanDetails(data.banDetails);
         setShowBanModal(true);
       } else {
-        console.error("❌ Login failed:", data.message);
-        alert(data.message);
+        // Failed login: increment attempts
+        const key = `login_attempts_${email}`;
+        const lockKey = `login_lockout_${email}`;
+        let attempts = parseInt(localStorage.getItem(key) || "0", 10) + 1;
+        localStorage.setItem(key, attempts);
+        if (attempts >= allowedAttempts) {
+          const lockout = Date.now() + LOCKOUT_DURATION;
+          localStorage.setItem(lockKey, lockout);
+          setLockoutUntil(lockout);
+          setLockoutTimer(Math.ceil(LOCKOUT_DURATION / 1000));
+          setLoginError(`Account locked. Try again in 5 minutes.`);
+        } else {
+          setRemainingAttempts(allowedAttempts - attempts);
+          setLoginError(`Invalid email or password. Attempts left: ${allowedAttempts - attempts}`);
+        }
       }
     } catch (error) {
       console.error("❌ Error logging in:", error);
-      alert("An error occurred while logging in");
+      setLoginError("An error occurred while logging in");
     }
   };
 
@@ -103,82 +181,103 @@ const Login = () => {
         }}
       ></div>
 
-      {/* Login Box */}
+      {/* Login Box or Lockout Timer */}
       <div className="relative bg-white/10 backdrop-blur-lg p-8 rounded-lg shadow-xl w-[380px] border border-white/20">
-        <h2 className="text-2xl font-semibold text-white text-center mb-6">
-          Welcome Back
-        </h2>
+        {lockoutUntil && lockoutUntil > Date.now() ? (
+          <div className="flex flex-col items-center justify-center h-64">
+            <h2 className="text-2xl font-semibold text-red-600 text-center mb-4">
+              Account Locked
+            </h2>
+            <p className="text-white text-lg mb-2">Too many failed login attempts.</p>
+            <p className="text-white text-md mb-4">Try again in <span className="font-bold">{lockoutTimer}</span> seconds.</p>
+          </div>
+        ) : (
+          <>
+            <h2 className="text-2xl font-semibold text-white text-center mb-6">
+              Welcome Back
+            </h2>
+            {loginError && (
+              <div className="bg-red-100 text-red-700 px-4 py-2 rounded mb-4 text-center">
+                {loginError}
+              </div>
+            )}
+            {/* Email Input */}
+            <div className="mb-4">
+              <label className="block text-white/80 text-sm">Email</label>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                onChange={(e) => setEmail(e.target.value)}
+                value={email}
+                className="w-full p-3 mt-1 bg-white/20 border border-white/30 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400 text-white placeholder-white/60"
+                disabled={!!lockoutUntil}
+              />
+            </div>
+            {/* Password Input */}
+            <div className="mb-4">
+              <label className="block text-white/80 text-sm">Password</label>
+              <input
+                type="password"
+                placeholder="Enter your password"
+                onChange={(e) => setPassword(e.target.value)}
+                value={password}
+                className="w-full p-3 mt-1 bg-white/20 border border-white/30 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400 text-white placeholder-white/60"
+                disabled={!!lockoutUntil}
+              />
+            </div>
+            {/* Remaining Attempts */}
+            {remainingAttempts < allowedAttempts && !lockoutUntil && (
+              <div className="text-yellow-200 text-sm mb-2 text-center">
+                Attempts left: {remainingAttempts}
+              </div>
+            )}
+            {/* Forgot Password & Signup Links */}
+            <div className="flex justify-between text-xs mb-4">
+              <a href="/" className="text-white/70 hover:text-white transition">
+                Forgot Password?
+              </a>
+              <Link
+                to="/register"
+                className="text-white/70 hover:text-white transition"
+              >
+                Sign Up
+              </Link>
+            </div>
+            {/* Login Button */}
+            <button
+              onClick={handleLogin}
+              className="w-full bg-purple-500 text-white p-3 rounded-md font-semibold hover:bg-purple-600 transition"
+              disabled={!!lockoutUntil}
+            >
+              Login
+            </button>
+            <br />
+            {/* <br /> */}
+            {/* <button
+              onClick={gotoOnboarding}
+              className="w-full bg-purple-500 text-white p-3 rounded-md font-semibold hover:bg-purple-600 transition"
+            >
+              Go to Onboarding
+            </button> */}
 
-        {/* Email Input */}
-        <div className="mb-4">
-          <label className="block text-white/80 text-sm">Email</label>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            onChange={(e) => setEmail(e.target.value)}
-            value={email}
-            className="w-full p-3 mt-1 bg-white/20 border border-white/30 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400 text-white placeholder-white/60"
-          />
-        </div>
+            {/* Divider */}
+            <div className="flex items-center my-5">
+              <hr className="flex-grow border-white/30" />
+              <span className="mx-3 text-white/70 text-sm">OR</span>
+              <hr className="flex-grow border-white/30" />
+            </div>
 
-        {/* Password Input */}
-        <div className="mb-4">
-          <label className="block text-white/80 text-sm">Password</label>
-
-          <input
-            type="password"
-            placeholder="Enter your password"
-            onChange={(e) => setPassword(e.target.value)}
-            value={password}
-            className="w-full p-3 mt-1 bg-white/20 border border-white/30 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400 text-white placeholder-white/60"
-          />
-        </div>
-
-        {/* Forgot Password & Signup Links */}
-        <div className="flex justify-between text-xs mb-4">
-          <a href="/" className="text-white/70 hover:text-white transition">
-            Forgot Password?
-          </a>
-          <Link
-            to="/register"
-            className="text-white/70 hover:text-white transition"
-          >
-            Sign Up
-          </Link>
-        </div>
-
-        {/* Login Button */}
-        <button
-          onClick={handleLogin}
-          className="w-full bg-purple-500 text-white p-3 rounded-md font-semibold hover:bg-purple-600 transition"
-        >
-          Login
-        </button>
-        <br />
-        {/* <br /> */}
-        {/* <button
-          onClick={gotoOnboarding}
-          className="w-full bg-purple-500 text-white p-3 rounded-md font-semibold hover:bg-purple-600 transition"
-        >
-          Go to Onboarding
-        </button> */}
-
-        {/* Divider */}
-        <div className="flex items-center my-5">
-          <hr className="flex-grow border-white/30" />
-          <span className="mx-3 text-white/70 text-sm">OR</span>
-          <hr className="flex-grow border-white/30" />
-        </div>
-
-        {/* Social Login */}
-        <button className="w-full bg-red-500 text-white p-3 rounded-md hover:bg-red-600 transition mb-3 flex items-center justify-center gap-2">
-          <FaGoogle className="text-lg" />
-          Login with Google
-        </button>
-        {/* <button className="w-full bg-blue-700 text-white p-3 rounded-md hover:bg-blue-800 transition flex items-center justify-center gap-2">
-          <FaFacebookF className="text-lg" />
-          Login with Facebook
-        </button> */}
+            {/* Social Login */}
+            <button className="w-full bg-red-500 text-white p-3 rounded-md hover:bg-red-600 transition mb-3 flex items-center justify-center gap-2">
+              <FaGoogle className="text-lg" />
+              Login with Google
+            </button>
+            {/* <button className="w-full bg-blue-700 text-white p-3 rounded-md hover:bg-blue-800 transition flex items-center justify-center gap-2">
+              <FaFacebookF className="text-lg" />
+              Login with Facebook
+            </button> */}
+          </>
+        )}
       </div>
 
       {/* Ban Modal */}

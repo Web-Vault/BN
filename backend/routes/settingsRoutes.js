@@ -37,6 +37,16 @@ router.get('/comments', async (req, res) => {
   }
 });
 
+// Public endpoint to get login attempts setting
+router.get('/login-attempts', async (req, res) => {
+  try {
+    const settings = await SettingsModel.getSettings();
+    res.json({ loginAttempts: settings.loginAttempts });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get all settings
 router.get('/', protect, admin, async (req, res) => {
   try {
