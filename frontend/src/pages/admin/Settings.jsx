@@ -3,7 +3,6 @@ import AdminLayout from "./AdminLayout";
 import axios from "axios";
 import config from "../../config/config.js";
 import { toast } from "react-hot-toast";
-import { useTranslation } from "react-i18next";
 
 const Settings = () => {
   const [settings, setSettings] = useState({
@@ -53,7 +52,6 @@ const Settings = () => {
   const [showFormatModal, setShowFormatModal] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState("json");
 
-  const { t, i18n } = useTranslation();
 
   // Fetch admin data
   useEffect(() => {
