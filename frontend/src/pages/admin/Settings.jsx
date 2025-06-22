@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
 import axios from "axios";
 import config from "../../config/config.js";
-import { toast } from 'react-hot-toast';
+import { toast } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 const Settings = () => {
   const [settings, setSettings] = useState({
@@ -49,6 +50,10 @@ const Settings = () => {
   const [editSuccess, setEditSuccess] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [currentSetting, setCurrentSetting] = useState(null);
+  const [showFormatModal, setShowFormatModal] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState("json");
+
+  const { t, i18n } = useTranslation();
 
   // Fetch admin data
   useEffect(() => {
@@ -104,7 +109,7 @@ const Settings = () => {
         setSettingsError(
           err.response?.data?.message || "Failed to fetch settings"
         );
-        toast.error('Failed to load settings');
+        toast.error("Failed to load settings");
       } finally {
         setSettingsLoading(false);
       }
@@ -148,9 +153,9 @@ const Settings = () => {
       );
 
       setSettings((prev) => ({
-      ...prev,
+        ...prev,
         [setting]: value,
-    }));
+      }));
     } catch (err) {
       setSettingsError(
         err.response?.data?.message || "Failed to update setting"
@@ -171,26 +176,29 @@ const Settings = () => {
     setEditSuccess(false);
 
     // Validate passwords match if changing password
-    if (editForm.newPassword && editForm.newPassword !== editForm.confirmPassword) {
-      setEditError('New passwords do not match');
+    if (
+      editForm.newPassword &&
+      editForm.newPassword !== editForm.confirmPassword
+    ) {
+      setEditError("New passwords do not match");
       return;
     }
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        setEditError('Authentication token not found');
+        setEditError("Authentication token not found");
         return;
       }
 
-      const headers = { 
+      const headers = {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       };
 
       // Only send fields that have values
       const updateData = {
-        userName: editForm.userName
+        userName: editForm.userName,
       };
 
       // Only include password fields if new password is provided
@@ -211,14 +219,14 @@ const Settings = () => {
       setEditSuccess(true);
       setIsEditing(false);
       setEditForm({
-        userName: '',
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
+        userName: "",
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
       });
     } catch (err) {
       // console.error('Profile update error:', err.response?.data || err);
-      setEditError(err.response?.data?.message || 'Failed to update profile');
+      setEditError(err.response?.data?.message || "Failed to update profile");
     }
   };
 
@@ -245,23 +253,26 @@ const Settings = () => {
   const confirmSettingChange = async () => {
     try {
       const { name, value } = currentSetting;
-      await axios.patch(`${config.API_BASE_URL}/api/settings/${name}`, 
+      await axios.patch(
+        `${config.API_BASE_URL}/api/settings/${name}`,
         { value },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`
-          }
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         }
       );
       // Fetch latest settings after update
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
-      const response = await axios.get(`${config.API_BASE_URL}/api/settings`, { headers });
+      const response = await axios.get(`${config.API_BASE_URL}/api/settings`, {
+        headers,
+      });
       setSettings(response.data);
-      toast.success('Setting updated successfully');
+      toast.success("Setting updated successfully");
     } catch (error) {
-      console.error('Error updating setting:', error);
-      toast.error('Failed to update setting');
+      console.error("Error updating setting:", error);
+      toast.error("Failed to update setting");
     } finally {
       setShowConfirmModal(false);
       setCurrentSetting(null);
@@ -271,27 +282,61 @@ const Settings = () => {
   const getSettingImpact = (setting) => {
     const impacts = {
       maintenanceMode: {
-        title: 'Maintenance Mode',
-        adminImpact: 'Admin panel will remain accessible',
-        userImpact: 'Regular users will see a maintenance page and cannot access the website'
+        title: "Maintenance Mode",
+        adminImpact: "Admin panel will remain accessible",
+        userImpact:
+          "Regular users will see a maintenance page and cannot access the website",
       },
       allowUserRegistration: {
-        title: 'User Registration',
-        adminImpact: 'No impact on admin functionality',
-        userImpact: 'New users will not be able to register on the website'
+        title: "User Registration",
+        adminImpact: "No impact on admin functionality",
+        userImpact: "New users will not be able to register on the website",
       },
       enableComments: {
-        title: 'Comments',
-        adminImpact: 'No impact on admin functionality',
-        userImpact: 'Users will not be able to comment on posts and discussions'
+        title: "Comments",
+        adminImpact: "No impact on admin functionality",
+        userImpact:
+          "Users will not be able to comment on posts and discussions",
       },
       maxUploadSize: {
-        title: 'Upload Size',
-        adminImpact: 'Applies to all file uploads across the platform',
-        userImpact: 'Users will be limited to the selected file size for uploads'
-      }
+        title: "Upload Size",
+        adminImpact: "Applies to all file uploads across the platform",
+        userImpact:
+          "Users will be limited to the selected file size for uploads",
+      },
     };
-    return impacts[setting] || { title: setting, adminImpact: '', userImpact: '' };
+    return (
+      impacts[setting] || { title: setting, adminImpact: "", userImpact: "" }
+    );
+  };
+
+  const handleBackup = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+      const response = await axios.get(
+        `${config.API_BASE_URL}/api/admin/backup?format=${selectedFormat}`,
+        {
+          headers,
+          responseType: 'blob',
+        }
+      );
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      const disposition = response.headers['content-disposition'];
+      let fileName = `backup.${selectedFormat === 'excel' ? 'xlsx' : selectedFormat === 'seeder' ? 'js' : selectedFormat}`;
+      if (disposition && disposition.indexOf('filename=') !== -1) {
+        fileName = disposition.split('filename=')[1].replace(/['\"]/g, '');
+      }
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Backup created and downloaded!');
+    } catch (error) {
+      toast.error('Failed to create backup');
+    }
   };
 
   return (
@@ -575,58 +620,58 @@ const Settings = () => {
                   <h2 className="text-lg font-medium text-gray-900 mb-4">
                     Notification Settings
                   </h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
                         <h3 className="text-sm font-medium text-gray-900">
                           Push Notifications
                         </h3>
                         <p className="text-sm text-gray-500">
                           Receive notifications in real-time
                         </p>
-                  </div>
-                  <button
+                      </div>
+                      <button
                         onClick={() => handleToggle("notifications")}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full ${
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                           settings.notifications ? "bg-blue-600" : "bg-gray-200"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
                             settings.notifications
                               ? "translate-x-6"
                               : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                </div>
+                          }`}
+                        />
+                      </button>
+                    </div>
 
-                <div className="flex items-center justify-between">
-                  <div>
+                    <div className="flex items-center justify-between">
+                      <div>
                         <h3 className="text-sm font-medium text-gray-900">
                           Email Alerts
                         </h3>
                         <p className="text-sm text-gray-500">
                           Receive email notifications
                         </p>
-                  </div>
-                  <button
+                      </div>
+                      <button
                         onClick={() => handleToggle("emailAlerts")}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full ${
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                           settings.emailAlerts ? "bg-blue-600" : "bg-gray-200"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
                             settings.emailAlerts
                               ? "translate-x-6"
                               : "translate-x-1"
-                      }`}
-                    />
-                  </button>
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
                 {/* Website Settings */}
                 <div>
@@ -644,7 +689,12 @@ const Settings = () => {
                         </p>
                       </div>
                       <button
-                        onClick={() => handleSettingChange("maintenanceMode", !settings.maintenanceMode)}
+                        onClick={() =>
+                          handleSettingChange(
+                            "maintenanceMode",
+                            !settings.maintenanceMode
+                          )
+                        }
                         className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                           settings.maintenanceMode
                             ? "bg-blue-600"
@@ -662,7 +712,7 @@ const Settings = () => {
                     </div>
 
                     <div className="flex items-center justify-between">
-            <div>
+                      <div>
                         <h3 className="text-sm font-medium text-gray-900">
                           User Registration
                         </h3>
@@ -671,7 +721,12 @@ const Settings = () => {
                         </p>
                       </div>
                       <button
-                        onClick={() => handleSettingChange("allowUserRegistration", !settings.allowUserRegistration)}
+                        onClick={() =>
+                          handleSettingChange(
+                            "allowUserRegistration",
+                            !settings.allowUserRegistration
+                          )
+                        }
                         className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                           settings.allowUserRegistration
                             ? "bg-blue-600"
@@ -688,7 +743,7 @@ const Settings = () => {
                       </button>
                     </div>
 
-              <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-sm font-medium text-gray-900">
                           Comments System
@@ -698,7 +753,12 @@ const Settings = () => {
                         </p>
                       </div>
                       <button
-                        onClick={() => handleSettingChange("enableComments", !settings.enableComments)}
+                        onClick={() =>
+                          handleSettingChange(
+                            "enableComments",
+                            !settings.enableComments
+                          )
+                        }
                         className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                           settings.enableComments
                             ? "bg-blue-600"
@@ -809,26 +869,18 @@ const Settings = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="text-sm font-medium text-gray-900">
-                          Auto Backup
+                          Backup Now
                         </h3>
                         <p className="text-sm text-gray-500">
-                          Enable automatic system backups
+                          Download a backup of all database collections
                         </p>
-                </div>
-                <button
-                        onClick={() => handleToggle("autoBackup")}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                          settings.autoBackup ? "bg-blue-600" : "bg-gray-200"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                            settings.autoBackup
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                    }`}
-                  />
-                </button>
+                      </div>
+                      <button
+                        onClick={() => setShowFormatModal(true)}
+                        className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
+                        Backup Now
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -914,8 +966,8 @@ const Settings = () => {
                         />
                       </button>
                     </div> */}
-              </div>
-            </div>
+                  </div>
+                </div>
 
                 {/* Appearance Settings */}
                 <div>
@@ -924,7 +976,7 @@ const Settings = () => {
                   </h2>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-            <div>
+                      <div>
                         <h3 className="text-sm font-medium text-gray-900">
                           Dark Mode
                         </h3>
@@ -948,24 +1000,25 @@ const Settings = () => {
                       </button>
                     </div>
 
-              <div>
+                    {/* <div>
                       <label className="block text-sm font-medium text-gray-900">
-                        Language
+                        {t("Language")}
                       </label>
-                <select
-                  value={settings.language}
-                        onChange={(e) =>
-                          handleSelectChange("language", e.target.value)
-                        }
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                >
-                  <option value="en">English</option>
-                  <option value="es">Spanish</option>
-                  <option value="fr">French</option>
-                  <option value="de">German</option>
-                </select>
-              </div>
-            </div>
+                      <select
+                        value={settings.language}
+                        onChange={(e) => {
+                          handleSelectChange("language", e.target.value);
+                          i18n.changeLanguage(e.target.value);
+                        }}
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                      >
+                        <option value="en">{t("English")}</option>
+                        <option value="es">{t("Spanish")}</option>
+                        <option value="fr">{t("French")}</option>
+                        <option value="de">{t("German")}</option>
+                      </select>
+                    </div> */}
+                  </div>
                 </div>
               </>
             )}
@@ -989,13 +1042,17 @@ const Settings = () => {
                   </p>
                 </div>
                 <div className="bg-blue-50 p-4 rounded-md">
-                  <h5 className="font-medium text-blue-900">Impact on Admin Panel:</h5>
+                  <h5 className="font-medium text-blue-900">
+                    Impact on Admin Panel:
+                  </h5>
                   <p className="text-sm text-blue-700 mt-1">
                     {getSettingImpact(currentSetting.name).adminImpact}
                   </p>
                 </div>
                 <div className="bg-yellow-50 p-4 rounded-md">
-                  <h5 className="font-medium text-yellow-900">Impact on User Website:</h5>
+                  <h5 className="font-medium text-yellow-900">
+                    Impact on User Website:
+                  </h5>
                   <p className="text-sm text-yellow-700 mt-1">
                     {getSettingImpact(currentSetting.name).userImpact}
                   </p>
@@ -1021,9 +1078,105 @@ const Settings = () => {
             </div>
           </div>
         )}
+
+        {showFormatModal && (
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border border-blue-200">
+              <h3 className="text-2xl font-bold text-blue-700 mb-2 text-center">
+                Choose Backup Format
+              </h3>
+              <p className="text-gray-600 text-center mb-6">
+                Select the file format you want to download. Each format is suitable for different use cases.
+              </p>
+              <div className="space-y-4">
+                <label className={`block border rounded-lg p-4 cursor-pointer transition-all ${selectedFormat === "json" ? "border-blue-500 bg-blue-50 shadow" : "border-gray-200 hover:border-blue-300"}`}>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      name="backupFormat"
+                      value="json"
+                      checked={selectedFormat === "json"}
+                      onChange={() => setSelectedFormat("json")}
+                      className="mr-3 accent-blue-600"
+                    />
+                    <span className="font-semibold text-blue-900">JSON (raw data)</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                    Standard JSON file containing all collections. Best for programmatic use or restoring data via scripts.
+                  </p>
+                </label>
+                <label className={`block border rounded-lg p-4 cursor-pointer transition-all ${selectedFormat === "text" ? "border-blue-500 bg-blue-50 shadow" : "border-gray-200 hover:border-blue-300"}`}>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      name="backupFormat"
+                      value="text"
+                      checked={selectedFormat === "text"}
+                      onChange={() => setSelectedFormat("text")}
+                      className="mr-3 accent-blue-600"
+                    />
+                    <span className="font-semibold text-blue-900">Text (formatted)</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                    Human-readable text file. Each collection is sectioned and entries are pretty-printed for easy review.
+                  </p>
+                </label>
+                <label className={`block border rounded-lg p-4 cursor-pointer transition-all ${selectedFormat === "excel" ? "border-blue-500 bg-blue-50 shadow" : "border-gray-200 hover:border-blue-300"}`}>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      name="backupFormat"
+                      value="excel"
+                      checked={selectedFormat === "excel"}
+                      onChange={() => setSelectedFormat("excel")}
+                      className="mr-3 accent-blue-600"
+                    />
+                    <span className="font-semibold text-blue-900">Excel (.xlsx)</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                    Multi-sheet Excel file. Each collection is a separate sheet, with all fields as columns. Best for analysis in Excel.
+                  </p>
+                </label>
+                <label className={`block border rounded-lg p-4 cursor-pointer transition-all ${selectedFormat === "seeder" ? "border-blue-500 bg-blue-50 shadow" : "border-gray-200 hover:border-blue-300"}`}>
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      name="backupFormat"
+                      value="seeder"
+                      checked={selectedFormat === "seeder"}
+                      onChange={() => setSelectedFormat("seeder")}
+                      className="mr-3 accent-blue-600"
+                    />
+                    <span className="font-semibold text-blue-900">Seeder.js (for DB restore)</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                    JavaScript file for MongoDB seeding. Can be used directly to restore all data into a compatible database.
+                  </p>
+                </label>
+              </div>
+              <div className="flex justify-end space-x-3 mt-8">
+                <button
+                  onClick={() => setShowFormatModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md border border-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    setShowFormatModal(false);
+                    await handleBackup();
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow"
+                >
+                  Download
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
 };
 
-export default Settings; 
+export default Settings;

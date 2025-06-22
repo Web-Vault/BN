@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const AdminLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -15,8 +15,8 @@ const AdminLayout = ({ children }) => {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Close sidebar when route changes on mobile
@@ -28,81 +28,85 @@ const AdminLayout = ({ children }) => {
 
   const menuItems = [
     {
-      section: 'Overview',
+      section: "Overview",
       items: [
-        { path: '/admin', label: 'Dashboard', icon: '📊' },
-        { path: '/admin/platform-report', label: 'Platform Report', icon: '📈' },
-      ]
+        { path: "/admin", label: "Dashboard", icon: "📊" },
+        {
+          path: "/admin/platform-report",
+          label: "Platform Report",
+          icon: "📈",
+        },
+      ],
     },
     {
-      section: 'User Management',
+      section: "User Management",
       items: [
-        { path: '/admin/users', label: 'All Users', icon: '👥' },
+        { path: "/admin/users", label: "All Users", icon: "👥" },
         // { path: '/admin/user-investments', label: 'User Investments', icon: '💰' },
         // { path: '/admin/user-connections', label: 'User Connections', icon: '🔗' },
         // { path: '/admin/user-businesses', label: 'User Businesses', icon: '🏢' },
         // { path: '/admin/user-referrals', label: 'User Referrals', icon: '↪️' },
         // { path: '/admin/user-transactions', label: 'User Transactions', icon: '💸' },
-      ]
+      ],
     },
     {
-      section: 'Chapter Management',
+      section: "Chapter Management",
       items: [
-        { path: '/admin/chapters', label: 'All Chapters', icon: '📚' },
+        { path: "/admin/chapters", label: "All Chapters", icon: "📚" },
         // { path: '/admin/chapter-members', label: 'Chapter Members', icon: '👥' },
         // { path: '/admin/chapter-events', label: 'Chapter Events', icon: '📅' },
-      ]
+      ],
     },
     {
-      section: 'Community',
+      section: "Community",
       items: [
-        { path: '/admin/posts', label: 'Community Place', icon: '📢' },
-        { path: '/admin/memberships', label: 'Memberships', icon: '🎖️' },
-      ]
+        { path: "/admin/posts", label: "Community Place", icon: "📢" },
+        { path: "/admin/memberships", label: "Memberships", icon: "🎖️" },
+      ],
     },
     {
-      section: 'Moderation',
+      section: "Moderation",
       items: [
-        { path: '/admin/warnings', label: 'Warnings', icon: '⚠️' },
-        { path: '/admin/bans', label: 'Bans', icon: '🚫' },
-      ]
+        { path: "/admin/warnings", label: "Warnings", icon: "⚠️" },
+        { path: "/admin/bans", label: "Bans", icon: "🚫" },
+      ],
     },
     {
-      section: 'Settings',
+      section: "Settings",
       items: [
-        { path: '/admin/settings', label: 'Settings', icon: '⚙️' },
+        { path: "/admin/settings", label: "Settings", icon: "⚙️" },
         // { path: '/admin/website-settings', label: 'Website Settings', icon: '🌐' },
-      ]
-    }
+      ],
+    },
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userId');
-    navigate('/login');
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    navigate("/login");
   };
 
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Mobile Sidebar Backdrop */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside 
+      <aside
         className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-gray-800 text-white transition-transform duration-300 transform ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0 flex flex-col h-screen`}
       >
         {/* Sidebar Header */}
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">Admin Panel</h2>
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(false)}
               className="lg:hidden text-gray-400 hover:text-white"
             >
@@ -126,8 +130,8 @@ const AdminLayout = ({ children }) => {
                       to={item.path}
                       className={`flex items-center space-x-2 p-3 rounded-lg mb-1 ${
                         location.pathname === item.path
-                          ? 'bg-gray-700'
-                          : 'hover:bg-gray-700'
+                          ? "bg-gray-700"
+                          : "hover:bg-gray-700"
                       }`}
                     >
                       <span>{item.icon}</span>
@@ -160,7 +164,7 @@ const AdminLayout = ({ children }) => {
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="text-gray-600 hover:text-gray-900"
           >
-            {isSidebarOpen ? '←' : '→'}
+            {isSidebarOpen ? "←" : "→"}
           </button>
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-600">Admin</span>
@@ -198,4 +202,4 @@ const AdminLayout = ({ children }) => {
   );
 };
 
-export default AdminLayout; 
+export default AdminLayout;

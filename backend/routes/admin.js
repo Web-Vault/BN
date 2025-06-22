@@ -2,6 +2,7 @@ import express from 'express';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import users from '../models/users.js';
 import bcrypt from 'bcryptjs';
+import { backupDatabase } from '../controllers/adminController.js';
 
 const router = express.Router();
 
@@ -102,5 +103,8 @@ router.put('/profile', protect, admin, async (req, res) => {
     res.status(500).json({ message: 'Failed to update profile. Please try again.' });
   }
 });
+
+// Backup database (admin only)
+router.get('/backup', protect, admin, backupDatabase);
 
 export default router; 
