@@ -31,11 +31,11 @@ const AdminLayout = ({ children }) => {
       section: "Overview",
       items: [
         { path: "/admin", label: "Dashboard", icon: "📊" },
-        {
-          path: "/admin/platform-report",
-          label: "Platform Report",
-          icon: "📈",
-        },
+        // {
+        //   path: "/admin/platform-report",
+        //   label: "Platform Report",
+        //   icon: "📈",
+        // },
       ],
     },
     {
@@ -67,8 +67,9 @@ const AdminLayout = ({ children }) => {
     {
       section: "Moderation",
       items: [
-        { path: "/admin/warnings", label: "Warnings", icon: "⚠️" },
-        { path: "/admin/bans", label: "Bans", icon: "🚫" },
+        {path: "", label: "empty", icon : "⚠️"}
+        // { path: "/admin/warnings", label: "Warnings", icon: "⚠️" },
+        // { path: "/admin/bans", label: "Bans", icon: "🚫" },
       ],
     },
     {

@@ -1092,15 +1092,18 @@ const Settings = () => {
         )}
 
         {showFormatModal && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border border-blue-200">
-              <h3 className="text-2xl font-bold text-blue-700 mb-2 text-center">
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-1 z-50">
+            <div
+              className="bg-white rounded-lg w-full max-w-xs sm:max-w-sm md:max-w-md p-2 sm:p-4 md:p-6 shadow-xl border border-blue-200 mx-1 flex flex-col"
+              style={{ maxWidth: '98vw', minWidth: 0, maxHeight: '98vh' }}
+            >
+              <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-700 mb-1 sm:mb-2 text-center">
                 Choose Backup Format
               </h3>
-              <p className="text-gray-600 text-center mb-6">
+              <p className="text-gray-600 text-center mb-2 sm:mb-4 md:mb-6 text-xs sm:text-sm md:text-base">
                 Select the file format you want to download. Each format is suitable for different use cases.
               </p>
-              <div className="space-y-4">
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-2 sm:space-y-3 md:space-y-4 mb-2">
                 <label className={`block border rounded-lg p-4 cursor-pointer transition-all ${selectedFormat === "json" ? "border-blue-500 bg-blue-50 shadow" : "border-gray-200 hover:border-blue-300"}`}>
                   <div className="flex items-center">
                     <input
@@ -1113,7 +1116,7 @@ const Settings = () => {
                     />
                     <span className="font-semibold text-blue-900">JSON (raw data)</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                  <p className="text-xs sm:text-xs md:text-sm text-gray-500 mt-1 ml-6 line-clamp-2 sm:line-clamp-none max-w-full">
                     Standard JSON file containing all collections. Best for programmatic use or restoring data via scripts.
                   </p>
                 </label>
@@ -1129,7 +1132,7 @@ const Settings = () => {
                     />
                     <span className="font-semibold text-blue-900">Text (formatted)</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                  <p className="text-xs sm:text-xs md:text-sm text-gray-500 mt-1 ml-6 line-clamp-2 sm:line-clamp-none max-w-full">
                     Human-readable text file. Each collection is sectioned and entries are pretty-printed for easy review.
                   </p>
                 </label>
@@ -1145,7 +1148,7 @@ const Settings = () => {
                     />
                     <span className="font-semibold text-blue-900">Excel (.xlsx)</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                  <p className="text-xs sm:text-xs md:text-sm text-gray-500 mt-1 ml-6 line-clamp-2 sm:line-clamp-none max-w-full">
                     Multi-sheet Excel file. Each collection is a separate sheet, with all fields as columns. Best for analysis in Excel.
                   </p>
                 </label>
@@ -1161,15 +1164,15 @@ const Settings = () => {
                     />
                     <span className="font-semibold text-blue-900">Seeder.js (for DB restore)</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                  <p className="text-xs sm:text-xs md:text-sm text-gray-500 mt-1 ml-6 line-clamp-2 sm:line-clamp-none max-w-full">
                     JavaScript file for MongoDB seeding. Can be used directly to restore all data into a compatible database.
                   </p>
                 </label>
               </div>
-              <div className="flex justify-end space-x-3 mt-8">
+              <div className="sticky bottom-0 left-0 right-0 bg-white pt-2 pb-1 flex flex-col md:flex-row justify-end md:space-x-3 space-y-2 md:space-y-0 border-t border-gray-100 z-10">
                 <button
                   onClick={() => setShowFormatModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md border border-gray-300"
+                  className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md border border-gray-300 w-full md:w-auto"
                 >
                   Cancel
                 </button>
@@ -1178,7 +1181,7 @@ const Settings = () => {
                     setShowFormatModal(false);
                     await handleBackup();
                   }}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow"
+                  className="px-3 py-2 text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow w-full md:w-auto"
                 >
                   Download
                 </button>
