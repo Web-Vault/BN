@@ -13,6 +13,7 @@ import Membership from "../models/membership.js";
 import Notification from "../models/notification.js";
 import MembershipHistory from "../models/membershipHistory.js";
 import SettingsModel from '../models/settings.js';
+import speakeasy from "speakeasy";
 
 dotenv.config();
 
@@ -288,6 +289,11 @@ export const login = async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.userPassword);
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid email or password" });
+        }
+
+        // 2FA for admin: if enabled, require code
+        if (user.isAdmin && user.twoFactorEnabled) {
+            return res.json({ twoFactorRequired: true });
         }
 
         // Generate JWT token
@@ -1381,3 +1387,50 @@ export const checkAndHandleExpiredBans = async () => {
 // Add this to your existing code to run the check periodically
 // You can adjust the interval as needed (currently set to 5 minutes)
 setInterval(checkAndHandleExpiredBans, 5 * 60 * 1000);
+
+export const login2FA = async (req, res) => {
+  try {
+    console.log('2FA login endpoint hit', req.body); // Debug log
+    const { email, code } = req.body;
+    const user = await users.findOne({ userEmail: email });
+    if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
+      console.log('2FA not enabled or user not found', email);
+      return res.status(400).json({ message: '2FA not enabled for this user' });
+    }
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token: code,
+      window: 1
+    });
+    if (verified) {
+      console.log('2FA code verified for', email);
+      // Issue JWT here
+      const token = jwt.sign(
+        { id: user._id, isAdmin: user.isAdmin },
+        process.env.JWT_SECRET,
+        { expiresIn: "30d" }
+      );
+      const userData = {
+        id: user._id,
+        userName: user.userName,
+        userEmail: user.userEmail,
+        isAdmin: user.isAdmin,
+        token,
+        onboardingStatus: user.onboardingStatus
+      };
+      return res.json({
+        success: true,
+        message: '2FA verified',
+        user: userData,
+        redirectTo: user.isAdmin ? '/admin-panel' : '/profile'
+      });
+    } else {
+      console.log('Invalid 2FA code for', email, 'code:', code);
+      return res.status(400).json({ success: false, message: 'Invalid 2FA code' });
+    }
+  } catch (err) {
+    console.error('2FA login error:', err);
+    res.status(500).json({ message: 'Failed to verify 2FA code', error: err.message });
+  }
+};

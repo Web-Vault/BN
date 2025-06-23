@@ -2,7 +2,7 @@ import express from 'express';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import users from '../models/users.js';
 import bcrypt from 'bcryptjs';
-import { backupDatabase } from '../controllers/adminController.js';
+import { backupDatabase, setup2FA, verify2FA, login2FA, disable2FA } from '../controllers/adminController.js';
 
 const router = express.Router();
 
@@ -106,5 +106,11 @@ router.put('/profile', protect, admin, async (req, res) => {
 
 // Backup database (admin only)
 router.get('/backup', protect, admin, backupDatabase);
+
+// 2FA routes
+router.post('/2fa/setup', protect, admin, setup2FA);
+router.post('/2fa/verify', protect, admin, verify2FA);
+router.post('/2fa/login', login2FA);
+router.post('/2fa/disable', protect, admin, disable2FA);
 
 export default router; 

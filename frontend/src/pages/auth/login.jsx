@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { FaGoogle } from "react-icons/fa"; // Import icons
 import { Link, useNavigate } from "react-router-dom";
 import config from "../../config/config.js";
+import { toast } from 'react-hot-toast';
 
 const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes in ms
 
@@ -17,6 +18,12 @@ const Login = () => {
   const [lockoutUntil, setLockoutUntil] = useState(null);
   const [lockoutTimer, setLockoutTimer] = useState(0);
   const [loginError, setLoginError] = useState("");
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [twoFACode, setTwoFACode] = useState('');
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [pendingPassword, setPendingPassword] = useState('');
+  const [twoFAError, setTwoFAError] = useState('');
+  const [twoFALoading, setTwoFALoading] = useState(false);
 
   // const gotoOnboarding = () => {
   //   localStorage.removeItem("onboardingCompleted");
@@ -100,39 +107,34 @@ const Login = () => {
         },
         body: JSON.stringify({ email, password }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
+        // 2FA required for admin
+        if (data.twoFactorRequired) {
+          setShow2FAModal(true);
+          setPendingEmail(email);
+          setPendingPassword(password);
+          return;
+        }
         localStorage.removeItem(`login_attempts_${email}`);
         localStorage.removeItem(`login_lockout_${email}`);
         setRemainingAttempts(allowedAttempts);
-        // console.log("✅ Login successful:", data);
-        // console.log("data.user: ", data.user);
-
-        // Store token & user ID in localStorage
         localStorage.setItem("token", data.user.token);
         localStorage.setItem("userId", data.user.id);
-        
         if (data.redirectTo === '/admin-panel') {
             navigate('/admin');
             return;
         }
-
-        // If site is in maintenance and user is not admin, redirect to maintenance page
         if (isMaintenance) {
           navigate('/maintenance');
           return;
         }
-
-        // Check onboarding status from user data
         if (data.user.onboardingStatus && data.user.onboardingStatus.isCompleted) {
           navigate("/profile");
         } else {
           navigate("/onboarding");
         }
       } else if (response.status === 403 && data.message === "Account is banned") {
-        // Handle banned user
         setBanDetails(data.banDetails);
         setShowBanModal(true);
       } else {
@@ -155,6 +157,51 @@ const Login = () => {
     } catch (error) {
       console.error("❌ Error logging in:", error);
       setLoginError("An error occurred while logging in");
+    }
+  };
+
+  const handle2FASubmit = async (e) => {
+    e.preventDefault();
+    setTwoFAError('');
+    setTwoFALoading(true);
+    try {
+      const res = await fetch(`${config.API_BASE_URL}/api/admin/2fa/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingEmail, code: twoFACode })
+      });
+      const data = await res.json();
+      console.log('2FA login response:', res.status, data); // Debug log
+      if (res.ok && data.success) {
+        console.log('2FA login success, storing token:', data.user.token);
+        localStorage.setItem("token", data.user.token);
+        localStorage.setItem("userId", data.user.id);
+        setShow2FAModal(false);
+        setTwoFACode('');
+        setPendingEmail('');
+        setPendingPassword('');
+        toast.success('2FA verified!');
+        if (data.redirectTo === '/admin-panel') {
+          navigate('/admin');
+          return;
+        }
+        if (isMaintenance) {
+          navigate('/maintenance');
+          return;
+        }
+        if (data.user.onboardingStatus && data.user.onboardingStatus.isCompleted) {
+          navigate("/profile");
+        } else {
+          navigate("/onboarding");
+        }
+      } else {
+        setTwoFAError(data.message || 'Invalid 2FA code');
+      }
+    } catch (err) {
+      console.error('2FA frontend error:', err);
+      setTwoFAError('Error verifying 2FA code');
+    } finally {
+      setTwoFALoading(false);
     }
   };
 
@@ -324,6 +371,43 @@ const Login = () => {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {show2FAModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold text-blue-700 mb-4 text-center">Two-Factor Authentication</h2>
+            <p className="text-gray-600 text-center mb-4">Enter the 6-digit code from your authenticator app.</p>
+            <form onSubmit={handle2FASubmit} className="space-y-4">
+              <input
+                type="text"
+                value={twoFACode}
+                onChange={e => setTwoFACode(e.target.value)}
+                maxLength={6}
+                pattern="[0-9]{6}"
+                required
+                className="w-full px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 text-center text-lg tracking-widest"
+                placeholder="123456"
+                autoFocus
+              />
+              {twoFAError && <div className="text-red-600 text-sm text-center">{twoFAError}</div>}
+              <button
+                type="submit"
+                className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md transition"
+                disabled={twoFALoading}
+              >
+                {twoFALoading ? 'Verifying...' : 'Verify'}
+              </button>
+              <button
+                type="button"
+                className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-md border border-gray-300 mt-2"
+                onClick={() => { setShow2FAModal(false); setTwoFACode(''); setTwoFAError(''); }}
+              >
+                Cancel
+              </button>
+            </form>
           </div>
         </div>
       )}

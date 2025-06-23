@@ -19,6 +19,9 @@ import Withdrawal from '../models/Withdrawal.js';
 import WithdrawalRequest from '../models/WithdrawalRequest.js';
 import Business from '../models/Business.js';
 import ExcelJS from 'exceljs';
+import speakeasy from 'speakeasy';
+import qrcode from 'qrcode';
+import jwt from 'jsonwebtoken';
 
 function flattenObject(obj) {
   const result = {};
@@ -152,5 +155,107 @@ export const backupDatabase = async (req, res) => {
   } catch (error) {
     console.error('Error creating backup:', error);
     res.status(500).json({ message: 'Failed to create backup', error: error.message });
+  }
+};
+
+// 2FA: Generate secret and QR code for setup
+export const setup2FA = async (req, res) => {
+  try {
+    const user = await users.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'Admin not found' });
+    const secret = speakeasy.generateSecret({ name: 'BusinessNetwork Admin' });
+    user.twoFactorSecret = secret.base32;
+    await user.save();
+    const otpauthUrl = secret.otpauth_url;
+    const qr = await qrcode.toDataURL(otpauthUrl);
+    res.json({ qr, secret: secret.base32 });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to generate 2FA secret', error: err.message });
+  }
+};
+
+// 2FA: Verify code and enable 2FA
+export const verify2FA = async (req, res) => {
+  try {
+    const { code } = req.body;
+    const user = await users.findById(req.user._id);
+    if (!user || !user.twoFactorSecret) return res.status(400).json({ message: '2FA not set up' });
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token: code,
+      window: 1
+    });
+    if (verified) {
+      user.twoFactorEnabled = true;
+      await user.save();
+      res.json({ success: true });
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid code' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to verify 2FA code', error: err.message });
+  }
+};
+
+// 2FA: Verify code during login
+export const login2FA = async (req, res) => {
+  try {
+    console.log('2FA login endpoint hit', req.body); // Debug log
+    const { email, code } = req.body;
+    const user = await users.findOne({ userEmail: email });
+    if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
+      console.log('2FA not enabled or user not found', email);
+      return res.status(400).json({ message: '2FA not enabled for this user' });
+    }
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token: code,
+      window: 1
+    });
+    if (verified) {
+      console.log('2FA code verified for', email);
+      // Issue JWT here
+      const token = jwt.sign(
+        { id: user._id, isAdmin: user.isAdmin },
+        process.env.JWT_SECRET,
+        { expiresIn: "30d" }
+      );
+      const userData = {
+        id: user._id,
+        userName: user.userName,
+        userEmail: user.userEmail,
+        isAdmin: user.isAdmin,
+        token,
+        onboardingStatus: user.onboardingStatus
+      };
+      return res.json({
+        success: true,
+        message: '2FA verified',
+        user: userData,
+        redirectTo: user.isAdmin ? '/admin-panel' : '/profile'
+      });
+    } else {
+      console.log('Invalid 2FA code for', email, 'code:', code);
+      return res.status(400).json({ success: false, message: 'Invalid 2FA code' });
+    }
+  } catch (err) {
+    console.error('2FA login error:', err);
+    res.status(500).json({ message: 'Failed to verify 2FA code', error: err.message });
+  }
+};
+
+// 2FA: Disable 2FA for admin
+export const disable2FA = async (req, res) => {
+  try {
+    const user = await users.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'Admin not found' });
+    user.twoFactorEnabled = false;
+    user.twoFactorSecret = undefined;
+    await user.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to disable 2FA', error: err.message });
   }
 }; 

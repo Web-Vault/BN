@@ -156,7 +156,10 @@ const userSchema = mongoose.Schema(
                         type: Date,
                         default: Date.now
                     }
-                }
+                },
+                // 2FA fields
+                twoFactorEnabled: { type: Boolean, default: false },
+                twoFactorSecret: { type: String },
         }, {
         timestamps: true,
 }

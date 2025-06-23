@@ -3,6 +3,7 @@ import AdminLayout from "./AdminLayout";
 import axios from "axios";
 import config from "../../config/config.js";
 import { toast } from "react-hot-toast";
+import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
   const [settings, setSettings] = useState({
@@ -51,6 +52,7 @@ const Settings = () => {
   const [currentSetting, setCurrentSetting] = useState(null);
   const [showFormatModal, setShowFormatModal] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState("json");
+  const navigate = useNavigate();
 
 
   // Fetch admin data
@@ -334,6 +336,24 @@ const Settings = () => {
       toast.success('Backup created and downloaded!');
     } catch (error) {
       toast.error('Failed to create backup');
+    }
+  };
+
+  const handleTwoFactorToggle = async () => {
+    if (!settings.twoFactorAuth) {
+      // Turning ON: go to setup page
+      navigate('/admin/twofactor');
+    } else {
+      // Turning OFF: call backend to disable
+      try {
+        const token = localStorage.getItem('token');
+        const headers = { Authorization: `Bearer ${token}` };
+        await axios.post(`${config.API_BASE_URL}/api/admin/2fa/disable`, {}, { headers });
+        setSettings((prev) => ({ ...prev, twoFactorAuth: false }));
+        toast.success('Two-Factor Authentication disabled');
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Failed to disable 2FA');
+      }
     }
   };
 
@@ -809,17 +829,11 @@ const Settings = () => {
                         </p>
                       </div>
                       <button
-                        onClick={() => handleToggle("twoFactorAuth")}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${
-                          settings.twoFactorAuth ? "bg-blue-600" : "bg-gray-200"
-                        }`}
+                        onClick={handleTwoFactorToggle}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full ${settings.twoFactorAuth ? "bg-blue-600" : "bg-gray-200"}`}
                       >
                         <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                            settings.twoFactorAuth
-                              ? "translate-x-6"
-                              : "translate-x-1"
-                          }`}
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${settings.twoFactorAuth ? "translate-x-6" : "translate-x-1"}`}
                         />
                       </button>
                     </div>
@@ -864,7 +878,7 @@ const Settings = () => {
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
                       <div>
                         <h3 className="text-sm font-medium text-gray-900">
                           Backup Now
@@ -875,7 +889,7 @@ const Settings = () => {
                       </div>
                       <button
                         onClick={() => setShowFormatModal(true)}
-                        className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full sm:w-auto mt-2 sm:mt-0"
                       >
                         Backup Now
                       </button>

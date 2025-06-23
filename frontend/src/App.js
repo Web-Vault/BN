@@ -44,6 +44,7 @@ import ChapterDetails from './pages/admin/ChapterDetails';
 import MembershipManagement from './pages/admin/MembershipManagement';
 import MaintenancePage from "./pages/utility/MaintenancePage";
 import { MaintenanceRoute } from "./middleware/maintenanceMiddleware";
+import TwoFactorSetup from './pages/admin/TwoFactorSetup';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -446,6 +447,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <WebsiteSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/twofactor"
+          element={
+            <ProtectedRoute>
+              <TwoFactorSetup />
             </ProtectedRoute>
           }
         />
