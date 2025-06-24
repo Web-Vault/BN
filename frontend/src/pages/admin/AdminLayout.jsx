@@ -64,14 +64,14 @@ const AdminLayout = ({ children }) => {
         { path: "/admin/memberships", label: "Memberships", icon: "🎖️" },
       ],
     },
-    {
-      section: "Moderation",
-      items: [
-        {path: "", label: "empty", icon : "⚠️"}
+    // {
+    //   section: "Moderation",
+    //   items: [
+    //     {path: "", label: "empty", icon : "⚠️"}
         // { path: "/admin/warnings", label: "Warnings", icon: "⚠️" },
         // { path: "/admin/bans", label: "Bans", icon: "🚫" },
-      ],
-    },
+    //   ],
+    // },
     {
       section: "Settings",
       items: [
@@ -106,7 +106,7 @@ const AdminLayout = ({ children }) => {
         {/* Sidebar Header */}
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Admin Panel</h2>
+            <h2 className="text-2xl text-center font-bold">Admin Panel</h2>
             <button
               onClick={() => setIsSidebarOpen(false)}
               className="lg:hidden text-gray-400 hover:text-white"
