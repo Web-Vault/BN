@@ -341,6 +341,14 @@ const LandingPage = () => {
               >
                 Purchase Membership
               </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate("/login")}
+                className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-full font-medium transition-all duration-300 border border-white/20 flex items-center justify-center gap-2"
+              >
+                Login
+              </motion.button>
             </div>
 
             {/* Quick Features */}
