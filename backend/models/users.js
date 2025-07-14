@@ -160,6 +160,19 @@ const userSchema = mongoose.Schema(
                 // 2FA fields
                 twoFactorEnabled: { type: Boolean, default: false },
                 twoFactorSecret: { type: String },
+                // QR-based password reset
+                resetPasswordQR: {
+                    token: { type: String },
+                    expires: { type: Number },
+                    used: { type: Boolean, default: false }
+                },
+                qrResetCodes: [
+                    {
+                        code: { type: String },
+                        expires: { type: Number }
+                    }
+                ],
+                qrResetVerified: { type: Boolean, default: false },
         }, {
         timestamps: true,
 }

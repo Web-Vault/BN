@@ -19,7 +19,11 @@ import {
         deleteUser,
         warnUser,
         banUser,
-        unbanUser
+        unbanUser,
+        forgotPasswordQR,
+        qrResetInit,
+        qrResetVerify,
+        qrResetFinal
 } from "../controllers/userController.js";
 
 const router = express.Router();
@@ -29,6 +33,10 @@ router.post("/register", registerUser);
 router.post("/login", login);
 router.post("/verify-otp", verifyOTP);
 router.post("/resend-otp", resendOTP);
+router.post("/forgot-password-qr", forgotPasswordQR);
+router.post("/qr-reset-init", qrResetInit);
+router.post("/qr-reset-verify", qrResetVerify);
+router.post("/qr-reset-final", qrResetFinal);
 
 // Protected routes
 router.post("/onboarding", protect, onboarding);

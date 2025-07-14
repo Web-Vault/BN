@@ -45,6 +45,10 @@ import MembershipManagement from './pages/admin/MembershipManagement';
 import MaintenancePage from "./pages/utility/MaintenancePage";
 import { MaintenanceRoute } from "./middleware/maintenanceMiddleware";
 import TwoFactorSetup from './pages/admin/TwoFactorSetup';
+import ForgotPassword from "./pages/auth/forgotpassword";
+import ResetPasswordQR from "./pages/auth/ResetPasswordQR";
+import ResetPasswordVerify from "./pages/auth/ResetPasswordVerify";
+import ResetPasswordFinal from "./pages/auth/ResetPasswordFinal";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
@@ -199,6 +203,26 @@ const App = () => {
         <Route path="/register" element={
           <MaintenanceRoute>
             <Register />
+          </MaintenanceRoute>
+        } />
+        <Route path="/forgotpassword" element={
+          <MaintenanceRoute>
+            <ForgotPassword />
+          </MaintenanceRoute>
+        } />
+        <Route path="/reset-password-qr" element={
+          <MaintenanceRoute>
+            <ResetPasswordQR />
+          </MaintenanceRoute>
+        } />
+        <Route path="/reset-password-verify" element={
+          <MaintenanceRoute>
+            <ResetPasswordVerify />
+          </MaintenanceRoute>
+        } />
+        <Route path="/reset-password-final" element={
+          <MaintenanceRoute>
+            <ResetPasswordFinal />
           </MaintenanceRoute>
         } />
         <Route path="/maintenance" element={<MaintenancePage />} />

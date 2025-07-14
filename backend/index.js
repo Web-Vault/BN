@@ -22,9 +22,14 @@ import membershipTierRoutes from './routes/membershipTierRoutes.js';
 import adminRoutes from './routes/admin.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 
+import path from "path";
+
 dotenv.config();
 
 const app = express();
+
+// Serve QR codes statically
+app.use("/qrcodes", express.static(path.join(process.cwd(), "public", "qrcodes")));
 
 connectDB();
 

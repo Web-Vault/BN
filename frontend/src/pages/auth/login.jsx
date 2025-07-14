@@ -24,6 +24,7 @@ const Login = () => {
   const [pendingPassword, setPendingPassword] = useState('');
   const [twoFAError, setTwoFAError] = useState('');
   const [twoFALoading, setTwoFALoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
 
   // const gotoOnboarding = () => {
   //   localStorage.removeItem("onboardingCompleted");
@@ -99,6 +100,7 @@ const Login = () => {
   const handleLogin = async () => {
     setLoginError("");
     if (lockoutUntil && lockoutUntil > Date.now()) return;
+    setLoginLoading(true); // Start loading
     try {
       const response = await fetch(`${config.API_BASE_URL}/api/users/login`, {
         method: "POST",
@@ -157,6 +159,8 @@ const Login = () => {
     } catch (error) {
       console.error("❌ Error logging in:", error);
       setLoginError("An error occurred while logging in");
+    } finally {
+      setLoginLoading(false); // Stop loading
     }
   };
 
@@ -280,9 +284,9 @@ const Login = () => {
             )}
             {/* Forgot Password & Signup Links */}
             <div className="flex justify-between text-xs mb-4">
-              <a href="/" className="text-white/70 hover:text-white transition">
+              <Link to="/forgotpassword" className="text-white/70 hover:text-white transition">
                 Forgot Password?
-              </a>
+              </Link>
               <Link
                 to="/register"
                 className="text-white/70 hover:text-white transition"
@@ -294,9 +298,9 @@ const Login = () => {
             <button
               onClick={handleLogin}
               className="w-full bg-purple-500 text-white p-3 rounded-md font-semibold hover:bg-purple-600 transition"
-              disabled={!!lockoutUntil}
+              disabled={!!lockoutUntil || loginLoading}
             >
-              Login
+              {loginLoading ? "Loading..." : "Login"}
             </button>
             <br />
             {/* <br /> */}

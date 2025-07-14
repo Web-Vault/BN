@@ -14,6 +14,10 @@ import Notification from "../models/notification.js";
 import MembershipHistory from "../models/membershipHistory.js";
 import SettingsModel from '../models/settings.js';
 import speakeasy from "speakeasy";
+import qrcode from "qrcode";
+import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 
 dotenv.config();
 
@@ -1432,5 +1436,155 @@ export const login2FA = async (req, res) => {
   } catch (err) {
     console.error('2FA login error:', err);
     res.status(500).json({ message: 'Failed to verify 2FA code', error: err.message });
+  }
+};
+
+// QR-based forgot password controller
+export const forgotPasswordQR = async (req, res) => {
+  const { email } = req.body;
+  // Always respond with success for privacy
+  const genericMsg = "If this email exists, a password reset QR code has been sent.";
+  try {
+    const user = await users.findOne({ userEmail: email });
+    if (!user) {
+      return res.status(200).json({ message: genericMsg });
+    }
+    // Generate secure token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = Date.now() + 15 * 60 * 1000; // 15 minutes
+    // Store token and expiry in user doc (or use a separate collection for production)
+    user.resetPasswordQR = {
+      token,
+      expires,
+      used: false
+    };
+    await user.save();
+    // Generate QR code with reset URL
+    const resetUrl = `${process.env.FRONTEND_URL || "https://bn-frontend.onrender.com"}/reset-password-qr?token=${token}`;
+    // Save QR code as PNG file and serve via public URL
+    const qrDir = path.join(process.cwd(), "public", "qrcodes");
+    if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
+    const qrFilename = `qr_${user._id}_${Date.now()}.png`;
+    const qrFilePath = path.join(qrDir, qrFilename);
+    await qrcode.toFile(qrFilePath, resetUrl, { width: 300 });
+    const qrUrl = `${process.env.BACKEND_URL || "http://localhost:5000"}/qrcodes/${qrFilename}`;
+    // Email QR code to user
+    const mailOptions = {
+      from: `"BN Platform" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Password Reset Request (QR)",
+      html: `
+        <h1>Password Reset Request</h1>
+        <p>Scan the QR code below with your mobile device to continue resetting your password. This code will expire in 15 minutes and can only be used once.</p>
+        <img src="${qrUrl}" alt="Reset QR Code" style="width:200px;height:200px;" />
+        <p>If you can't scan the QR, <a href="${resetUrl}">click here</a> to continue.</p>
+        <p>If you did not request this, you can ignore this email.</p>
+      `
+    };
+    await transporter.sendMail(mailOptions);
+    return res.status(200).json({ message: genericMsg });
+  } catch (err) {
+    console.error("Error in forgotPasswordQR:", err);
+    return res.status(200).json({ message: genericMsg });
+  }
+};
+
+// QR Reset Init: Generate codes after QR scan
+export const qrResetInit = async (req, res) => {
+  const { token } = req.body;
+  console.log("qr-reset-init called with token:", token);
+  if (!token) return res.status(400).json({ message: "Token required" });
+  try {
+    const user = await users.findOne({ "resetPasswordQR.token": token });
+    if (!user) {
+      console.log("User not found for token:", token);
+      return res.status(400).json({ message: "Invalid or expired token (user not found)" });
+    }
+    if (!user.resetPasswordQR) {
+      console.log("resetPasswordQR not found for user:", user._id);
+      return res.status(400).json({ message: "Invalid or expired token (no resetPasswordQR)" });
+    }
+    const { expires, used } = user.resetPasswordQR;
+    if (used || Date.now() > expires) {
+      console.log("Token expired or already used for user:", user._id);
+      return res.status(400).json({ message: "Token expired or already used" });
+    }
+    // Generate two 6-digit codes
+    const codeA = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeB = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeExpires = Date.now() + 120 * 1000; // 2 minutes
+    // Use updateOne for atomic update to avoid VersionError
+    await users.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          qrResetCodes: [
+            { code: codeA, expires: codeExpires },
+            { code: codeB, expires: codeExpires }
+          ],
+          qrResetVerified: false
+        }
+      }
+    );
+    return res.json({ codes: [codeA, codeB], expires: codeExpires });
+  } catch (err) {
+    console.error("qrResetInit error:", err);
+    return res.status(500).json({ message: "Server error: " + err.message });
+  }
+};
+
+// QR Reset Verify: User submits code
+export const qrResetVerify = async (req, res) => {
+  const { token, code } = req.body;
+  if (!token || !code) return res.status(400).json({ message: "Token and code required" });
+  try {
+    const user = await users.findOne({ "resetPasswordQR.token": token });
+    if (!user || !user.resetPasswordQR) return res.status(400).json({ message: "Invalid or expired token" });
+    const { expires, used } = user.resetPasswordQR;
+    if (used || Date.now() > expires) return res.status(400).json({ message: "Token expired or already used" });
+    // Check codes
+    const now = Date.now();
+    console.log("User codes:", user.qrResetCodes, "Now:", now, "Entered code:", code);
+    const validCode = (user.qrResetCodes || []).find(c => c.code === code && now <= c.expires);
+    if (!validCode) return res.status(400).json({ message: "Invalid or expired code" });
+    // Mark as verified, clear codes (do NOT mark token as used here)
+    await users.updateOne(
+      { _id: user._id },
+      {
+        $set: { qrResetVerified: true, qrResetCodes: [] }
+      }
+    );
+    return res.json({ success: true, message: "Code verified. You may now reset your password." });
+  } catch (err) {
+    console.error("qrResetVerify error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// QR Reset Final: Set new password
+export const qrResetFinal = async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) return res.status(400).json({ message: "Token and new password required" });
+  try {
+    const user = await users.findOne({ "resetPasswordQR.token": token });
+    if (!user || !user.resetPasswordQR) return res.status(400).json({ message: "Invalid or expired token" });
+    const { expires, used } = user.resetPasswordQR;
+    if (used || Date.now() > expires) return res.status(400).json({ message: "Token expired or already used" });
+    if (!user.qrResetVerified) return res.status(400).json({ message: "Code verification required" });
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashed = await bcrypt.hash(newPassword, salt);
+    // Atomic update to clear all reset fields and set new password, and mark token as used
+    await users.updateOne(
+      { _id: user._id },
+      {
+        $set: { userPassword: hashed, "resetPasswordQR.used": true },
+        $unset: { qrResetCodes: "", qrResetVerified: "" }
+      }
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("qrResetFinal error:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 };
